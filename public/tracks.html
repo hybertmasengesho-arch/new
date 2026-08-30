@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Tracks — Reasoning Hub</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/favicon-180.png">
+<link rel="stylesheet" href="/css/theme.css">
+<script>(function(){try{var t=localStorage.getItem('rh_theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<style>
+  .tracks-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:22px; }
+  .track-card{
+    background:var(--panel); border:1.5px solid var(--grid); border-radius:14px; padding:20px;
+    text-decoration:none; color:var(--ink); display:block; position:relative; overflow:hidden;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; cursor:pointer;
+  }
+  .track-card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,0.08); border-color:var(--card-accent,var(--blue)); }
+  .track-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--card-accent,var(--blue)); }
+  .track-card h3{ font-family:'Newsreader',serif; font-style:italic; font-weight:600; font-size:18px; margin:0 0 6px; }
+  .track-card p{ font-size:12.5px; color:var(--muted); margin:0 0 12px; line-height:1.4; min-height:1em; }
+  .track-progress-bar{ height:6px; border-radius:4px; background:var(--grid); overflow:hidden; }
+  .track-progress-bar i{ display:block; height:100%; background:var(--card-accent,var(--blue)); border-radius:4px; transition:width .3s ease; }
+  .track-progress-label{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-top:6px; }
+  .track-delete{
+    position:absolute; top:12px; right:12px; background:none; border:none; color:var(--muted);
+    cursor:pointer; font-size:13px; opacity:0; transition:opacity .12s ease;
+  }
+  .track-card:hover .track-delete{ opacity:1; }
+  .track-delete:hover{ color:var(--red); }
+  .team-badge{
+    display:inline-block; font-family:'JetBrains Mono',monospace; font-size:10px; text-transform:uppercase;
+    letter-spacing:.03em; padding:2px 8px; border-radius:20px; background:var(--blue-soft); color:var(--blue);
+    margin-bottom:8px;
+  }
+  .mini-btn{
+    border:1.5px solid var(--line); background:var(--panel); border-radius:6px; padding:4px 10px;
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:600; cursor:pointer; color:var(--ink);
+    text-decoration:none; display:inline-block;
+  }
+  .share-row{ display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .share-row select{
+    padding:6px 8px; border:1.5px solid var(--line); border-radius:7px; font-family:'Inter',sans-serif;
+    font-size:12.5px; color:var(--ink); background:var(--paper);
+  }
+
+
+  .ct-card{ max-width:640px; margin-top:34px; padding-top:22px; border-top:1px solid var(--grid); }
+  .ct-stage input, .ct-stage textarea, .ct-stage select{
+    width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:8px;
+    font-family:'Inter',sans-serif; font-size:14px; color:var(--ink); background:var(--paper); box-sizing:border-box;
+    margin-bottom:10px;
+  }
+  .ct-stage textarea{ min-height:60px; resize:vertical; }
+  .ct-stage input:focus, .ct-stage textarea:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+  .ct-label{ display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .ct-row{ display:flex; gap:10px; align-items:flex-end; }
+  .ct-row > div{ flex:1; }
+  .ct-row .color-field{ flex:none; width:70px; }
+  .ct-row input[type="color"]{ height:42px; padding:2px; }
+  .ct-primary{
+    margin-top:4px; background:var(--ink); color:#fff; border:none; border-radius:8px;
+    padding:11px 18px; font-family:'Inter',sans-serif; font-weight:600; font-size:14px; cursor:pointer;
+  }
+  .ct-primary:disabled{ opacity:.6; cursor:default; }
+
+  /* ---------- track detail: day grid ---------- */
+  .track-detail-head{ display:flex; align-items:center; gap:12px; margin-top:8px; }
+  .back-link{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); text-decoration:none; }
+  .back-link:hover{ color:var(--ink); }
+  .day-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:8px; margin-top:20px; max-width:720px; }
+  .day-tile{
+    aspect-ratio:1; border-radius:9px; border:1.5px solid var(--line); background:var(--panel);
+    display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace;
+    font-size:13px; font-weight:700; cursor:pointer; color:var(--ink); position:relative;
+    transition:border-color .12s ease, transform .1s ease;
+  }
+  .day-tile:hover{ transform:translateY(-1px); border-color:var(--card-accent,var(--blue)); }
+  .day-tile.done{ background:var(--card-accent,var(--green)); color:#fff; border-color:transparent; }
+  .day-tile.selected{ box-shadow:0 0 0 3px color-mix(in srgb, var(--card-accent,var(--blue)) 30%, transparent); }
+  .day-editor{
+    max-width:420px; margin-top:18px; padding:16px; border:1.5px solid var(--line); border-radius:10px;
+    background:var(--panel); display:none;
+  }
+  .day-editor.open{ display:block; }
+  .day-editor label{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; margin-bottom:10px; cursor:pointer; }
+  .day-editor input[type="number"], .day-editor textarea{
+    width:100%; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px;
+    font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); background:var(--paper); box-sizing:border-box; margin-bottom:10px;
+  }
+  .day-editor textarea{ min-height:60px; resize:vertical; }
+  .empty-state{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--muted); padding:30px 0; text-align:center; }
+  .msg{ font-size:13px; margin-top:8px; display:none; }
+  .msg.ok{ color:var(--green); display:block; }
+  .msg.err{ color:var(--red); display:block; }
+</style>
+</head>
+<body class="hub-body">
+<div id="siteNav"></div>
+
+<div class="hub-wrap">
+  <div id="listView">
+    <div class="hub-eyebrow">Guided curriculum</div>
+    <h1 class="hub-h1">Tracks</h1>
+    <p class="hub-sub" id="listSub">Day-by-day trackers set up by your facilitator or admin — check off your own progress as you go.</p>
+
+    <div class="tracks-grid" id="tracksGrid"><div class="empty-state">Loading…</div></div>
+
+    <div class="ct-card" id="createCard" style="display:none;">
+      <h2 style="font-family:'Newsreader',serif; font-style:italic; font-weight:600; font-size:20px; color:var(--ink); margin:0 0 4px;">Create a track</h2>
+      <p class="section-hint" style="max-width:520px; margin-bottom:16px; color:var(--muted); font-size:13px;">Visible to every user once created. Right here on the page — no popup.</p>
+
+      <div class="ct-stage">
+        <label class="ct-label" for="trackName">Track name</label>
+        <input type="text" id="trackName" maxlength="150" placeholder="e.g. 14-Day Spanish Sprint">
+
+        <div class="ct-row">
+          <div>
+            <label class="ct-label" for="trackDays">Number of days</label>
+            <input type="number" id="trackDays" min="1" max="100" value="14">
+          </div>
+          <div class="color-field">
+            <label class="ct-label" for="trackColor">Theme</label>
+            <input type="color" id="trackColor" value="#2F6F4F">
+          </div>
+        </div>
+
+        <label class="ct-label" for="trackDesc">Description (optional)</label>
+        <textarea id="trackDesc" maxlength="1000" placeholder="What are learners working through?"></textarea>
+
+        <label class="ct-label" for="trackTeam">Visible to</label>
+        <select id="trackTeam"></select>
+
+        <button id="createTrackBtn" class="ct-primary">Create track</button>
+        <div class="msg" id="createMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailView" style="display:none;">
+    <div class="track-detail-head">
+      <a href="#" class="back-link" id="backLink">← Tracks</a>
+    </div>
+    <div class="hub-eyebrow" id="detailEyebrow"></div>
+    <div id="detailTeamBadge"></div>
+    <h1 class="hub-h1" id="detailName"></h1>
+    <p class="hub-sub" id="detailDesc"></p>
+    <div class="track-progress-label" id="detailProgress" style="font-size:13px;"></div>
+
+    <div class="share-row" id="shareRow" style="display:none;">
+      <select id="shareTeamSelect"></select>
+      <button id="shareBtn" type="button" class="mini-btn">📣 Share results</button>
+      <span class="msg" id="shareMsg"></span>
+    </div>
+
+    <div id="manageBar" style="display:none; gap:10px; margin-top:10px;">
+      <button id="editTrackBtn" type="button" class="mini-btn">Edit track</button>
+      <button id="deleteTrackBtn" type="button" class="mini-btn" style="color:var(--red);">Delete track</button>
+    </div>
+
+    <div class="ct-card" id="editCard" style="display:none;">
+      <h2 style="font-family:'Newsreader',serif; font-style:italic; font-weight:600; font-size:18px; color:var(--ink); margin:0 0 12px;">Edit track</h2>
+      <div class="ct-stage">
+        <label class="ct-label" for="editName">Track name</label>
+        <input type="text" id="editName" maxlength="150">
+        <div class="ct-row">
+          <div>
+            <label class="ct-label" for="editDays">Number of days</label>
+            <input type="number" id="editDays" min="1" max="100">
+          </div>
+          <div class="color-field">
+            <label class="ct-label" for="editColor">Theme</label>
+            <input type="color" id="editColor">
+          </div>
+        </div>
+        <label class="ct-label" for="editDesc">Description (optional)</label>
+        <textarea id="editDesc" maxlength="1000"></textarea>
+        <button id="saveEditBtn" class="ct-primary">Save changes</button>
+        <button id="cancelEditBtn" type="button" class="mini-btn">Cancel</button>
+        <div class="msg" id="editMsg"></div>
+      </div>
+    </div>
+
+    <div class="day-grid" id="dayGrid"></div>
+
+    <div class="day-editor" id="dayEditor">
+      <label><input type="checkbox" id="dayCompleted"> Mark day <span id="dayEditorNum"></span> complete</label>
+      <label class="ct-label" for="dayScore">Score (optional, 0–100)</label>
+      <input type="number" id="dayScore" min="0" max="100" placeholder="e.g. 85">
+      <label class="ct-label" for="dayNote">Note (optional)</label>
+      <textarea id="dayNote" placeholder="What did you work on?"></textarea>
+      <button id="saveDayBtn" class="ct-primary">Save day</button>
+      <div class="msg" id="dayMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/nav.js"></script>
+<script src="/js/toast.js"></script>
+<script>
+function getToken(){ return localStorage.getItem('rh_token'); }
+function authHeaders(extra){ return Object.assign({ Authorization: 'Bearer ' + getToken() }, extra || {}); }
+function esc(s){
+  if(s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let allTracks = [];
+let currentTrack = null;
+let selectedDay = null;
+let canManage = false;
+let currentUserId = null;
+let myTeams = []; // teams I'm an accepted member of (owner counts as a member)
+
+function ownedTeams(){ return myTeams.filter(t => t.my_status === 'accepted' && t.owner_id === currentUserId); }
+function acceptedTeams(){ return myTeams.filter(t => t.my_status === 'accepted'); }
+
+async function loadMyTeams(){
+  try{
+    const res = await fetch('/api/teams/mine', { headers: authHeaders() });
+    if(!res.ok) return;
+    const data = await res.json();
+    myTeams = data.teams || [];
+  }catch(e){ /* team-scoped tracks just won't be offered if this fails */ }
+}
+
+function populateTeamSelect(select, { includeGlobal }){
+  const owned = ownedTeams();
+  select.innerHTML = '';
+  if(includeGlobal){
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = 'Everyone (global)';
+    select.appendChild(opt);
+  }
+  owned.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id; opt.textContent = 'Just my team — ' + t.name;
+    select.appendChild(opt);
+  });
+}
+
+async function loadTracks(){
+  const grid = document.getElementById('tracksGrid');
+  try{
+    const res = await fetch('/api/tracks', { headers: authHeaders() });
+    const data = await res.json();
+    allTracks = data.tracks || [];
+    canManage = !!data.canManage;
+    const canCreate = canManage || ownedTeams().length > 0;
+    document.getElementById('createCard').style.display = canCreate ? 'block' : 'none';
+    if(canCreate) populateTeamSelect(document.getElementById('trackTeam'), { includeGlobal: canManage });
+    document.getElementById('listSub').textContent = canManage
+      ? 'Day-by-day trackers visible to every user, or scoped to one team. Create, edit, or delete them below; each person checks off their own progress.'
+      : (ownedTeams().length
+          ? 'Day-by-day trackers from your facilitator, admin, or your own team — check off your own progress and add one for your team below.'
+          : 'Day-by-day trackers set up by your facilitator or admin — check off your own progress as you go.');
+    if(!allTracks.length){
+      grid.innerHTML = '<div class="empty-state">' + (canCreate ? 'No tracks yet — create one below.' : 'No tracks yet — check back soon.') + '</div>';
+      return;
+    }
+    grid.innerHTML = allTracks.map(t => `
+      <div class="track-card" data-id="${t.id}" style="--card-accent:${esc(t.themeColor)};">
+        ${canManage || (t.team && ownedTeams().some(ot => ot.id === t.team.id)) ? `<button class="track-delete" data-delete="${t.id}" title="Delete track">✕</button>` : ''}
+        ${t.team ? `<span class="team-badge">${esc(t.team.name || 'Team')}</span>` : ''}
+        <h3>${esc(t.name)}</h3>
+        <p>${esc(t.description || '')}</p>
+        <div class="track-progress-bar"><i style="width:${t.totalDays ? (t.done / t.totalDays * 100) : 0}%;"></i></div>
+        <div class="track-progress-label">${t.done}/${t.totalDays} days${t.avgScore != null ? ' · avg ' + t.avgScore + '%' : ''}</div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.track-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if(e.target.closest('.track-delete')) return;
+        openTrack(card.dataset.id);
+      });
+    });
+    grid.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.delete;
+        const t = allTracks.find(x => String(x.id) === id);
+        if(!confirm('Delete "' + (t ? t.name : 'this track') + '"? This removes it — and everyone\'s progress on it — for good.')) return;
+        const res = await fetch('/api/tracks/' + id, { method: 'DELETE', headers: authHeaders() });
+        if(res.ok){ showToast('Track deleted.', 'success'); loadTracks(); }
+        else { const d = await res.json().catch(() => ({})); showToast(d.error || 'Could not delete track.', 'error'); }
+      });
+    });
+  }catch(e){
+    grid.innerHTML = '<div class="empty-state">Could not load tracks.</div>';
+  }
+}
+
+document.getElementById('createTrackBtn').addEventListener('click', async () => {
+  const name = document.getElementById('trackName').value.trim();
+  const totalDays = Number(document.getElementById('trackDays').value);
+  const themeColor = document.getElementById('trackColor').value;
+  const description = document.getElementById('trackDesc').value.trim();
+  const teamId = document.getElementById('trackTeam').value || undefined;
+  const msg = document.getElementById('createMsg');
+  if(!name){ msg.textContent = 'Give your track a name.'; msg.className = 'msg err'; return; }
+  if(!Number.isInteger(totalDays) || totalDays < 1 || totalDays > 100){
+    msg.textContent = 'Days must be a whole number between 1 and 100.'; msg.className = 'msg err'; return;
+  }
+  const btn = document.getElementById('createTrackBtn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  try{
+    const res = await fetch('/api/tracks', {
+      method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ name, totalDays, themeColor, description, teamId })
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || 'Could not create track'; msg.className = 'msg err'; return; }
+    document.getElementById('trackName').value = '';
+    document.getElementById('trackDesc').value = '';
+    document.getElementById('trackDays').value = '14';
+    msg.className = 'msg';
+    showToast('Track created.', 'success');
+    loadTracks();
+  }finally{
+    btn.disabled = false; btn.textContent = 'Create track';
+  }
+});
+
+async function openTrack(id){
+  const res = await fetch('/api/tracks/' + id, { headers: authHeaders() });
+  if(!res.ok){ const d = await res.json().catch(() => ({})); showToast(d.error || 'Could not open track.', 'error'); return; }
+  const data = await res.json();
+  currentTrack = data.track;
+  canManage = !!data.canManage;
+  selectedDay = null;
+  document.getElementById('listView').style.display = 'none';
+  document.getElementById('detailView').style.display = 'block';
+  document.getElementById('manageBar').style.display = canManage ? 'flex' : 'none';
+  document.getElementById('editCard').style.display = 'none';
+  document.documentElement.style.setProperty('--card-accent', currentTrack.themeColor);
+  setupShareRow();
+  renderDetail();
+}
+
+function setupShareRow(){
+  const row = document.getElementById('shareRow');
+  const select = document.getElementById('shareTeamSelect');
+  document.getElementById('shareMsg').textContent = '';
+  if(currentTrack.team){
+    // Team-scoped track — share goes straight to that team, no picker needed.
+    select.style.display = 'none';
+    select.innerHTML = '';
+    row.style.display = 'flex';
+  } else if(acceptedTeams().length){
+    // Global track — let the user pick which of their own teams to share with.
+    select.style.display = '';
+    select.innerHTML = acceptedTeams().map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    row.style.display = 'flex';
+  } else {
+    row.style.display = 'none';
+  }
+}
+
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  if(!currentTrack) return;
+  const msg = document.getElementById('shareMsg');
+  const select = document.getElementById('shareTeamSelect');
+  const teamId = currentTrack.team ? currentTrack.team.id : Number(select.value);
+  const btn = document.getElementById('shareBtn');
+  btn.disabled = true; btn.textContent = 'Sharing…';
+  try{
+    const res = await fetch('/api/tracks/' + currentTrack.id + '/share', {
+      method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ teamId })
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || 'Could not share results'; msg.className = 'msg err'; return; }
+    msg.textContent = 'Shared with ' + data.sentCount + ' teammate' + (data.sentCount === 1 ? '' : 's') + '.';
+    msg.className = 'msg ok';
+    showToast('Results shared.', 'success');
+  }finally{
+    btn.disabled = false; btn.textContent = '📣 Share results';
+  }
+});
+
+document.getElementById('editTrackBtn').addEventListener('click', () => {
+  document.getElementById('editName').value = currentTrack.name;
+  document.getElementById('editDays').value = currentTrack.totalDays;
+  document.getElementById('editColor').value = currentTrack.themeColor;
+  document.getElementById('editDesc').value = currentTrack.description || '';
+  document.getElementById('editMsg').className = 'msg';
+  document.getElementById('editCard').style.display = 'block';
+});
+
+document.getElementById('cancelEditBtn').addEventListener('click', () => {
+  document.getElementById('editCard').style.display = 'none';
+});
+
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
+  const name = document.getElementById('editName').value.trim();
+  const totalDays = Number(document.getElementById('editDays').value);
+  const themeColor = document.getElementById('editColor').value;
+  const description = document.getElementById('editDesc').value.trim();
+  const msg = document.getElementById('editMsg');
+  if(!name){ msg.textContent = 'Give the track a name.'; msg.className = 'msg err'; return; }
+  if(!Number.isInteger(totalDays) || totalDays < 1 || totalDays > 100){
+    msg.textContent = 'Days must be a whole number between 1 and 100.'; msg.className = 'msg err'; return;
+  }
+  const btn = document.getElementById('saveEditBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const res = await fetch('/api/tracks/' + currentTrack.id, {
+      method: 'PATCH', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ name, totalDays, themeColor, description })
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || 'Could not save changes'; msg.className = 'msg err'; return; }
+    currentTrack = Object.assign({}, currentTrack, {
+      name: data.track.name, description: data.track.description,
+      themeColor: data.track.themeColor, totalDays: data.track.totalDays
+    });
+    document.getElementById('editCard').style.display = 'none';
+    document.documentElement.style.setProperty('--card-accent', currentTrack.themeColor);
+    renderDetail();
+    showToast('Track updated.', 'success');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Save changes';
+  }
+});
+
+document.getElementById('deleteTrackBtn').addEventListener('click', async () => {
+  if(!currentTrack) return;
+  if(!confirm('Delete "' + currentTrack.name + '"? This removes it — and everyone\'s progress on it — for good.')) return;
+  const res = await fetch('/api/tracks/' + currentTrack.id, { method: 'DELETE', headers: authHeaders() });
+  if(res.ok){
+    showToast('Track deleted.', 'success');
+    document.getElementById('detailView').style.display = 'none';
+    document.getElementById('listView').style.display = 'block';
+    loadTracks();
+  } else {
+    const d = await res.json().catch(() => ({}));
+    showToast(d.error || 'Could not delete track.', 'error');
+  }
+});
+
+function renderDetail(){
+  const t = currentTrack;
+  document.getElementById('detailEyebrow').textContent = t.totalDays + '-DAY TRACK';
+  document.getElementById('detailTeamBadge').innerHTML = t.team ? `<span class="team-badge">${esc(t.team.name || 'Team')}</span>` : '';
+  document.getElementById('detailName').textContent = t.name;
+  document.getElementById('detailDesc').textContent = t.description || '';
+  const done = Object.values(t.progress || {}).filter(d => d && d.completed).length;
+  document.getElementById('detailProgress').textContent = done + '/' + t.totalDays + ' days complete';
+
+  const grid = document.getElementById('dayGrid');
+  grid.style.setProperty('--card-accent', t.themeColor);
+  let html = '';
+  for(let d = 1; d <= t.totalDays; d++){
+    const entry = (t.progress || {})[d];
+    html += `<div class="day-tile ${entry && entry.completed ? 'done' : ''} ${selectedDay === d ? 'selected' : ''}" data-day="${d}" style="--card-accent:${esc(t.themeColor)};">${d}</div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.day-tile').forEach(tile => {
+    tile.addEventListener('click', () => selectDay(Number(tile.dataset.day)));
+  });
+}
+
+function selectDay(day){
+  selectedDay = day;
+  renderDetail();
+  const entry = (currentTrack.progress || {})[day] || {};
+  document.getElementById('dayEditorNum').textContent = day;
+  document.getElementById('dayCompleted').checked = !!entry.completed;
+  document.getElementById('dayScore').value = entry.score != null ? entry.score : '';
+  document.getElementById('dayNote').value = entry.note || '';
+  document.getElementById('dayMsg').className = 'msg';
+  document.getElementById('dayEditor').classList.add('open');
+}
+
+document.getElementById('saveDayBtn').addEventListener('click', async () => {
+  if(!selectedDay) return;
+  const msg = document.getElementById('dayMsg');
+  const scoreVal = document.getElementById('dayScore').value;
+  const body = {
+    completed: document.getElementById('dayCompleted').checked,
+    note: document.getElementById('dayNote').value.trim(),
+    score: scoreVal === '' ? null : Number(scoreVal)
+  };
+  const btn = document.getElementById('saveDayBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const res = await fetch('/api/tracks/' + currentTrack.id + '/day/' + selectedDay, {
+      method: 'PATCH', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || 'Could not save'; msg.className = 'msg err'; return; }
+    currentTrack.progress = data.progress;
+    renderDetail();
+    showToast('Day ' + selectedDay + ' saved.', 'success');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Save day';
+  }
+});
+
+document.getElementById('backLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('detailView').style.display = 'none';
+  document.getElementById('listView').style.display = 'block';
+  document.getElementById('dayEditor').classList.remove('open');
+  loadTracks();
+});
+
+(async function init(){
+  const user = await window.HubNav.init('tracks', true);
+  if(!user) return;
+  currentUserId = user.id;
+  await loadMyTeams();
+  loadTracks();
+})();
+</script>
+</body>
+</html>

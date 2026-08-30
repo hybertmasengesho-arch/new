@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reasoning Hub — File Sharing, Team Collaboration & Notes</title>
+<meta name="description" content="Share files, collaborate with your team, and write and save notes — all under one account, one login, one authenticated workspace.">
+<link rel="canonical" href="https://REPLACE-WITH-YOUR-DOMAIN/">
+<meta property="og:title" content="Reasoning Hub">
+<meta property="og:description" content="One account for file sharing, team collaboration, and a built-in text editor for notes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://REPLACE-WITH-YOUR-DOMAIN/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/favicon-180.png">
+<link rel="stylesheet" href="/css/theme.css">
+<script>(function(){try{var t=localStorage.getItem('rh_theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<style>
+  /* Each note gets its own card here, in the same visual language as the
+     Matrix/Courses card above (.app-card + --app-accent), with a small
+     cover thumbnail when the note has a photo. */
+  .note-card-cover{ width:100%; aspect-ratio:16/9; border-radius:8px; overflow:hidden; background:var(--paper); margin:10px 0 12px; border:1px solid var(--grid); }
+  .note-card-cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* ============================================================
+     HOME PAGE MOTION — entrance keyframes, scroll-triggered reveals,
+     and richer hover/press transitions for cards + buttons.
+     Everything respects prefers-reduced-motion at the bottom.
+     ============================================================ */
+
+  /* ---- entrance keyframes (one per zone, so nothing feels identical) ---- */
+  @keyframes hubHeroIn{
+    0%{ opacity:0; transform:translateY(-14px) scale(.985); }
+    60%{ opacity:1; }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  @keyframes hubEyebrowSlide{
+    0%{ opacity:0; letter-spacing:.02em; transform:translateX(-10px); }
+    100%{ opacity:1; letter-spacing:.18em; transform:translateX(0); }
+  }
+  @keyframes hubCardRise{
+    0%{ opacity:0; transform:translateY(28px) scale(.96) rotateX(6deg); }
+    55%{ opacity:1; }
+    80%{ transform:translateY(-3px) scale(1.005) rotateX(0deg); }
+    100%{ opacity:1; transform:translateY(0) scale(1) rotateX(0deg); }
+  }
+  @keyframes hubAccentSweep{
+    0%{ transform:scaleX(0); opacity:.4; }
+    100%{ transform:scaleX(1); opacity:1; }
+  }
+  @keyframes hubBarFill{
+    0%{ filter:brightness(1); }
+    50%{ filter:brightness(1.35); }
+    100%{ filter:brightness(1); }
+  }
+  @keyframes hubChipPop{
+    0%{ opacity:0; transform:scale(.4) rotate(-12deg); }
+    65%{ opacity:1; transform:scale(1.12) rotate(4deg); }
+    100%{ opacity:1; transform:scale(1) rotate(0deg); }
+  }
+  @keyframes hubGlowPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(216,84,107,0); }
+    50%{ box-shadow:0 0 0 6px rgba(216,84,107,0.08); }
+  }
+  @keyframes hubShimmer{
+    0%{ background-position:-160% 0; }
+    100%{ background-position:160% 0; }
+  }
+  @keyframes hubFloat{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
+  }
+  @keyframes hubModalIn{
+    0%{ opacity:0; transform:translateY(18px) scale(.96); }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  @keyframes hubBackdropIn{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes hubSpin{ to{ transform:rotate(360deg); } }
+  @keyframes hubCheckPop{
+    0%{ opacity:0; transform:scale(.3); }
+    70%{ transform:scale(1.15); }
+    100%{ opacity:1; transform:scale(1); }
+  }
+
+  /* ---- additional ambient / signature keyframes ---- */
+  /* the graph-paper grid itself drifts, almost imperceptibly — same idea
+     as a slowly-scrolling notebook page, not a moving background */
+  @keyframes hubGridDrift{
+    0%{ background-position:0 0, 0 0; }
+    100%{ background-position:28px 28px, 28px 28px; }
+  }
+  /* a pencil-underline draws itself under the h1 once the entrance settles */
+  @keyframes hubUnderlineDraw{
+    0%{ transform:scaleX(0); opacity:.3; }
+    100%{ transform:scaleX(1); opacity:1; }
+  }
+  /* faint diagonal shimmer across progress-bar tracks — reads as "live",
+     doubles as a loading cue before the fill width is known */
+  @keyframes hubTrackShimmer{
+    0%{ background-position:-120% 0; }
+    100%{ background-position:220% 0; }
+  }
+  /* unread-message dot on the nav gets a soft pulse instead of sitting static */
+  @keyframes hubBadgePulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(178,58,46,.55); }
+    50%{ box-shadow:0 0 0 5px rgba(178,58,46,0); }
+  }
+  /* thin scan line traveling across the trend card, echoing the accent
+     sweep on the app cards so the motion language carries down the page */
+  @keyframes hubChartScan{
+    0%{ left:-20%; }
+    60%{ left:100%; }
+    100%{ left:100%; }
+  }
+  /* the "message my team" bar's dashed border breathes gently to draw the
+     eye without competing with its entrance */
+  @keyframes hubQuickPulse{
+    0%,100%{ border-color:var(--grid); }
+    50%{ border-color:var(--blue); }
+  }
+  /* small live-status dot next to the eyebrow, same pulse language as a
+     recording/online indicator */
+  @keyframes hubDotBlink{
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:.35; transform:scale(.8); }
+  }
+  /* skeleton placeholder lines inside the "how it looks" card previews
+     shimmer while they stand in for real content */
+  @keyframes hubPreviewShimmer{
+    0%{ background-position:-160% 0; }
+    100%{ background-position:160% 0; }
+  }
+
+  /* ---- hero: greeting + subhead play once on load ---- */
+  .hub-eyebrow{ animation:hubEyebrowSlide .6s cubic-bezier(.22,1,.36,1) both; display:inline-flex; align-items:center; gap:7px; }
+  .hub-eyebrow .hub-live-dot{ width:6px; height:6px; border-radius:50%; background:var(--green); animation:hubDotBlink 2.2s ease-in-out infinite; }
+  .hub-h1{ animation:hubHeroIn .7s cubic-bezier(.22,1,.36,1) both .08s; position:relative; display:inline-block; }
+  .hub-h1::after{
+    content:''; position:absolute; left:1px; right:auto; bottom:-4px; width:64px; height:2px;
+    background:var(--amber); transform-origin:left center; transform:scaleX(0);
+    animation:hubUnderlineDraw .5s ease both .78s;
+  }
+  .hub-sub{ animation:hubHeroIn .7s cubic-bezier(.22,1,.36,1) both .16s; }
+
+  /* ---- app cards: hidden until scrolled into view, then rise in with stagger ---- */
+  .app-card-grid .app-card,
+  .trend-card,
+  #noteCardsWrap{ opacity:0; }
+  .app-card-grid .app-card.in-view{
+    animation:hubCardRise .62s cubic-bezier(.22,1,.36,1) both;
+  }
+  .app-card-grid .app-card.in-view:nth-child(1){ animation-delay:.02s; }
+  .app-card-grid .app-card.in-view:nth-child(2){ animation-delay:.10s; }
+  .app-card-grid .app-card.in-view:nth-child(3){ animation-delay:.18s; }
+  .app-card-grid .app-card.in-view:nth-child(4){ animation-delay:.26s; }
+  .app-card-grid .app-card.in-view:nth-child(5){ animation-delay:.34s; }
+  .trend-card.in-view{ animation:hubCardRise .62s cubic-bezier(.22,1,.36,1) both .1s; }
+  #noteCardsWrap.in-view{ animation:hubCardRise .62s cubic-bezier(.22,1,.36,1) both; }
+
+  /* the top accent bar sweeps in left-to-right once its card is visible */
+  .app-card::before{ transform-origin:left center; transform:scaleX(0); }
+  .app-card.in-view::before{ animation:hubAccentSweep .5s ease both .28s; }
+
+  /* ---- hover/press motion, layered on top of the existing transform ---- */
+  .app-card{
+    transition:transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s ease, border-color .28s ease;
+    will-change:transform;
+  }
+  .app-card:hover{
+    transform:translateY(-6px) scale(1.012);
+    box-shadow:0 16px 32px rgba(30,42,74,0.14);
+  }
+  .app-card:active{ transform:translateY(-2px) scale(.995); transition-duration:.1s; }
+  .app-card h3{ transition:transform .28s cubic-bezier(.22,1,.36,1), color .2s ease; display:inline-block; }
+  .app-card:hover h3{ transform:translateX(3px); }
+  .app-card .app-eyebrow{ transition:color .25s ease, letter-spacing .25s ease; }
+  .app-card:hover .app-eyebrow{ color:var(--app-accent,var(--blue)); letter-spacing:.14em; }
+  .app-card .preview-chip,
+  .app-card .preview-icon{ transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .app-card:hover .preview-chip,
+  .app-card:hover .preview-icon{ animation:hubFloat 1.4s ease-in-out infinite; }
+  .app-card .app-progress-bar i{ transition:width .6s cubic-bezier(.22,1,.36,1); }
+  .app-card:hover .app-progress-bar i{ animation:hubBarFill 1s ease; }
+
+  /* progress-bar tracks carry a faint permanent shimmer — reads as "live
+     data", and doubles as a loading cue while the real width is fetched */
+  .app-progress-bar{
+    position:relative; overflow:hidden;
+    background-image:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 46%, transparent 62%);
+    background-size:200% 100%;
+    animation:hubTrackShimmer 2.4s ease-in-out infinite;
+  }
+  [data-theme="dark"] .app-progress-bar{
+    background-image:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.14) 46%, transparent 62%);
+  }
+
+  /* skeleton placeholder lines in the "how it looks" mini-previews */
+  .card-preview .preview-line{
+    background-image:linear-gradient(100deg, var(--line) 20%, rgba(255,255,255,.65) 45%, var(--line) 70%);
+    background-size:220% 100%;
+    animation:hubPreviewShimmer 3.2s ease-in-out infinite;
+  }
+  [data-theme="dark"] .card-preview .preview-line{
+    background-image:linear-gradient(100deg, var(--line) 20%, rgba(255,255,255,.10) 45%, var(--line) 70%);
+  }
+
+  /* ---- quick-action bar: "Message My Team" entrance + button flourish ---- */
+  .hub-quick-actions{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    margin-top:18px; padding:14px 18px; border-radius:12px;
+    border:1.5px dashed var(--grid); background:rgba(216,84,107,0.045);
+    animation:hubHeroIn .7s cubic-bezier(.22,1,.36,1) both .22s, hubQuickPulse 4.5s ease-in-out infinite 1.1s;
+  }
+  [data-theme="dark"] .hub-quick-actions{ background:rgba(216,84,107,0.07); }
+  .hub-quick-actions-text{ font-size:13px; color:var(--text-dim,var(--muted)); max-width:520px; }
+  .hub-quick-actions-text b{ color:var(--ink); }
+  .hub-btn{
+    position:relative; overflow:hidden; isolation:isolate; cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    border:none; border-radius:9px; padding:10px 18px; color:#fff;
+    background:linear-gradient(135deg,#D8546B,#c23f57);
+    box-shadow:0 4px 14px rgba(216,84,107,0.32);
+    transition:transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease, filter .2s ease;
+    animation:hubGlowPulse 2.6s ease-in-out infinite;
+  }
+  .hub-btn::after{
+    content:''; position:absolute; inset:0; z-index:-1;
+    background:linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.35) 42%, transparent 64%);
+    background-size:220% 100%; background-position:-160% 0;
+  }
+  .hub-btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 8px 20px rgba(216,84,107,0.42); filter:brightness(1.04); }
+  .hub-btn:hover::after{ animation:hubShimmer 1.1s ease; }
+  .hub-btn:active{ transform:translateY(0) scale(.97); }
+  .hub-btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; filter:none; animation:none; }
+  .hub-btn-ghost{
+    background:transparent; color:var(--ink); border:1.5px solid var(--grid);
+    box-shadow:none; animation:none;
+  }
+  .hub-btn-ghost:hover{ border-color:var(--blue); color:var(--blue); box-shadow:0 6px 16px rgba(58,111,216,0.14); }
+
+  /* ---- broadcast modal ---- */
+  .hub-modal-backdrop{
+    position:fixed; inset:0; z-index:9998; background:rgba(10,12,18,0.55);
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    animation:hubBackdropIn .2s ease both;
+  }
+  .hub-modal{
+    width:100%; max-width:440px; background:var(--panel); border:1.5px solid var(--grid);
+    border-radius:16px; padding:24px; box-shadow:0 24px 60px rgba(10,12,18,0.35);
+    animation:hubModalIn .32s cubic-bezier(.22,1,.36,1) both;
+  }
+  .hub-modal h2{ font-family:'Newsreader',serif; font-style:italic; font-size:21px; color:var(--ink); margin:0 0 4px; }
+  .hub-modal .hub-modal-sub{ font-size:12.5px; color:var(--muted); margin:0 0 18px; line-height:1.5; }
+  .hub-modal label{ display:block; font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .hub-modal select, .hub-modal textarea{
+    width:100%; border:1.5px solid var(--grid); border-radius:9px; background:var(--paper);
+    color:var(--ink); font-family:'Inter',sans-serif; font-size:13.5px; padding:10px 12px;
+    transition:border-color .2s ease, box-shadow .2s ease; margin-bottom:14px;
+  }
+  .hub-modal textarea{ resize:vertical; min-height:88px; }
+  .hub-modal select:focus, .hub-modal textarea:focus{
+    outline:none; border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft);
+  }
+  .hub-modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:4px; }
+  .hub-modal-count{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin:-8px 0 14px; }
+  .hub-spinner{
+    display:inline-block; width:13px; height:13px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.45); border-top-color:#fff;
+    animation:hubSpin .7s linear infinite; vertical-align:-2px; margin-right:6px;
+  }
+  .hub-modal-success{ text-align:center; padding:6px 0 2px; }
+  .hub-modal-success .check{
+    width:44px; height:44px; margin:0 auto 12px; border-radius:50%;
+    background:var(--green-soft); color:var(--green); display:flex; align-items:center; justify-content:center;
+    font-size:22px; animation:hubCheckPop .4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+
+  /* ---- nav unread badge + trend card scan line + ambient grid ---- */
+  .hub-nav-links a.has-unread::after{ animation:hubBadgePulse 1.8s ease-in-out infinite; }
+
+  body.hub-body{ animation:hubGridDrift 45s linear infinite; }
+
+  .trend-card{ position:relative; overflow:hidden; }
+  .trend-card::before{
+    content:''; position:absolute; top:0; width:22%; height:2px; left:-20%;
+    background:linear-gradient(90deg, transparent, var(--blue), transparent);
+    animation:hubChartScan 6.5s ease-in-out infinite 1.4s;
+  }
+
+  /* ---- respect users who've asked for less motion ---- */
+  @media (prefers-reduced-motion: reduce){
+    .hub-eyebrow, .hub-h1, .hub-h1::after, .hub-sub, .hub-quick-actions,
+    .app-card-grid .app-card, .trend-card, .trend-card::before, #noteCardsWrap,
+    .app-card.in-view, .app-card.in-view::before,
+    .hub-btn, .hub-modal, .hub-modal-backdrop, .hub-modal-success .check,
+    .app-progress-bar, .card-preview .preview-line, .hub-eyebrow .hub-live-dot,
+    .hub-nav-links a.has-unread::after, body.hub-body{
+      animation:none !important; opacity:1 !important; transform:none !important;
+    }
+    .app-card:hover{ transform:none; }
+  }
+</style>
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0E9E68" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#07080B" media="(prefers-color-scheme: dark)">
+</head>
+<body class="hub-body">
+<div id="siteNav"></div>
+
+<div class="hub-wrap">
+  <div class="hub-eyebrow"><span class="hub-live-dot" aria-hidden="true"></span>One account · files, team & notes</div>
+  <h1 class="hub-h1" id="hubGreeting">Reasoning Hub</h1>
+  <p class="hub-sub">Share files, collaborate with your team, and write and save notes in the built-in editor — one login, one authenticated workspace, saved to your own database.</p>
+
+  <div class="hub-quick-actions" id="broadcastBar" style="display:none;">
+    <div class="hub-quick-actions-text"><b>Message your whole team</b> — send one note that reaches every teammate at once, no need to message each person separately.</div>
+    <button type="button" class="hub-btn" id="openBroadcastBtn">✉ Message My Team</button>
+  </div>
+
+  <div class="app-card-grid" id="appCards">
+    <a class="app-card app-card-wide" href="/files.html" style="--app-accent:#0E9E68;">
+      <div class="app-eyebrow mono">UPLOAD · SHARE · MANAGE</div>
+      <h3>My Files</h3>
+      <p>Upload and store your documents, keep them private, post them publicly, or hand out a share code or QR that unlocks one file for whoever redeems it.</p>
+      <div class="card-preview preview-files">
+        <div class="card-preview-tag">How it looks</div>
+        <div class="preview-row"><div class="preview-icon">PDF</div><div class="preview-meta"><div class="preview-line"></div><div class="preview-line short"></div></div><div class="preview-pill">Share</div></div>
+        <div class="preview-row"><div class="preview-icon">DOC</div><div class="preview-meta"><div class="preview-line"></div><div class="preview-line short"></div></div><div class="preview-pill">Share</div></div>
+      </div>
+    </a>
+    <a class="app-card" href="/teams.html" style="--app-accent:#D8546B;">
+      <div class="app-eyebrow mono">WORK TOGETHER</div>
+      <h3>My Team</h3>
+      <p>Build a team, share files and notes with teammates, and message anyone you've joined a team with.</p>
+      <div class="app-progress-label mono" id="myTeamLabel">Loading…</div>
+      <div class="card-preview preview-notes">
+        <div class="card-preview-tag">How it looks</div>
+        <div class="preview-row"><div class="preview-chip">👤</div><div class="preview-line"></div><div class="preview-line short"></div></div>
+        <div class="preview-row"><div class="preview-chip">👤</div><div class="preview-line"></div><div class="preview-line short"></div></div>
+      </div>
+    </a>
+    <a class="app-card" href="/notes.html" style="--app-accent:#7A5CC7;">
+      <div class="app-eyebrow mono">TEXT EDITOR</div>
+      <h3>Notes</h3>
+      <p>Write and save notes right in the browser, mark them private or shared, and pick them back up from any device.</p>
+      <div class="app-progress-label mono" id="communityLabel">Loading…</div>
+      <div class="card-preview preview-notes">
+        <div class="card-preview-tag">How it looks</div>
+        <div class="preview-row"><div class="preview-chip">📘</div><div class="preview-line"></div><div class="preview-line short"></div></div>
+        <div class="preview-row"><div class="preview-chip">📗</div><div class="preview-line"></div><div class="preview-line short"></div></div>
+      </div>
+    </a>
+    <a class="app-card" href="/public-files.html" style="--app-accent:#C08A2E;">
+      <div class="app-eyebrow mono">SHARED WITH EVERYONE</div>
+      <h3>Public Files</h3>
+      <p>Documents any user chose to share — post your own from My Files.</p>
+      <div class="app-progress-label mono" id="publicFilesLabel">Loading…</div>
+      <div class="card-preview preview-files">
+        <div class="card-preview-tag">How it looks</div>
+        <div class="preview-row"><div class="preview-icon">PDF</div><div class="preview-meta"><div class="preview-line"></div><div class="preview-line short"></div></div><div class="preview-pill">Open</div></div>
+        <div class="preview-row"><div class="preview-icon">DOC</div><div class="preview-meta"><div class="preview-line"></div><div class="preview-line short"></div></div><div class="preview-pill">Open</div></div>
+      </div>
+    </a>
+    <a class="app-card" href="/reader.html" style="--app-accent:#3A6FD8;">
+      <div class="app-eyebrow mono">PDF · WORD · TEXT</div>
+      <h3>Reader</h3>
+      <p>Open any file straight from your device — nothing is uploaded or stored, only your reading position.</p>
+      <div class="app-progress-label mono">Never saves the file itself</div>
+      <div class="card-preview preview-reader">
+        <div class="card-preview-tag">How it looks</div>
+        <div class="preview-toolbar"><span>◂</span><span>1 / 12</span><span>▸</span></div>
+        <div class="preview-line"></div>
+        <div class="preview-line"></div>
+        <div class="preview-line"></div>
+        <div class="preview-line"></div>
+        <div class="preview-line"></div>
+      </div>
+    </a>
+    <a class="app-card" href="/courses.html" style="--app-accent:#2F6F4F;">
+      <div class="app-eyebrow mono">OPTIONAL · STUDY TRACKS</div>
+      <h3>Courses</h3>
+      <p>Matrix Accuracy, the Reasoning Lab, and the 30-Day Prep Track — one place to jump into any of the three.</p>
+      <div class="courses-mini-row">
+        <div class="courses-mini-item">
+          <div class="mini-label mono">MATRIX</div>
+          <div class="app-progress-bar" style="--app-accent:#2F6F4F;"><i id="matrixBar"></i></div>
+          <div class="app-progress-label mono" id="matrixLabel">Loading…</div>
+        </div>
+        <div class="courses-mini-item">
+          <div class="mini-label mono">REASONING LAB</div>
+          <div class="app-progress-bar" style="--app-accent:#3FA796;"><i id="reasoningBar"></i></div>
+          <div class="app-progress-label mono" id="reasoningLabel">Loading…</div>
+        </div>
+        <div class="courses-mini-item">
+          <div class="mini-label mono">30-DAY PREP</div>
+          <div class="app-progress-bar" style="--app-accent:#C08A2E;"><i id="prep30Bar"></i></div>
+          <div class="app-progress-label mono" id="prep30Label">Loading…</div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="trend-card" style="margin-top:24px;">
+    <div class="trend-title">COMBINED ACTIVITY TREND · ITEMS COMPLETED OVER TIME, ACROSS ALL THREE TRACKS</div>
+    <div id="combinedChart"></div>
+  </div>
+
+  <div id="noteCardsWrap" style="display:none;">
+    <h2 style="font-family:'Newsreader',serif; font-style:italic; font-weight:600; font-size:20px; color:var(--ink); margin:28px 0 4px;">Your notes</h2>
+    <div class="app-card-grid" id="noteCards"></div>
+  </div>
+</div>
+
+<!-- Broadcast-to-team modal, hidden until "Message My Team" is clicked -->
+<div class="hub-modal-backdrop" id="broadcastBackdrop" style="display:none;">
+  <div class="hub-modal" role="dialog" aria-modal="true" aria-labelledby="broadcastTitle">
+    <div id="broadcastFormView">
+      <h2 id="broadcastTitle">Message My Team</h2>
+      <p class="hub-modal-sub">Pick a team and write one message — it's sent to every accepted member at the same time, individually, just like a normal chat message from you.</p>
+      <label for="broadcastTeamSelect">Team</label>
+      <select id="broadcastTeamSelect"></select>
+      <div class="hub-modal-count" id="broadcastRecipientCount"></div>
+      <label for="broadcastBody">Message</label>
+      <textarea id="broadcastBody" maxlength="2000" placeholder="e.g. Let's meet Thursday at 7pm to go over Day 12 together."></textarea>
+      <div class="hub-modal-actions">
+        <button type="button" class="hub-btn hub-btn-ghost" id="broadcastCancelBtn">Cancel</button>
+        <button type="button" class="hub-btn" id="broadcastSendBtn">Send to whole team</button>
+      </div>
+    </div>
+    <div id="broadcastSuccessView" style="display:none;" class="hub-modal-success">
+      <div class="check">✓</div>
+      <h2 style="margin-bottom:4px;">Sent!</h2>
+      <p class="hub-modal-sub" id="broadcastSuccessText" style="margin-bottom:18px;"></p>
+      <div class="hub-modal-actions" style="justify-content:center;">
+        <button type="button" class="hub-btn" id="broadcastDoneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/nav.js"></script>
+<script src="/js/trend-chart.js"></script>
+<script>
+function getToken(){ return localStorage.getItem('rh_token'); }
+async function apiGet(app, key){
+  const q = new URLSearchParams({ app, key, shared: false });
+  const res = await fetch('/api/kv?' + q.toString(), { headers: { Authorization: 'Bearer ' + getToken() } });
+  if(!res.ok) return null;
+  const data = await res.json();
+  return data.value ? JSON.parse(data.value) : null;
+}
+
+async function loadMatrix(){
+  const events = [];
+  let done = 0, accSum = 0;
+  for(let day=1; day<=30; day++){
+    const v = await apiGet('matrix', 'day-progress:' + day);
+    if(v && v.completed){
+      done++;
+      accSum += (v.accuracy || 0);
+      if(v.timestamp) events.push({ t: v.timestamp, app:'matrix' });
+    }
+  }
+  document.getElementById('matrixBar').style.width = (done/30*100) + '%';
+  document.getElementById('matrixLabel').textContent = done + '/30 days · avg ' + (done ? Math.round(accSum/done) : 0) + '%';
+  return { done, total:30, events };
+}
+
+async function loadReasoning(){
+  const v = await apiGet('reasoning', 'progress');
+  const events = [];
+  let done = 0;
+  if(v){
+    Object.keys(v).forEach(day => {
+      const d = v[day];
+      if(d && d.done){ done++; if(d.ts) events.push({ t: new Date(d.ts).toISOString(), app:'reasoning' }); }
+    });
+  }
+  document.getElementById('reasoningBar').style.width = (done/20*100) + '%';
+  document.getElementById('reasoningLabel').textContent = done + '/20 days';
+  return { done, total:20, events };
+}
+
+async function loadPrep30(){
+  const v = await apiGet('prep30', 'prep30-progress');
+  const events = [];
+  let done = 0;
+  if(v && Array.isArray(v.completed)){
+    done = v.completed.length;
+    if(v.completedAt){
+      Object.keys(v.completedAt).forEach(day => events.push({ t: v.completedAt[day], app:'prep30' }));
+    }
+  }
+  document.getElementById('prep30Bar').style.width = (done/30*100) + '%';
+  document.getElementById('prep30Label').textContent = done + '/30 days';
+  return { done, total:30, events };
+}
+
+async function loadCommunity(){
+  try{
+    const [notesRes, booksRes] = await Promise.all([
+      fetch('/api/notes', { headers: { Authorization: 'Bearer ' + getToken() } }),
+      fetch('/api/content/books', { headers: { Authorization: 'Bearer ' + getToken() } })
+    ]);
+    const notesData = notesRes.ok ? await notesRes.json() : { notes: [] };
+    const booksData = booksRes.ok ? await booksRes.json() : { books: [] };
+    const noteCount = (notesData.notes || []).length;
+    const bookCount = (booksData.books || []).length;
+    document.getElementById('communityLabel').textContent = noteCount + ' note' + (noteCount===1?'':'s') + ' · ' + bookCount + ' book' + (bookCount===1?'':'s');
+  } catch(e){
+    document.getElementById('communityLabel').textContent = '';
+  }
+}
+
+async function loadPublicFilesCount(){
+  const label = document.getElementById('publicFilesLabel');
+  try{
+    const res = await fetch('/api/files/public', { headers: { Authorization: 'Bearer ' + getToken() } });
+    const data = res.ok ? await res.json() : { files: [] };
+    const count = (data.files || []).length;
+    label.textContent = count + ' file' + (count===1?'':'s') + ' shared';
+  } catch(e){
+    label.textContent = '';
+  }
+}
+
+// Notes as individual cards, matching the app-card look used for the
+// Matrix/Courses tile above (--app-accent bar, eyebrow, title, blurb).
+// A note with a photo shows it as a small cover thumbnail.
+const NOTE_ACCENTS = ['#7A5CC7', '#2F6F4F', '#3A6FD8', '#C08A2E', '#D8546B', '#3FA796'];
+
+async function fetchAuthedBlobUrl(url){
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + getToken() } });
+  if(!res.ok) return null;
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+function noteVisLabel(n){
+  if(n.team_id) return 'TEAM';
+  if(!n.is_public) return 'PRIVATE';
+  return n.access_mode === 'restricted' ? 'BY REQUEST' : 'PUBLIC';
+}
+
+async function loadNoteCards(){
+  const wrap = document.getElementById('noteCardsWrap');
+  const mount = document.getElementById('noteCards');
+  try{
+    const res = await fetch('/api/notes', { headers: { Authorization: 'Bearer ' + getToken() } });
+    if(!res.ok) return;
+    const data = await res.json();
+    const notes = data.notes || [];
+    if(!notes.length){ wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    mount.innerHTML = notes.map((n, i) => `
+      <a class="app-card" href="/notes.html?note=${n.id}" style="--app-accent:${NOTE_ACCENTS[i % NOTE_ACCENTS.length]};">
+        <div class="app-eyebrow mono">${noteVisLabel(n)}</div>
+        <h3>${(n.title || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</h3>
+        ${n.cover_storage_path ? `<div class="note-card-cover" id="note-cover-${n.id}"></div>` : ''}
+        ${n.document_original_name ? '<p>📄 Has an attached document</p>' : ''}
+      </a>
+    `).join('');
+    notes.forEach(n => {
+      if(!n.cover_storage_path) return;
+      fetchAuthedBlobUrl('/api/notes/' + n.id + '/cover').then(url => {
+        if(!url) return;
+        const el = document.getElementById('note-cover-' + n.id);
+        if(el) el.innerHTML = `<img src="${url}" alt="">`;
+      }).catch(() => {});
+    });
+  }catch(e){ wrap.style.display = 'none'; }
+}
+
+async function loadMyTeam(){
+  const label = document.getElementById('myTeamLabel');
+  try{
+    const res = await fetch('/api/teams/mine', { headers: { Authorization: 'Bearer ' + getToken() } });
+    const data = res.ok ? await res.json() : { teams: [] };
+    const teams = data.teams || [];
+    if(!teams.length){ label.textContent = 'No team yet — start or join one'; return; }
+    const accepted = teams.filter(t => t.my_status === 'accepted');
+    const pending = teams.filter(t => t.my_status === 'pending');
+    let text = accepted.length + ' team' + (accepted.length===1?'':'s');
+    if(pending.length) text += ' · ' + pending.length + ' pending';
+    label.textContent = text;
+  }catch(e){
+    label.textContent = '';
+  }
+}
+
+function renderCombinedChart(allEvents, totalItems){
+  const sorted = allEvents.filter(e => e.t).sort((a,b) => new Date(a.t) - new Date(b.t));
+  if(sorted.length < 2){
+    document.getElementById('combinedChart').innerHTML =
+      '<div class="trend-empty">Complete a few days across any tracker to see your combined trend here.</div>';
+    return;
+  }
+  // Sample down to at most 14 points so the chart stays readable.
+  const step = Math.max(1, Math.ceil(sorted.length / 14));
+  const points = [];
+  for(let i=0; i<sorted.length; i+=step){
+    points.push({ label: 'D' + (points.length+1), value: (i+1) });
+  }
+  if(points[points.length-1].value !== sorted.length){
+    points.push({ label: 'D' + (points.length+1), value: sorted.length });
+  }
+  window.renderTrendChart(document.getElementById('combinedChart'), points, { max: totalItems });
+}
+
+/* ---------------- scroll-triggered reveal animations ---------------- */
+// Cards start at opacity:0 (see CSS) and pick up the .in-view class the
+// first time they cross into the viewport, which plays the hubCardRise
+// keyframe. unobserve after firing so it's a one-time entrance, not a
+// re-trigger every time the user scrolls back up.
+function initScrollReveal(){
+  const targets = document.querySelectorAll('.app-card-grid .app-card, .trend-card, #noteCardsWrap');
+  if(!('IntersectionObserver' in window)){
+    targets.forEach(el => el.classList.add('in-view'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('in-view');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  targets.forEach(el => io.observe(el));
+}
+// Cards inserted later (note cards, or the trend card once its wrap becomes
+// visible) need their own pass since they didn't exist when init() first ran.
+function revealNewCards(){
+  document.querySelectorAll('.app-card-grid .app-card:not(.in-view)').forEach(el => {
+    el.classList.add('in-view');
+  });
+}
+
+/* ---------------- "Message My Team" broadcast modal ---------------- */
+const Broadcast = {
+  teams: [],
+  async loadTeams(){
+    try{
+      const res = await fetch('/api/teams/mine', { headers: { Authorization: 'Bearer ' + getToken() } });
+      const data = res.ok ? await res.json() : { teams: [] };
+      this.teams = (data.teams || []).filter(t => t.my_status === 'accepted');
+    }catch(e){ this.teams = []; }
+    const bar = document.getElementById('broadcastBar');
+    if(bar) bar.style.display = this.teams.length ? 'flex' : 'none';
+  },
+  async loadMemberCount(teamId){
+    const countEl = document.getElementById('broadcastRecipientCount');
+    if(!teamId){ countEl.textContent = ''; return; }
+    countEl.textContent = 'Loading recipients…';
+    try{
+      const res = await fetch('/api/teams/' + teamId + '/members', { headers: { Authorization: 'Bearer ' + getToken() } });
+      const data = res.ok ? await res.json() : { members: [] };
+      const accepted = (data.members || []).filter(m => m.status === 'accepted');
+      const others = accepted.length ? accepted.length - 1 : 0; // minus yourself
+      countEl.textContent = others > 0
+        ? ('Will reach ' + others + ' teammate' + (others === 1 ? '' : 's') + ' at once')
+        : 'No other accepted members on this team yet';
+    }catch(e){ countEl.textContent = ''; }
+  },
+  open(){
+    const select = document.getElementById('broadcastTeamSelect');
+    select.innerHTML = this.teams.map(t => `<option value="${t.id}">${(t.name||'Untitled team').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</option>`).join('');
+    document.getElementById('broadcastFormView').style.display = '';
+    document.getElementById('broadcastSuccessView').style.display = 'none';
+    document.getElementById('broadcastBody').value = '';
+    document.getElementById('broadcastBackdrop').style.display = 'flex';
+    if(select.value) this.loadMemberCount(select.value);
+    setTimeout(() => document.getElementById('broadcastBody').focus(), 50);
+  },
+  close(){
+    document.getElementById('broadcastBackdrop').style.display = 'none';
+  },
+  async send(){
+    const select = document.getElementById('broadcastTeamSelect');
+    const teamId = select.value;
+    const body = document.getElementById('broadcastBody').value.trim();
+    if(!teamId){ window.showToast && showToast('Pick a team first', 'error'); return; }
+    if(!body){ window.showToast && showToast('Write a message first', 'error'); return; }
+    const btn = document.getElementById('broadcastSendBtn');
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="hub-spinner"></span>Sending…';
+    try{
+      const res = await fetch('/api/teams/' + teamId + '/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getToken() },
+        body: JSON.stringify({ body })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || 'Could not message the team');
+      document.getElementById('broadcastFormView').style.display = 'none';
+      const successView = document.getElementById('broadcastSuccessView');
+      document.getElementById('broadcastSuccessText').textContent =
+        'Delivered to ' + data.sentCount + ' teammate' + (data.sentCount === 1 ? '' : 's') + ' at the same time.';
+      successView.style.display = '';
+    }catch(e){
+      window.showToast ? showToast(e.message, 'error') : alert(e.message);
+    }finally{
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }
+  }
+};
+
+function initBroadcastUI(){
+  const openBtn = document.getElementById('openBroadcastBtn');
+  const cancelBtn = document.getElementById('broadcastCancelBtn');
+  const doneBtn = document.getElementById('broadcastDoneBtn');
+  const sendBtn = document.getElementById('broadcastSendBtn');
+  const backdrop = document.getElementById('broadcastBackdrop');
+  const select = document.getElementById('broadcastTeamSelect');
+  if(openBtn) openBtn.addEventListener('click', () => Broadcast.open());
+  if(cancelBtn) cancelBtn.addEventListener('click', () => Broadcast.close());
+  if(doneBtn) doneBtn.addEventListener('click', () => Broadcast.close());
+  if(sendBtn) sendBtn.addEventListener('click', () => Broadcast.send());
+  if(select) select.addEventListener('change', () => Broadcast.loadMemberCount(select.value));
+  if(backdrop) backdrop.addEventListener('click', (e) => { if(e.target === backdrop) Broadcast.close(); });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && backdrop.style.display === 'flex') Broadcast.close();
+  });
+}
+
+(async function init(){
+  const user = await window.HubNav.init('home', true);
+  if(!user) return;
+  const greetEl = document.getElementById('hubGreeting');
+  if(greetEl) greetEl.textContent = 'Welcome, ' + (user.name || user.email.split('@')[0]);
+  initScrollReveal();
+  initBroadcastUI();
+  const [matrix, reasoning, prep30] = await Promise.all([loadMatrix(), loadReasoning(), loadPrep30()]);
+  const totalItems = matrix.total + reasoning.total + prep30.total;
+  renderCombinedChart([...matrix.events, ...reasoning.events, ...prep30.events], totalItems);
+  loadCommunity();
+  loadPublicFilesCount();
+  loadMyTeam();
+  loadNoteCards();
+  Broadcast.loadTeams();
+  // Note cards + trend card render after their own async loads finish, so
+  // give the reveal system one more pass shortly after for anything that
+  // just came into the DOM below the fold.
+  setTimeout(revealNewCards, 400);
+})();
+</script>
+</body>
+</html>
