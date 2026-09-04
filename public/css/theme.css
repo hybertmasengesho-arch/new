@@ -413,6 +413,7 @@ body.hub-body{
 .courses-row .app-card{ min-width:0; margin-bottom:0; }
 @media (max-width:760px){
   .courses-row{ grid-template-columns:1fr; }
+  .courses-mini-row{ flex-direction:column; }
 }
 
 .courses-section-head{
