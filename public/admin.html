@@ -174,6 +174,12 @@
           <option value="danger">Urgent (red)</option>
         </select>
       </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+      <label class="settings-row">
+        <input type="checkbox" id="settingAppDownloadActive">
+        <span><strong>"Download the app" popup</strong><br><span class="hub-sub" style="font-size:12.5px;margin:2px 0 0;">Shown once per visit to signed-out visitors on the landing page, with a button linking to the URL below. Turn off any time to unpublish — the URL is kept so you can turn it back on later.</span></span>
+      </label>
+      <input type="url" id="settingAppDownloadUrl" placeholder="https://example.com/cortex.apk" style="width:100%;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);">
       <button id="saveSettingsBtn" type="button" style="font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:7px;border:1.5px solid var(--line);background:var(--ink);color:#fff;cursor:pointer;margin-top:16px;">Save settings</button>
     </div>
   </div>
@@ -750,11 +756,19 @@ async function loadSettings(){
     document.getElementById('settingAnnouncementActive').checked = !!s.announcement.active;
     document.getElementById('settingAnnouncementText').value = s.announcement.text || '';
     document.getElementById('settingAnnouncementTone').value = s.announcement.tone || 'info';
+    document.getElementById('settingAppDownloadActive').checked = !!(s.appDownload && s.appDownload.active);
+    document.getElementById('settingAppDownloadUrl').value = (s.appDownload && s.appDownload.url) || '';
   }catch(e){ /* form just keeps its defaults if this fails */ }
 }
 
 document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
   const btn = document.getElementById('saveSettingsBtn');
+  const appDownloadActive = document.getElementById('settingAppDownloadActive').checked;
+  const appDownloadUrl = document.getElementById('settingAppDownloadUrl').value.trim();
+  if (appDownloadActive && !appDownloadUrl) {
+    showToast('Add a download URL before publishing the app popup.', 'error');
+    return;
+  }
   btn.disabled = true; btn.textContent = 'Saving…';
   try{
     const payload = {
@@ -763,6 +777,10 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
         active: document.getElementById('settingAnnouncementActive').checked,
         text: document.getElementById('settingAnnouncementText').value.trim(),
         tone: document.getElementById('settingAnnouncementTone').value
+      },
+      appDownload: {
+        active: document.getElementById('settingAppDownloadActive').checked,
+        url: document.getElementById('settingAppDownloadUrl').value.trim()
       }
     };
     const res = await fetch('/api/admin/settings', { method: 'POST', headers: authHeaders(true), body: JSON.stringify(payload) });

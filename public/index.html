@@ -436,6 +436,39 @@
     *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
     .track-card{ transform:none !important; }
   }
+
+  /* ---------------- app-download popup ---------------- */
+  /* Admin-controlled via Settings → "Download the app" popup. Hidden by
+     default; JS below only reveals it if the admin has published a URL. */
+  .app-dl-overlay{
+    display:none; position:fixed; inset:0; z-index:100;
+    background:rgba(7,8,11,.55); backdrop-filter:blur(3px);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .app-dl-overlay.open{ display:flex; animation:appDlFade .2s ease; }
+  @keyframes appDlFade{ from{ opacity:0; } to{ opacity:1; } }
+  .app-dl-card{
+    position:relative; width:100%; max-width:380px;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:28px 26px 24px; text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.28);
+    animation:appDlPop .25s cubic-bezier(.2,.8,.3,1.2);
+  }
+  @keyframes appDlPop{ from{ opacity:0; transform:translateY(10px) scale(.97); } to{ opacity:1; transform:none; } }
+  .app-dl-close{
+    position:absolute; top:12px; right:12px; width:28px; height:28px; border-radius:8px;
+    border:1px solid var(--line); background:transparent; color:var(--ink-dim);
+    font-size:15px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .app-dl-close:hover{ color:var(--ink); border-color:var(--ink-dim); }
+  .app-dl-icon{ width:56px; height:56px; border-radius:14px; margin:0 auto 16px; display:block; }
+  .app-dl-card h3{
+    font-family:'Space Grotesk',sans-serif; font-size:19px; margin:0 0 8px; color:var(--ink);
+  }
+  .app-dl-card p{
+    font-size:13.5px; line-height:1.55; color:var(--ink-dim); margin:0 0 20px;
+  }
+  .app-dl-actions{ display:flex; flex-direction:column; gap:10px; }
 </style>
 </head>
 <body>
@@ -560,6 +593,19 @@
   <span>© 2026 · <a href="/login.html">Log in</a> · <a href="/register.html">Sign up</a></span>
 </footer>
 
+<div class="app-dl-overlay" id="appDlOverlay" role="dialog" aria-modal="true" aria-labelledby="appDlTitle">
+  <div class="app-dl-card">
+    <button class="app-dl-close" id="appDlClose" type="button" aria-label="Close">✕</button>
+    <img class="app-dl-icon" src="/favicon-180.png" alt="" width="56" height="56">
+    <h3 id="appDlTitle">Get the Cortex app</h3>
+    <p>Install Cortex on your phone for quicker access — same account, same files, same everything.</p>
+    <div class="app-dl-actions">
+      <a class="btn btn-solid btn-solid-lg" id="appDlLink" href="#" download>Download app</a>
+      <button class="btn btn-ghost" id="appDlDismiss" type="button">Maybe later</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // theme toggle — a manual choice here is saved under the same key the
   // rest of the app reads, so it carries over once you're signed in too.
@@ -671,6 +717,38 @@
         card.style.transform = '';
       });
     });
+  })();
+
+  // ---------------- app-download popup ----------------
+  // Admin-controlled (Settings → "Download the app" popup). Only shown if
+  // the admin has published a URL; dismissing hides it for this browser
+  // tab/session only — it comes back on the next full visit, same pattern
+  // as the site-wide announcement banner.
+  (function(){
+    var overlay = document.getElementById('appDlOverlay');
+    if(!overlay) return;
+    function open(url){
+      document.getElementById('appDlLink').href = url;
+      overlay.classList.add('open');
+    }
+    function close(){
+      overlay.classList.remove('open');
+      try{ sessionStorage.setItem('rh_app_dl_dismissed', '1'); }catch(e){}
+    }
+    document.getElementById('appDlClose').addEventListener('click', close);
+    document.getElementById('appDlDismiss').addEventListener('click', close);
+    document.getElementById('appDlLink').addEventListener('click', close);
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && overlay.classList.contains('open')) close(); });
+
+    try{
+      if(sessionStorage.getItem('rh_app_dl_dismissed') === '1') return;
+    }catch(e){}
+
+    fetch('/api/public/settings').then(function(res){ return res.ok ? res.json() : null; }).then(function(data){
+      var d = data && data.appDownload;
+      if(d && d.active && d.url) setTimeout(function(){ open(d.url); }, 1200);
+    }).catch(function(){ /* popup just doesn't show if this fails */ });
   })();
 
   // Single named cache for fast repeat loads. Registered last and

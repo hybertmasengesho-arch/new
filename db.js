@@ -1695,7 +1695,14 @@ async function getAdminStats() {
 // Site-wide settings (registration on/off, the announcement banner) live in
 // the existing kv table at the shared scope (scope_user_id = 0) under
 // app='site', so no new table is needed — just one JSON blob under one key.
-const SITE_SETTINGS_DEFAULTS = { registrationOpen: true, announcement: { active: false, text: '', tone: 'info' } };
+const SITE_SETTINGS_DEFAULTS = {
+  registrationOpen: true,
+  announcement: { active: false, text: '', tone: 'info' },
+  // Admin-controlled "download the app" popup shown to visitors on the
+  // public landing page. `active` is the publish toggle — the admin can
+  // set a url once and flip active on/off without losing the url.
+  appDownload: { active: false, url: '' }
+};
 
 async function getSiteSettings() {
   const raw = await kvGet(0, 'site', 'settings');
@@ -1708,6 +1715,10 @@ async function getSiteSettings() {
         active: !!(parsed.announcement && parsed.announcement.active),
         text: (parsed.announcement && parsed.announcement.text) || '',
         tone: (parsed.announcement && parsed.announcement.tone) || 'info'
+      },
+      appDownload: {
+        active: !!(parsed.appDownload && parsed.appDownload.active),
+        url: (parsed.appDownload && parsed.appDownload.url) || ''
       }
     };
   } catch (e) {
@@ -1723,6 +1734,10 @@ async function updateSiteSettings(patch) {
       active: patch.announcement && patch.announcement.active !== undefined ? !!patch.announcement.active : current.announcement.active,
       text: patch.announcement && patch.announcement.text !== undefined ? String(patch.announcement.text).slice(0, 500) : current.announcement.text,
       tone: patch.announcement && patch.announcement.tone !== undefined ? patch.announcement.tone : current.announcement.tone
+    },
+    appDownload: {
+      active: patch.appDownload && patch.appDownload.active !== undefined ? !!patch.appDownload.active : current.appDownload.active,
+      url: patch.appDownload && patch.appDownload.url !== undefined ? String(patch.appDownload.url).slice(0, 500) : current.appDownload.url
     }
   };
   await kvSet(0, 'site', 'settings', JSON.stringify(next));
