@@ -403,16 +403,28 @@ body.hub-body{
   font-size:12px; font-weight:700; box-shadow:0 2px 6px rgba(192,138,46,0.35);
 }
 
-/* ---------- courses.html: the three tracks fit on one line ---------- */
+/* ---------- courses.html: responsive grid — wraps into rows on desktop,
+   single vertical column on phones (was a horizontal-scroll flex row,
+   fine for 3 cards, unusable for 7) ---------- */
 .courses-row{
-  display:flex; gap:14px; margin-top:22px; overflow-x:auto; padding-bottom:4px;
-  scrollbar-width:thin;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+  gap:14px; margin-top:22px;
 }
-.courses-row .app-card{ flex:1 1 0; min-width:220px; margin-bottom:0; }
+.courses-row .app-card{ min-width:0; margin-bottom:0; }
 @media (max-width:760px){
-  .courses-row{ flex-wrap:nowrap; }
-  .courses-row .app-card{ min-width:200px; }
+  .courses-row{ grid-template-columns:1fr; }
 }
+
+.courses-section-head{
+  grid-column:1 / -1;
+  margin-top:20px; margin-bottom:2px; display:flex; align-items:baseline; gap:10px;
+}
+.courses-section-head:first-child{ margin-top:0; }
+.courses-section-head .label{
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em;
+  color:var(--muted); text-transform:uppercase; white-space:nowrap;
+}
+.courses-section-head .rule{ flex:1; height:1px; background:var(--line); }
 
 /* ---------- trend chart (blue, matrix-style: gridline + drawn path) ---------- */
 .trend-card{ background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:18px; }

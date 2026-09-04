@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Mechanics Track — 45 Days</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#151a12; --panel:#1e2519; --panel2:#252e1f; --rule:#333f2a;
+    --chalk:#e7e6d9; --chalk-dim:#9aa38e;
+    --paper:#f0ece0; --paper-ink:#25291d; --paper-rule:#d8d2bd;
+    --steel:#c99a3e; --steel-dim:#8a6b2c;
+    --wrong:#a8564a; --right:#5f8a5c;
+    --p0:#4f7a8b; --p1:#c98a3e; --p2:#7d916b; --p3:#8a6b91; --p4:#a85751;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--ink); color:var(--chalk); font-family:'Fraunces',serif; line-height:1.5;}
+  .wrap{max-width:840px; margin:0 auto; padding:28px 18px 80px;}
+  header{margin-bottom:28px;}
+  .kicker{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.04em; color:var(--steel); margin:0 0 6px;}
+  h1{font-size:clamp(30px,6vw,44px); font-weight:600; font-style:italic; margin:0 0 8px; line-height:1.08;}
+  .sub{color:var(--chalk-dim); font-size:15px; max-width:58ch; margin:0 0 20px;}
+
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:10px; overflow:hidden; margin-bottom:18px;}
+  .stat{background:var(--panel); padding:14px 12px;}
+  .stat .n{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--chalk);}
+  .stat .l{font-size:11px; color:var(--chalk-dim); font-family:'JetBrains Mono',monospace; letter-spacing:.03em; margin-top:2px;}
+
+  .spark{background:var(--panel); border:1px solid var(--rule); border-radius:10px; padding:14px 16px; margin-bottom:26px;}
+  .spark .l{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--chalk-dim); margin-bottom:8px;}
+  svg.sparkline{width:100%; height:52px; display:block;}
+
+  .phase{margin-bottom:22px;}
+  .phase-head{display:flex; align-items:baseline; gap:10px; padding:0 4px; margin-bottom:8px;}
+  .phase-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .phase-name{font-style:italic; font-weight:600; font-size:17px;}
+  .phase-range{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--chalk-dim);}
+
+  .day{border:1px solid var(--rule); border-radius:9px; margin-bottom:6px; background:var(--panel); overflow:hidden;}
+  .day-row{display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; user-select:none;}
+  .day-row:hover{background:var(--panel2);}
+  .day-num{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--chalk-dim); width:38px; flex-shrink:0;}
+  .day-topic{flex:1; font-size:15px;}
+  .day-badge{font-family:'JetBrains Mono',monospace; font-size:11px; padding:3px 8px; border-radius:20px; flex-shrink:0;}
+  .badge-todo{background:var(--rule); color:var(--chalk-dim);}
+  .badge-done{background:rgba(95,138,92,.18); color:var(--right);}
+  .badge-partial{background:rgba(201,154,62,.18); color:var(--steel);}
+  .chevron{color:var(--chalk-dim); font-size:12px; transition:transform .2s;}
+  .day.open .chevron{transform:rotate(90deg);}
+
+  .day-body{display:none; background:var(--paper); color:var(--paper-ink); padding:20px 20px 22px;}
+  .day.open .day-body{display:block;}
+  .note{font-size:14.5px; font-style:italic; color:#3d3826; border-left:3px solid var(--steel); padding-left:12px; margin:0 0 18px;}
+  .q-block{margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid var(--paper-rule);}
+  .q-block:last-of-type{border-bottom:none; margin-bottom:8px; padding-bottom:0;}
+  .q-text{font-size:15px; font-weight:500; margin-bottom:10px;}
+  .choices{display:flex; flex-direction:column; gap:7px;}
+  .choice{display:flex; align-items:center; gap:9px; padding:8px 10px; border:1px solid var(--paper-rule); border-radius:7px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:13.5px; background:#fff8;}
+  .choice:hover{border-color:var(--steel-dim);}
+  .choice.selected{border-color:var(--steel); background:rgba(201,154,62,.12);}
+  .choice.correct{border-color:var(--right); background:rgba(95,138,92,.15);}
+  .choice.incorrect{border-color:var(--wrong); background:rgba(168,86,74,.15);}
+  .choice input{accent-color:var(--steel);}
+  .explain{display:none; font-size:13px; color:#3d3826; margin-top:8px; padding:8px 10px; background:rgba(0,0,0,.04); border-radius:6px;}
+  .explain.show{display:block;}
+
+  .day-actions{display:flex; gap:10px; align-items:center; margin-top:6px;}
+  button.check{font-family:'JetBrains Mono',monospace; font-size:12.5px; background:var(--paper-ink); color:var(--paper); border:none; padding:9px 16px; border-radius:6px; cursor:pointer;}
+  button.check:hover{opacity:.85;}
+  .day-score{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#3d3826;}
+
+  footer{margin-top:30px; text-align:center;}
+  button.reset{font-family:'JetBrains Mono',monospace; font-size:11px; background:none; border:1px solid var(--rule); color:var(--chalk-dim); padding:8px 14px; border-radius:20px; cursor:pointer;}
+  button.reset:hover{border-color:var(--wrong); color:var(--wrong);}
+</style>
+</head>
+<body>
+<div id="siteNav"></div>
+<div class="wrap">
+  <header>
+    <p class="kicker">45-DAY SELF-STUDY TRACK</p>
+    <h1>The Mechanics Track</h1>
+    <p class="sub">Beginner to advanced, day by day — statics fundamentals, rigid body equilibrium and structures, friction and centroids, then dynamics kinematics and kinetics. A study note plus seven questions a day.</p>
+    <div class="stats">
+      <div class="stat"><div class="n" id="statDone">0/45</div><div class="l">DAYS DONE</div></div>
+      <div class="stat"><div class="n" id="statAcc">—</div><div class="l">ACCURACY</div></div>
+      <div class="stat"><div class="n" id="statStreak">0</div><div class="l">DAY STREAK</div></div>
+    </div>
+    <div class="spark">
+      <div class="l">ACCURACY BY DAY</div>
+      <svg class="sparkline" id="sparkline" viewBox="0 0 400 52" preserveAspectRatio="none"></svg>
+    </div>
+  </header>
+
+  <div id="phases"></div>
+
+  <footer>
+    <button class="reset" onclick="resetProgress()">Reset all progress</button>
+  </footer>
+</div>
+
+<script>window.APP_NAME = 'engineering-mechanics';</script>
+<script src="/js/nav.js"></script>
+<script src="/js/file-input-enhance.js"></script>
+<script src="/js/storage-shim.js"></script>
+<script>(function(){ window.HubNav.init('engineering-mechanics', true); })();</script>
+
+<script>
+const PHASES = [
+  {name:"Statics Fundamentals", color:"var(--p0)", range:"Days 1–12"},
+  {name:"Rigid Body Equilibrium & Structures", color:"var(--p1)", range:"Days 13–22"},
+  {name:"Friction, Centroids & Distributed Forces", color:"var(--p2)", range:"Days 23–30"},
+  {name:"Dynamics — Kinematics", color:"var(--p3)", range:"Days 31–38"},
+  {name:"Dynamics — Kinetics & Advanced", color:"var(--p4)", range:"Days 39–45"}
+];
+
+const DAYS = [
+{t:"Introduction to Mechanics & Units",p:0,b:"Engineering mechanics splits into statics (bodies at rest) and dynamics (bodies in motion). SI units: force in Newtons (N), mass in kilograms (kg), length in meters (m). Newton's three laws underpin everything that follows — today's job is fluency with units, dimensional consistency, and basic terminology before the math gets heavier.",q:[
+ {q:"Engineering mechanics is divided into:",c:["Statics and dynamics","Only statics","Thermodynamics and statics","Kinematics and chemistry"],a:0,e:"The two major branches: bodies at rest/equilibrium (statics) and bodies in motion (dynamics)."},
+ {q:"SI unit of force is:",c:["Newton (N)","Joule (J)","Watt (W)","Pascal (Pa)"],a:0,e:"Force is measured in Newtons; Joules are energy, Watts are power, Pascals are pressure."},
+ {q:"1 Newton equals:",c:["1 kg·m/s²","1 kg/s","1 kg·m","1 m/s²"],a:0,e:"From F=ma, force units are mass × acceleration: kg·m/s²."},
+ {q:"Statics deals with bodies that are:",c:["Accelerating","In equilibrium (at rest or constant velocity)","Always moving","Deforming plastically"],a:1,e:"Statics assumes zero net force and zero net moment."},
+ {q:"Weight W relates to mass m by:",c:["W=m/g","W=mg","W=m+g","W=g/m"],a:1,e:"Weight is the gravitational force on a mass: W=mg."},
+ {q:"A rigid body is one that:",c:["Deforms under any load","Does not deform under load (idealization)","Is always in motion","Has zero mass"],a:1,e:"Rigid body mechanics idealizes bodies as non-deforming for simplicity."},
+ {q:"Newton's First Law states a body remains at rest or in uniform motion unless acted on by:",c:["Gravity only","A net unbalanced force","Friction only","Its own weight"],a:1,e:"Inertia persists until a net external force changes it."}
+]},
+{t:"Vectors & Scalars",p:0,b:"Scalars (mass, time, temperature) have magnitude only; vectors (force, velocity, displacement) have magnitude and direction. You'll represent vectors graphically (arrows) and analytically (components), and this distinction determines whether you can just add numbers or need trigonometry.",q:[
+ {q:"A scalar quantity has:",c:["Magnitude and direction","Magnitude only","Direction only","Neither"],a:1,e:"Scalars are fully described by a single number."},
+ {q:"Which is a vector quantity?",c:["Mass","Temperature","Force","Time"],a:2,e:"Force has both magnitude and direction; the others are scalars."},
+ {q:"Two vectors are equal if they have the same:",c:["Magnitude only","Direction only","Magnitude and direction","Starting point"],a:2,e:"Vectors don't care about position — only magnitude and direction define them."},
+ {q:"The negative of a vector has:",c:["Same magnitude, opposite direction","Different magnitude, same direction","Zero magnitude","Same magnitude, same direction"],a:0,e:"Negating a vector flips its direction 180°, keeping magnitude the same."},
+ {q:"A unit vector has magnitude:",c:["0","1","Equal to the original vector","Infinite"],a:1,e:"Unit vectors are normalized to length 1, used to indicate pure direction."},
+ {q:"Vector addition follows the:",c:["Parallelogram law","Multiplication rule","Scalar rule only","Subtraction rule"],a:0,e:"Two vectors add tip-to-tail, equivalent to completing a parallelogram."},
+ {q:"Which of these is NOT a vector quantity?",c:["Displacement","Velocity","Speed","Force"],a:2,e:"Speed is the magnitude of velocity only — a scalar."}
+]},
+{t:"Vector Addition & Resolution",p:0,b:"Any vector can be broken into perpendicular components (usually x and y) using trigonometry: Fx = F cos θ, Fy = F sin θ. Resolving forces into components is the single most-used skill in statics — it turns geometry problems into simple algebra you can add and subtract.",q:[
+ {q:"Fx component of force F at angle θ from the x-axis:",c:["F sin θ","F cos θ","F tan θ","F/cos θ"],a:1,e:"The adjacent component uses cosine."},
+ {q:"Fy component of force F at angle θ from the x-axis:",c:["F cos θ","F sin θ","F tan θ","F/sin θ"],a:1,e:"The opposite component uses sine."},
+ {q:"Magnitude of resultant from components Fx, Fy:",c:["Fx+Fy","√(Fx²+Fy²)","Fx·Fy","Fx−Fy"],a:1,e:"Pythagorean theorem combines perpendicular components."},
+ {q:"Direction angle of resultant: θ =",c:["tan⁻¹(Fy/Fx)","sin⁻¹(Fx)","cos⁻¹(Fy)","Fx/Fy"],a:0,e:"The arctangent of the ratio of components gives the angle from the x-axis."},
+ {q:"A force of 100N at 30° above horizontal has horizontal component:",c:["100 cos30° ≈ 86.6N","100 sin30° = 50N","100N","0N"],a:0,e:"Horizontal component uses cosine of the angle from horizontal."},
+ {q:"Adding two vectors component-wise means:",c:["Adding magnitudes directly","Adding respective x and y components separately","Multiplying components","Averaging components"],a:1,e:"Sum each axis independently, then recombine if needed."},
+ {q:"The resultant of two perpendicular forces of 3N and 4N is:",c:["7N","5N","1N","12N"],a:1,e:"A 3-4-5 right triangle: √(3²+4²)=5N."}
+]},
+{t:"Forces & Force Systems",p:0,b:"Forces are classified as concurrent (lines of action meet at a point), parallel, or general/non-concurrent. Recognizing which system you have determines which equilibrium equations apply — concurrent systems need only force balance, while general systems also need moment balance.",q:[
+ {q:"Concurrent forces:",c:["Never meet","All pass through a common point","Are always parallel","Are always equal"],a:1,e:"Their lines of action intersect at one point."},
+ {q:"Coplanar forces lie:",c:["In 3D space only","In the same plane","Along the same line","Perpendicular to each other"],a:1,e:"Coplanar means confined to a single 2D plane."},
+ {q:"A collinear force system has forces:",c:["Along the same line of action","In different planes","At right angles","Random directions"],a:0,e:"All forces share one common line."},
+ {q:"A parallel force system has forces with:",c:["Different but parallel lines of action","The same point of application","No direction","Random magnitudes"],a:0,e:"Lines of action never meet but stay parallel."},
+ {q:"External forces acting on a body include:",c:["Only applied loads","Applied loads and reactions","Only internal stresses","Only weight"],a:1,e:"Externally applied loads plus support reactions make up the external force set."},
+ {q:"Internal forces act:",c:["Between particles within the body","Only at supports","Only externally","Never in statics"],a:0,e:"Internal forces hold the body's own particles together, not shown on a whole-body FBD."},
+ {q:"A general (non-concurrent, non-parallel) force system requires how many independent equilibrium equations in 2D?",c:["1","2","3","4"],a:2,e:"ΣFx=0, ΣFy=0, ΣM=0 — three equations for a general 2D system."}
+]},
+{t:"Resultant of Concurrent Forces",p:0,b:"For several concurrent forces, sum all x-components and all y-components separately, then combine into a single resultant force. This is the polygon method reduced to algebra: ΣFx and ΣFy give you everything you need to describe the net effect of the whole force system.",q:[
+ {q:"Resultant Rx of several concurrent forces =",c:["ΣFx","ΣFy","ΣF","Fx·Fy"],a:0,e:"Sum all x-components to get the resultant's x-component."},
+ {q:"Given ΣFx=6N, ΣFy=8N, the resultant magnitude is:",c:["14N","10N","2N","48N"],a:1,e:"√(6²+8²)=10N."},
+ {q:"If ΣFx=0 and ΣFy=0 for a force system, the resultant is:",c:["Maximum","Zero — system is in equilibrium","Undefined","Equal to one force"],a:1,e:"Zero net components means the resultant vanishes entirely."},
+ {q:"The direction of the resultant from Rx=6, Ry=8 is θ=tan⁻¹(Ry/Rx). This equals approximately:",c:["36.9° from x-axis","53.1° from x-axis","45°","90°"],a:1,e:"tan⁻¹(8/6) ≈ 53.1°."},
+ {q:"Three forces of equal magnitude at 120° apart have resultant:",c:["3F","Zero","F","2F"],a:1,e:"Symmetric forces at 120° cancel exactly, summing to zero."},
+ {q:"A resultant force can replace:",c:["Only one force","A system of concurrent forces with equivalent effect","Nothing physical","Only moments"],a:1,e:"It represents the combined effect of multiple forces as one equivalent force."},
+ {q:"For a concurrent force system in equilibrium, the vector polygon must:",c:["Be open","Close (form a closed polygon)","Have one side missing","Be a straight line always"],a:1,e:"A closed polygon means the vector sum returns to the starting point — zero resultant."}
+]},
+{t:"Moment of a Force",p:0,b:"A moment measures a force's tendency to rotate a body about a point: M = F × d, where d is the perpendicular distance from the point to the force's line of action. Sign convention matters — counterclockwise is typically positive — and getting the perpendicular distance right is the most common source of error.",q:[
+ {q:"Moment of a force about a point is defined as:",c:["F + d","F × d (perpendicular distance)","F / d","F − d"],a:1,e:"Moment equals force times the perpendicular distance to the point."},
+ {q:"Units of moment in SI are:",c:["N","N·m","N/m","m"],a:1,e:"Force times distance gives Newton-meters."},
+ {q:"A force passing directly through the point produces a moment of:",c:["Maximum","Zero","Negative infinity","F itself"],a:1,e:"Zero perpendicular distance means zero moment."},
+ {q:"Standard sign convention: counterclockwise moments are usually taken as:",c:["Negative","Positive","Zero","Undefined"],a:1,e:"By common convention, CCW is positive (though either convention can be used consistently)."},
+ {q:"A 50N force acts 2m perpendicular from a pivot. The moment is:",c:["25 N·m","52 N·m","100 N·m","2 N·m"],a:2,e:"50N × 2m = 100 N·m."},
+ {q:"The perpendicular distance in the moment formula is also called the:",c:["Moment arm","Force vector","Resultant","Load path"],a:0,e:"'Moment arm' is the standard term for this perpendicular distance."},
+ {q:"If a force's line of action passes through the axis of rotation, the moment arm is:",c:["Equal to the force","Zero","Equal to the distance to origin","Infinite"],a:1,e:"No perpendicular offset means no turning effect."}
+]},
+{t:"Varignon's Theorem",p:0,b:"Varignon's theorem says the moment of a force about a point equals the sum of the moments of its components about that same point. It lets you compute a moment using easy-to-resolve x and y components rather than finding one awkward perpendicular distance — a major time-saver in 2D problems.",q:[
+ {q:"Varignon's theorem states the moment of a force equals:",c:["The moment of its resultant only","The sum of moments of its components","Zero always","The force times total distance"],a:1,e:"Moments add just like the forces that produce them."},
+ {q:"Varignon's theorem is most useful when:",c:["Perpendicular distance is hard to find directly","Forces are all vertical","There's only one force","Never useful"],a:0,e:"It sidesteps awkward geometry by using easy-to-resolve components instead."},
+ {q:"For force F with components Fx, Fy at position (x,y) from a pivot, moment M =",c:["x·Fy − y·Fx","x·Fx + y·Fy","x+y","Fx·Fy"],a:0,e:"This is the standard 2D cross-product-style moment formula."},
+ {q:"Varignon's theorem applies to:",c:["Only 3D systems","Coplanar force systems","Only single forces with no components","Only couples"],a:1,e:"It's a general result for planar (and extendable to 3D) force systems."},
+ {q:"Using Varignon's theorem simplifies moment calculation by:",c:["Avoiding trigonometric perpendicular-distance calculations","Requiring more steps","Ignoring direction","Removing the need for components"],a:0,e:"Working with components is usually more direct than finding perpendicular distances."},
+ {q:"The theorem is a direct consequence of moments being:",c:["Scalar quantities only","Distributive over vector addition","Always zero","Undefined for components"],a:1,e:"Because moment is linear in the force vector, it distributes over the sum of components."},
+ {q:"If a force is resolved into Fx and Fy, the total moment about O equals:",c:["Moment of Fx alone","Moment of Fy alone","Sum of moments of Fx and Fy about O","The product FxFy"],a:2,e:"Add the individual component moments to get the total."}
+]},
+{t:"Couples",p:0,b:"A couple is two equal, opposite, parallel forces separated by a distance — it produces pure rotation with zero net force. The couple moment M = F × d is the same about any point in the plane, which makes couples uniquely useful for representing pure torsional effects independent of location.",q:[
+ {q:"A couple consists of:",c:["One force","Two equal, opposite, parallel forces","Three forces","A single moment with no forces"],a:1,e:"Two equal-magnitude, opposite-direction, parallel forces define a couple."},
+ {q:"The net force of a couple is:",c:["2F","F","Zero","F/2"],a:2,e:"The two equal-opposite forces cancel entirely."},
+ {q:"The moment of a couple is the same:",c:["Only about the center","About any point in the plane","Only about one endpoint","Undefined"],a:1,e:"A couple's moment is independent of the reference point — a special property."},
+ {q:"Couple moment magnitude =",c:["F/d","F×d","F+d","F−d"],a:1,e:"Force times the perpendicular distance between the two lines of action."},
+ {q:"A couple produces:",c:["Translation only","Pure rotation, no translation","No effect","Both equally split"],a:1,e:"With zero net force but nonzero moment, only rotational tendency remains."},
+ {q:"Two couples can be combined by:",c:["Multiplying their moments","Adding their moments algebraically","Ignoring one","Averaging"],a:1,e:"Couple moments are scalars (in 2D) or vectors (in 3D) that simply add."},
+ {q:"Replacing a force with a force at a different point plus a couple is called:",c:["Force resolution","Equivalent force-couple system","Moment cancellation","Vector subtraction"],a:1,e:"This is the standard technique for relocating a force's line of action."}
+]},
+{t:"Equivalent Force Systems",p:0,b:"Any force system can be replaced by a single resultant force plus a couple moment acting at a chosen reference point, without changing its external effect on the body. This 'reduction' is essential for simplifying complex loadings (like distributed loads or multiple forces) into something you can analyze directly.",q:[
+ {q:"An equivalent force system produces the same:",c:["Internal stresses only","External effect (net force and moment)","Weight","Material properties"],a:1,e:"Equivalence is defined by matching net force and net moment, not internal details."},
+ {q:"Reducing a force system to a resultant force and a couple moment at point O is called:",c:["Force resolution","System reduction / equivalent system","Decomposition","Superposition only"],a:1,e:"This standard technique simplifies complex loadings to one force plus one moment."},
+ {q:"When you move a force to a new point without rotating it, you must add:",c:["Nothing","A compensating couple moment","Another force","A friction term"],a:1,e:"Relocating a force changes its moment about other points, so a couple compensates."},
+ {q:"The resultant of an equivalent system equals:",c:["The sum of all original forces (vector sum)","Just one of the original forces","Zero always","The average force"],a:0,e:"The resultant force is simply the vector sum of every force in the system."},
+ {q:"The couple moment of an equivalent system depends on:",c:["The chosen reference point","Nothing, it's always the same","Only force magnitudes","Only the number of forces"],a:0,e:"Unlike a pure couple, this moment changes depending on where you reduce the system to."},
+ {q:"Two systems are statically equivalent if they have the same:",c:["Resultant force and resultant moment","Number of forces","Points of application","Colors"],a:0,e:"Equivalence only requires matching net force and net moment."},
+ {q:"Simplifying a distributed load to a single resultant force is an example of:",c:["Force decomposition","Equivalent system reduction","Moment cancellation","Vector negation"],a:1,e:"A distributed load reduces to one equivalent concentrated force."}
+]},
+{t:"Equilibrium of Particles (2D)",p:0,b:"A particle is in equilibrium when the net force acting on it is zero — in 2D that means ΣFx=0 and ΣFy=0. Draw a free body diagram first, resolve every force into x/y components, then solve the two equations simultaneously for unknowns.",q:[
+ {q:"For a particle in 2D equilibrium:",c:["ΣFx=0 only","ΣFy=0 only","ΣFx=0 and ΣFy=0","ΣM=0 only"],a:2,e:"Both component equations must hold simultaneously."},
+ {q:"The first step in solving an equilibrium problem is usually:",c:["Guessing the answer","Drawing a free body diagram","Skipping to equations","Ignoring geometry"],a:1,e:"A correct FBD is the foundation every equation depends on."},
+ {q:"A particle has zero size, so it can experience:",c:["Moments only","No moments, only forces","Neither forces nor moments","Only friction"],a:1,e:"Without size, there's no moment arm, so only force balance applies."},
+ {q:"Two 2D equilibrium equations can solve for at most how many unknowns?",c:["1","2","3","Unlimited"],a:1,e:"Two independent equations solve for two unknowns."},
+ {q:"A hanging weight supported by two cables is an example of:",c:["A rigid body problem","A particle equilibrium problem","A couple problem","A friction problem"],a:1,e:"The point where cables meet can be treated as a particle in equilibrium."},
+ {q:"If ΣFx≠0 for a 'particle,' the particle is:",c:["In equilibrium","Accelerating (not in static equilibrium)","At rest regardless","Irrelevant"],a:1,e:"A nonzero net force means the particle is not in static equilibrium."},
+ {q:"Tension in a cable is always directed:",c:["Away from the particle, along the cable","Perpendicular to the cable","Toward the ground","Randomly"],a:0,e:"Cables can only pull, along their own length, away from the point being analyzed."}
+]},
+{t:"Equilibrium of Particles (3D)",p:0,b:"In three dimensions, equilibrium of a particle requires all three force components to vanish: ΣFx=0, ΣFy=0, ΣFz=0. Direction cosines (or unit vectors along each cable/member) let you resolve 3D forces cleanly — this is the natural extension of Day 10 into space.",q:[
+ {q:"3D particle equilibrium requires:",c:["2 equations","3 equations: ΣFx=ΣFy=ΣFz=0","1 equation","6 equations"],a:1,e:"Each spatial direction contributes its own independent equation."},
+ {q:"A unit vector along a line from A to B is found by:",c:["Dividing the position vector AB by its magnitude","Multiplying AB by its magnitude","Adding A and B","Subtracting magnitudes"],a:0,e:"Normalizing the position vector gives a pure direction vector."},
+ {q:"Direction cosines cos α, cos β, cos γ satisfy:",c:["Their sum = 1","Their squares sum to 1","Their product = 1","They're always equal"],a:1,e:"cos²α+cos²β+cos²γ=1, a consequence of unit vector length."},
+ {q:"A force vector F along unit vector u is:",c:["F = |F|·u","F = |F|+u","F = |F|/u","F = u/|F|"],a:0,e:"Multiply the magnitude by the direction (unit vector)."},
+ {q:"3D equilibrium problems typically solve for up to how many unknowns with the 3 equations?",c:["1","2","3","6"],a:2,e:"Three independent equations solve for three unknowns."},
+ {q:"A particle suspended by three cables in 3D space is analyzed using:",c:["2D equations only","3D force equilibrium with direction cosines","Moments only","Friction equations"],a:1,e:"Each cable's tension is resolved via direction cosines into x,y,z components."},
+ {q:"If a 3D force has magnitude 10N and direction cosines (0.6, 0.8, 0), its z-component is:",c:["6N","8N","0N","10N"],a:2,e:"z-component = 10 × 0 = 0N."}
+]},
+{t:"Free Body Diagrams",p:0,b:"A free body diagram (FBD) isolates one body, replacing every support and connection with the forces/moments it exerts. Getting an FBD right — including all reactions and correctly omitting internal forces — is the single most important habit in all of mechanics; a wrong FBD guarantees a wrong answer no matter how good your math is.",q:[
+ {q:"A free body diagram shows:",c:["Only internal forces","All external forces and moments acting on an isolated body","The whole structure at once","Only weight"],a:1,e:"An FBD isolates the body and shows every external influence on it."},
+ {q:"A pin support provides reaction force(s) in:",c:["No directions","One direction only","Two directions (x and y), no moment","Two directions plus a moment"],a:2,e:"A pin resists translation but allows free rotation, so no moment reaction."},
+ {q:"A roller support provides a reaction:",c:["In two directions","Perpendicular to the rolling surface only","As a moment only","In all directions"],a:1,e:"Rollers only resist motion normal to the surface they rest on."},
+ {q:"A fixed (built-in) support provides:",c:["No reactions","Force reactions only","Force reactions and a moment reaction","Only a moment"],a:2,e:"A fixed support fully restrains translation and rotation."},
+ {q:"Internal forces between two members are NOT shown when you isolate:",c:["The whole assembly together","A single member/body via FBD","Nothing, they're always shown","External loads"],a:1,e:"Internal forces become external (at the cut) only once you separate connected members."},
+ {q:"Cables/ropes in an FBD are represented by:",c:["A force in tension along the cable","A compressive force","A moment","A distributed load"],a:0,e:"Cables can only pull — always shown in tension, along their length."},
+ {q:"The main purpose of drawing an FBD before solving is to:",c:["Save time by skipping equations","Identify every force so equilibrium equations can be applied correctly","Decorate the solution","Avoid using trigonometry"],a:1,e:"A complete, correct FBD is what makes the equilibrium equations solvable and correct."}
+]},
+{t:"Equilibrium of Rigid Bodies (2D)",p:1,b:"Unlike particles, rigid bodies can rotate, so equilibrium needs three equations in 2D: ΣFx=0, ΣFy=0, ΣM=0 (about any point). Choosing a smart moment point — often where an unknown force acts — can eliminate unknowns and simplify the algebra dramatically.",q:[
+ {q:"2D rigid body equilibrium requires how many independent equations?",c:["1","2","3","4"],a:2,e:"Two force equations plus one moment equation."},
+ {q:"The three 2D equilibrium equations are:",c:["ΣFx=0, ΣFy=0, ΣM=0","ΣFx=0 only","ΣM=0 twice","ΣFx=ΣFy"],a:0,e:"These three independent equations fully define 2D rigid body equilibrium."},
+ {q:"Choosing the moment point at an unknown force's location:",c:["Makes the problem unsolvable","Eliminates that unknown from the moment equation","Doubles the unknowns","Has no effect"],a:1,e:"A force through the moment point has zero moment arm, dropping out of that equation."},
+ {q:"A rigid body with 3 unknown reactions is generally:",c:["Unsolvable","Statically determinate (solvable with 3 equations)","Always unstable","Overconstrained"],a:1,e:"Matching unknowns to equations (3 and 3) typically gives a determinate problem."},
+ {q:"If a body has more unknown reactions than equilibrium equations, it is:",c:["Statically determinate","Statically indeterminate","Unstable","In free fall"],a:1,e:"Extra unknowns beyond what statics alone can solve makes it indeterminate."},
+ {q:"Alternative equilibrium equation sets can use:",c:["Only force equations","Two moment equations and one force equation, under conditions","Never moments","Only one equation total"],a:1,e:"As long as the chosen equations are independent, alternative combinations work."},
+ {q:"A ladder leaning against a wall, resting on the ground, is typically analyzed as a:",c:["Particle","2D rigid body equilibrium problem","3D problem only","Fluid problem"],a:1,e:"The ladder can rotate, so it needs force and moment equilibrium as a rigid body."}
+]},
+{t:"Equilibrium of Rigid Bodies (3D)",p:1,b:"3D rigid body equilibrium needs six equations: ΣFx=ΣFy=ΣFz=0 and ΣMx=ΣMy=ΣMz=0. Moments in 3D are computed via the cross product M = r × F, which tracks both magnitude and rotational axis simultaneously.",q:[
+ {q:"3D rigid body equilibrium requires how many equations?",c:["3","4","6","9"],a:2,e:"Three force equations plus three moment equations."},
+ {q:"The six 3D equations are force balance in x,y,z and moment balance about:",c:["Only one axis","x, y, and z axes","No axes needed","Only the origin"],a:1,e:"Moment equilibrium must hold about each of the three coordinate axes."},
+ {q:"The moment of a force about a point in 3D is computed via:",c:["Dot product","Cross product r × F","Simple multiplication","Division"],a:1,e:"The cross product naturally produces a vector perpendicular to both r and F."},
+ {q:"A ball-and-socket joint in 3D restrains:",c:["Rotation only","Translation in all 3 directions, no moment","Nothing","Everything including rotation"],a:1,e:"Like a 3D pin, it prevents translation but allows free rotation."},
+ {q:"A 3D problem with 6 unknown reactions and 6 equilibrium equations is:",c:["Indeterminate","Determinate (generally solvable)","Unsolvable","Unstable always"],a:1,e:"Matching unknowns to independent equations gives a solvable (determinate) system."},
+ {q:"The cross product r × F is:",c:["A scalar","A vector perpendicular to both r and F","Equal to r·F","Always zero"],a:1,e:"Cross products yield vectors, unlike dot products which yield scalars."},
+ {q:"In 3D, a moment about the x-axis measures rotation tendency about:",c:["The y-axis","The z-axis","The x-axis itself","No specific axis"],a:2,e:"Each moment component measures twisting about its own named axis."}
+]},
+{t:"Support Reactions & Types of Supports",p:1,b:"Different supports restrain different degrees of freedom: rollers resist one direction, pins resist two, fixed supports resist three (in 2D). Correctly identifying support type — and therefore how many and which reactions it provides — is the first real decision point in any statics problem.",q:[
+ {q:"A roller support resists motion:",c:["In all directions","Perpendicular to the surface only","Only rotation","Nothing"],a:1,e:"Rollers allow sliding along the surface but resist motion into/out of it."},
+ {q:"A pin support resists:",c:["Translation in x and y, but allows rotation","Only rotation","Nothing","Translation and rotation both"],a:0,e:"Pins act like hinges — no rotational restraint, but full translational restraint."},
+ {q:"A fixed support resists:",c:["Only translation","Only rotation","Translation in x,y and rotation (moment)","Nothing"],a:2,e:"Fixed supports fully clamp the body, restraining every degree of freedom."},
+ {q:"A cable/link support provides a reaction:",c:["In any direction","Only along the cable's axis (tension)","As a moment","Perpendicular to the cable"],a:1,e:"A two-force member like a cable or link only reacts along its own line."},
+ {q:"The number of unknowns a support introduces equals the number of:",c:["Members connected","Motions it restrains","Loads applied","Joints nearby"],a:1,e:"Each restrained degree of freedom becomes one unknown reaction."},
+ {q:"A smooth surface contact provides a reaction:",c:["Along the surface","Normal (perpendicular) to the surface","In all directions","As friction only"],a:1,e:"A frictionless surface can only push perpendicular to itself."},
+ {q:"Compared to a pin, a fixed support has one additional reaction:",c:["A horizontal force","A vertical force","A moment","Nothing extra"],a:2,e:"The fixed support adds moment restraint on top of the pin's two force reactions."}
+]},
+{t:"Two-Force and Three-Force Members",p:1,b:"A two-force member has forces applied at only two points, so those forces must be equal, opposite, and collinear along the line joining the points — this is a huge shortcut in truss analysis. A three-force member in equilibrium has its three forces either all parallel or all meeting at one point.",q:[
+ {q:"A two-force member has forces acting at:",c:["Three points","Exactly two points","Many points","One point"],a:1,e:"By definition, loads are applied at only two locations on the member."},
+ {q:"For a two-force member in equilibrium, the two forces must be:",c:["Perpendicular","Equal, opposite, and collinear","Random","Unequal"],a:1,e:"Equilibrium with only two forces forces them to align along the same line."},
+ {q:"Two-force members are common in:",c:["Beams under distributed load","Truss members","Fluid systems","Electrical circuits"],a:1,e:"Truss members are the classic real-world two-force member."},
+ {q:"A three-force member in equilibrium has forces that are:",c:["Always parallel only","Concurrent or all parallel","Random directions","Always perpendicular"],a:1,e:"Three forces in equilibrium must either meet at a point or all run parallel."},
+ {q:"Recognizing a two-force member lets you skip:",c:["All calculations","Writing separate moment equations for its direction — the force direction is already known","Drawing an FBD","Nothing"],a:1,e:"Knowing the force lies along the member saves significant algebra."},
+ {q:"In a truss, a straight member with pin connections at both ends and no load in between is a:",c:["Three-force member","Two-force member","Zero-force member always","Beam"],a:1,e:"Classic definition of a truss member — loaded only at its two pin ends."},
+ {q:"A three-force member's forces, if not parallel, must all pass through:",c:["Different points","A single common point","The centroid always","No specific point"],a:1,e:"Non-parallel forces in equilibrium on a rigid body must be concurrent."}
+]},
+{t:"Trusses — Method of Joints",p:1,b:"The method of joints analyzes each pin joint as a particle in equilibrium (ΣFx=0, ΣFy=0), solving member forces one joint at a time, usually starting where only two unknowns exist. Tension is positive/pulling away from the joint, compression is pushing into it — sign conventions here drive everything downstream.",q:[
+ {q:"The method of joints applies equilibrium at:",c:["The whole truss at once","Each individual joint (pin)","Only supports","Only the midpoint"],a:1,e:"Each joint is treated as a particle in equilibrium."},
+ {q:"At each joint you can solve for at most how many unknown member forces (2D)?",c:["1","2","3","Unlimited"],a:1,e:"Two equilibrium equations (ΣFx=0, ΣFy=0) per joint solve two unknowns."},
+ {q:"A member in tension:",c:["Pushes into the joint","Pulls away from the joint","Has zero force","Bends"],a:1,e:"Tension stretches the member, pulling on the joints at each end."},
+ {q:"A member in compression:",c:["Pulls the joint","Pushes into the joint","Has zero force","Is always a two-force member exception"],a:1,e:"Compression pushes the member's ends outward, into the connected joints."},
+ {q:"You typically start the method of joints at a joint with:",c:["The most unknowns","Only 2 unknown forces","Zero forces","The heaviest load"],a:1,e:"Starting where you can actually solve (2 unknowns, 2 equations) is essential."},
+ {q:"A zero-force member carries:",c:["Maximum load","No load under the given loading condition","Only compression","Only tension"],a:1,e:"Certain geometric configurations force a member's axial load to be zero."},
+ {q:"Truss members are assumed to be:",c:["Beams under bending","Two-force members (axial force only)","Fixed supports","Cables only"],a:1,e:"Standard truss assumptions treat every member as carrying pure axial force."}
+]},
+{t:"Trusses — Method of Sections",p:1,b:"The method of sections cuts through up to three members at once and applies rigid-body equilibrium (all three equations) to one half of the truss, letting you solve directly for a specific member's force without working joint by joint. It's faster than method of joints when you only need one or two interior member forces.",q:[
+ {q:"The method of sections cuts through the truss to isolate:",c:["A single joint","A portion of the truss containing several members","The whole truss","Only supports"],a:1,e:"A cut separates the truss into two rigid-body pieces you can analyze independently."},
+ {q:"The method of sections is most efficient when you need:",c:["Every member force","Only a few specific member forces","Only reactions","Only zero-force members"],a:1,e:"It jumps directly to interior members without solving every joint along the way."},
+ {q:"A section cut should generally pass through no more than how many unknown members (for a 2D solvable cut)?",c:["1","3","6","Unlimited"],a:1,e:"Three rigid-body equations can solve for up to three unknowns."},
+ {q:"After cutting, you apply equilibrium to:",c:["Both halves separately, redundantly","One isolated half of the truss","Neither half","Only the cut members"],a:1,e:"Analyze one convenient half as a free rigid body."},
+ {q:"Taking moments about a point where two unknown member forces intersect helps solve for:",c:["Both unknowns at once","The third unknown member force directly","Nothing","Only reactions"],a:1,e:"That moment point eliminates the two intersecting unknowns, isolating the third."},
+ {q:"The method of sections uses which equilibrium equations?",c:["Only ΣF=0","Only ΣM=0","ΣFx=0, ΣFy=0, and ΣM=0","None"],a:2,e:"It's a full rigid-body equilibrium analysis of the cut section."},
+ {q:"Compared to method of joints, method of sections is generally:",c:["Slower for finding one interior member","Faster for finding one specific interior member","Only usable for zero-force members","Identical in every way"],a:1,e:"It skips ahead directly to the member of interest."}
+]},
+{t:"Frames & Machines",p:1,b:"Unlike trusses, frames and machines have multi-force members (not just two-force), so you must dismember the structure, draw an FBD for each part, and apply full rigid-body equilibrium to each — remembering that internal pin forces are equal and opposite on connected members (Newton's third law).",q:[
+ {q:"Frames and machines differ from trusses because they contain:",c:["Only two-force members","Multi-force members","No pins","No loads"],a:1,e:"Members with loads applied at more than two points require full equilibrium analysis."},
+ {q:"Analyzing a frame requires:",c:["Treating the whole frame as one rigid body only","Dismembering it and analyzing each member's FBD","Ignoring internal forces","Using only the method of joints"],a:1,e:"Internal pin forces only become visible once you separate the members."},
+ {q:"At a pin connecting two frame members, the forces each member exerts on the other are:",c:["Unrelated","Equal and opposite (Newton's third law)","Always zero","Only moments"],a:1,e:"Action-reaction pairs act between connected members at each pin."},
+ {q:"A machine differs from a frame primarily in that a machine:",c:["Has no moving parts","Is designed to transmit and modify forces (often has moving parts)","Never has pins","Is always a truss"],a:1,e:"Machines (like pliers or clamps) are built specifically to alter force or motion."},
+ {q:"Multi-force members require which equilibrium equations?",c:["Only force equations","Force and moment equations (full rigid body equilibrium)","Only moment equations","None"],a:1,e:"Members with more than two force points need the complete set of equilibrium equations."},
+ {q:"When you isolate one member of a frame, forces from removed members are replaced by:",c:["Nothing","Reaction forces/moments at the connection points","Only weight","Only friction"],a:1,e:"Each cut connection introduces the internal force it was transmitting."},
+ {q:"A pair of pliers is a classic example of a:",c:["Truss","Machine","Beam","Cable system"],a:1,e:"Pliers use multi-force members and pins to modify and transmit force."}
+]},
+{t:"Beams — Shear Force",p:1,b:"Shear force at a cross-section is the net transverse force one side of the cut exerts on the other. You compute it by summing all vertical forces from one end up to that point — plotting V(x) along the beam reveals where shear peaks, which usually coincides with maximum bending moment slope.",q:[
+ {q:"Shear force at a section is the sum of:",c:["All moments to one side","All transverse forces to one side of the cut","Only reactions","Only distributed loads"],a:1,e:"Shear is the running total of vertical forces up to that point."},
+ {q:"Shear force is typically denoted:",c:["M","V","F","W"],a:1,e:"V is the standard symbol for internal shear force in beam analysis."},
+ {q:"At a point load, the shear diagram shows:",c:["A smooth curve","A sudden jump equal to the load magnitude","No change","A zero value"],a:1,e:"A concentrated force causes an instantaneous jump in the shear diagram."},
+ {q:"Under a uniformly distributed load, shear varies:",c:["Linearly","As a constant","Not at all","Exponentially"],a:0,e:"Constant load intensity produces a linearly varying shear force."},
+ {q:"The relationship between shear V and load w is:",c:["dV/dx = w","dV/dx = -w","V = w²","No relationship"],a:0,e:"The slope of the shear diagram equals the load intensity (sign convention dependent)."},
+ {q:"For a simply supported beam with a central point load, maximum shear occurs:",c:["At the center","At the supports","Nowhere","At the load only"],a:1,e:"Shear is largest right next to the reactions for this classic loading case."},
+ {q:"Shear force convention: positive shear tends to rotate a beam element:",c:["Counterclockwise","Clockwise","No rotation","Randomly"],a:1,e:"By common convention, positive shear produces a clockwise tendency on the element."}
+]},
+{t:"Beams — Bending Moment",p:1,b:"Bending moment at a section measures the internal moment resisting flexure, found by summing moments of all forces on one side of the cut about that section. Bending moment is directly related to shear by dM/dx = V, which means moment is maximum where shear crosses zero.",q:[
+ {q:"Bending moment at a section equals:",c:["Sum of transverse forces","Sum of moments of forces to one side about that section","The weight of the beam","Zero always"],a:1,e:"It's the running total of moments, not forces, up to that section."},
+ {q:"The relationship between moment M and shear V is:",c:["dM/dx = V","dM/dx = -V","M = V²","No relationship"],a:0,e:"The slope of the moment diagram equals the shear force at that point."},
+ {q:"Maximum bending moment typically occurs where:",c:["Shear is maximum","Shear is zero (or changes sign)","At the very ends always","Nowhere specific"],a:1,e:"Since dM/dx=V, the moment curve peaks where shear crosses zero."},
+ {q:"A positive bending moment (sagging convention) causes the beam to bend:",c:["Concave up","Concave down","Not at all","Twist"],a:0,e:"Sagging (positive moment) curves the beam like a smile — concave up."},
+ {q:"At a pin support (simply supported end) with no applied moment, the bending moment is:",c:["Maximum","Zero","Infinite","Undefined"],a:1,e:"A pin can't resist moment, so the internal moment there is zero."},
+ {q:"For a simply supported beam with a central point load P and span L, maximum moment is:",c:["PL/4","PL/2","PL","PL/8"],a:0,e:"This is the standard textbook result for a centrally loaded simple beam."},
+ {q:"Bending moment units in SI are:",c:["N","N·m","N/m","Pa"],a:1,e:"Force times distance, same units as any moment: Newton-meters."}
+]},
+{t:"Shear-Moment Diagrams",p:1,b:"Shear and moment diagrams plot V(x) and M(x) along the full beam length, built from the load diagram using the relationships dV/dx=−w and dM/dx=V. Reading these diagrams tells you instantly where a beam is most likely to fail in shear or bending — essential for real design.",q:[
+ {q:"The area under the load diagram (with sign) gives the change in:",c:["Moment","Shear","Deflection","Nothing"],a:1,e:"Integrating load intensity gives the change in shear force."},
+ {q:"The area under the shear diagram gives the change in:",c:["Load","Moment","Deflection","Reaction"],a:1,e:"Integrating shear gives the change in bending moment."},
+ {q:"A shear diagram that crosses zero corresponds to a point of:",c:["Zero moment","Maximum or minimum moment","Zero load","Maximum shear"],a:1,e:"Since dM/dx=V, a zero-shear point is where the moment curve has zero slope — an extremum."},
+ {q:"For a cantilever beam with a point load at the free end, the maximum moment occurs:",c:["At the free end","At the fixed support","At the midpoint","Nowhere"],a:1,e:"The internal moment builds up along the beam, maximized at the rigid support."},
+ {q:"A uniformly distributed load produces a moment diagram that is:",c:["Linear","Parabolic (quadratic)","Constant","Cubic"],a:1,e:"Integrating a linear shear diagram (from constant load) gives a parabolic moment curve."},
+ {q:"A concentrated moment applied at a point causes the moment diagram to:",c:["Stay smooth","Jump suddenly by that moment's value","Go to zero","Have no effect"],a:1,e:"An applied point moment causes a discontinuity (jump) in the moment diagram."},
+ {q:"Shear-moment diagrams are primarily used to determine:",c:["Material cost","Locations and magnitudes of maximum internal forces for design","Beam color","Weight only"],a:1,e:"They pinpoint where a beam experiences its critical internal forces."}
+]},
+{t:"Friction Basics",p:2,b:"Friction opposes relative sliding between surfaces; static friction (up to μs·N) prevents motion from starting, while kinetic friction (μk·N) acts once sliding occurs, with μk generally less than μs. The friction force is not fixed — it adjusts up to its maximum to maintain equilibrium, only reaching μN right at the point of slipping.",q:[
+ {q:"Static friction force before slipping is:",c:["Always equal to μsN","Whatever value is needed for equilibrium, up to μsN","Zero always","Equal to kinetic friction"],a:1,e:"Static friction self-adjusts to satisfy equilibrium, capped at its maximum value."},
+ {q:"Maximum static friction force is:",c:["μkN","μsN","N/μs","Independent of N"],a:1,e:"The threshold at which slipping begins is μs times the normal force."},
+ {q:"Kinetic friction acts:",c:["Before motion starts","Once sliding is occurring","Never","Only in fluids"],a:1,e:"Kinetic friction only applies during actual relative sliding."},
+ {q:"Generally, μs compared to μk is:",c:["Always smaller","Usually larger or equal","Always zero","Unrelated"],a:1,e:"It typically takes more force to start sliding than to sustain it."},
+ {q:"The friction force direction opposes:",c:["The applied force always","The relative (or tendency of) sliding motion","Gravity only","Nothing specific"],a:1,e:"Friction always resists the direction of actual or impending relative motion."},
+ {q:"The normal force N in friction problems is:",c:["Always equal to weight","The perpendicular contact force between surfaces","Always zero","Parallel to the surface"],a:1,e:"N is whatever perpendicular contact force equilibrium requires — not always equal to weight."},
+ {q:"A block remains stationary as long as the applied force is:",c:["Greater than μsN","Less than or equal to μsN","Always, regardless of force","Equal to weight"],a:1,e:"Once the applied force exceeds maximum static friction, slipping begins."}
+]},
+{t:"Friction on Inclined Planes",p:2,b:"On an incline, gravity resolves into components parallel (mg sinθ) and perpendicular (mg cosθ) to the surface — the block slips when tanθ exceeds μs, defining the 'angle of repose.' This is the classic setup for testing whether you can combine equilibrium and friction correctly.",q:[
+ {q:"On a frictionless incline at angle θ, the component of weight along the surface is:",c:["mg cosθ","mg sinθ","mg tanθ","mg"],a:1,e:"The component parallel to the incline surface uses sine of the incline angle."},
+ {q:"The normal force on an incline (no other vertical forces) is:",c:["mg","mg cosθ","mg sinθ","mg tanθ"],a:1,e:"The perpendicular component of weight balances the normal force."},
+ {q:"The angle of repose is the incline angle where:",c:["The block accelerates rapidly","The block is on the verge of sliding (tanθ=μs)","Friction is zero","Normal force is zero"],a:1,e:"At this critical angle, gravity's parallel component exactly equals maximum friction."},
+ {q:"A block stays at rest on an incline if:",c:["tanθ > μs","tanθ ≤ μs","θ=90° always","Never, gravity always wins"],a:1,e:"As long as the required friction ratio doesn't exceed μs, the block holds."},
+ {q:"As incline angle increases past the angle of repose, the block:",c:["Remains stationary","Begins to slide","Flies off","Stays frozen"],a:1,e:"Beyond the critical angle, gravity's component overcomes maximum static friction."},
+ {q:"Friction force on an incline at the verge of sliding equals:",c:["μsN = μs·mg cosθ","mg sinθ always regardless of θ","mg","Zero"],a:0,e:"At the point of slipping, friction reaches its maximum value μsN."},
+ {q:"Adding a force pushing the block up the incline increases the required friction to prevent:",c:["Sliding down only","Sliding down, unless the push causes sliding up instead","Nothing changes","Only affects normal force"],a:1,e:"Depending on magnitude, the extra push could cause sliding in either direction."}
+]},
+{t:"Belt Friction",p:2,b:"Belt (or capstan) friction relates the tensions on either side of a belt wrapped around a drum: T1/T2 = e^(μθ), where θ is the wrap angle in radians. Small increases in wrap angle produce exponential increases in holding capacity — the reason ropes wrapped around a post hold enormous loads with modest hand force.",q:[
+ {q:"The belt friction formula relates T1 and T2 via:",c:["T1 = T2 + μθ","T1/T2 = e^(μθ)","T1 = T2·μ·θ","T1 − T2 = μ"],a:1,e:"This is the classic capstan equation — an exponential relationship."},
+ {q:"θ in the belt friction formula must be in:",c:["Degrees","Radians","Revolutions","Any unit"],a:1,e:"The exponential formula requires angle measured in radians."},
+ {q:"As wrap angle θ increases, the ratio T1/T2:",c:["Decreases","Increases exponentially","Stays constant","Becomes negative"],a:1,e:"More wrap means a much larger achievable tension ratio."},
+ {q:"Belt friction explains why:",c:["A rope wrapped around a post holds large loads with small effort","Friction is always zero on curves","Belts never slip","Tension is always equal on both sides"],a:0,e:"The exponential relationship makes a few wraps enough to resist huge forces."},
+ {q:"T2 in the belt friction formula usually represents:",c:["The tight side (higher tension)","The slack side (lower tension)","An average tension","Zero tension always"],a:1,e:"By convention, T1 is the tight (larger) side and T2 the slack (smaller) side."},
+ {q:"If μ=0 (frictionless pulley), T1/T2 =",c:["0","1 (T1=T2)","Infinite","Undefined"],a:1,e:"With no friction, tension is unchanged going around the pulley."},
+ {q:"Belt friction analysis is commonly applied to:",c:["Ropes over posts, belt drives, band brakes","Only truss members","Only beams","Fluid pressure"],a:0,e:"Any belt- or rope-wrapped-drum scenario uses this relationship."}
+]},
+{t:"Centroids of Areas",p:2,b:"The centroid is the geometric center of an area, found by x̄ = ∫x dA/A and ȳ = ∫y dA/A. For simple shapes (rectangles, triangles, circles) these are tabulated formulas — the real skill is combining shapes correctly, which sets up next lesson's composite-shape technique.",q:[
+ {q:"The centroid of a rectangle is located at:",c:["A corner","The geometric center","Along one edge","Outside the shape"],a:1,e:"By symmetry, a rectangle's centroid sits at its middle."},
+ {q:"The centroid of a triangle (from its base) is at:",c:["1/2 the height","1/3 the height","2/3 the height","At the apex"],a:1,e:"The centroid sits one-third of the height up from the base."},
+ {q:"The centroid of a semicircle of radius r (from the flat edge) is at:",c:["r/2","4r/(3π)","r","2r/3"],a:1,e:"This is the standard tabulated result for a semicircular area."},
+ {q:"Centroid formula x̄ equals:",c:["∫x dA / A","∫x dA · A","A / ∫x dA","∫dA / x"],a:0,e:"It's the area-weighted average x-position."},
+ {q:"For a symmetric shape, the centroid lies:",c:["Off the axis of symmetry","On the axis of symmetry","At a random point","Outside the shape"],a:1,e:"Symmetry guarantees the centroid falls exactly on the axis of symmetry."},
+ {q:"The centroid represents the point where:",c:["All mass is concentrated for moment purposes (uniform density)","Maximum stress occurs","The shape is heaviest","Friction acts"],a:0,e:"For uniform density, the centroid coincides with the center of mass."},
+ {q:"For a circle, the centroid is located:",c:["At the edge","At the center","Undefined","At the top"],a:1,e:"By symmetry, a circle's centroid is exactly at its center."}
+]},
+{t:"Centroids of Composite Shapes",p:2,b:"For a shape built from simpler pieces, the composite centroid is a weighted average: x̄ = Σ(Aᵢx̄ᵢ)/ΣAᵢ. Cut-out holes are handled by treating their area as negative — a technique that turns any complex outline into a manageable sum of rectangles, triangles, and circles.",q:[
+ {q:"The composite centroid formula is:",c:["x̄ = Σ(Aᵢx̄ᵢ)/ΣAᵢ","x̄ = ΣAᵢ + Σx̄ᵢ","x̄ = Aᵢ·x̄ᵢ (single term)","x̄ = ΣAᵢ/Σx̄ᵢ"],a:0,e:"A weighted average of each piece's centroid, weighted by its area."},
+ {q:"A hole cut from a shape is treated in the centroid formula as:",c:["Positive area","Negative area","Ignored entirely","Doubled area"],a:1,e:"Subtracting a hole's contribution is equivalent to treating it as negative area."},
+ {q:"To find a composite centroid, you first divide the shape into:",c:["Random pieces","Simple shapes with known centroids","Infinitely many points","Only rectangles"],a:1,e:"Break the shape into rectangles, triangles, circles, etc. with tabulated centroids."},
+ {q:"If a composite shape is symmetric about the y-axis, x̄ is:",c:["Undefined","0 (on the axis)","Equal to total area","Always positive"],a:1,e:"Symmetry about the y-axis places the centroid exactly on that axis, x̄=0."},
+ {q:"For a composite shape, ΣAᵢ represents:",c:["The total area","The total perimeter","The number of pieces","Zero"],a:0,e:"Summing each piece's area (with holes negative) gives the net total area."},
+ {q:"Composite centroid calculations rely on:",c:["Calculus for every shape","Weighted averaging of known sub-shape centroids","Guessing","Random sampling"],a:1,e:"You reuse tabulated centroid formulas instead of integrating from scratch."},
+ {q:"A tabular method for composite centroids typically lists, per piece:",c:["Only area","Area, centroid location, and their product","Only centroid location","Color and weight"],a:1,e:"A table tracking Aᵢ, x̄ᵢ, ȳᵢ, and their products makes the summation organized."}
+]},
+{t:"Moment of Inertia of Areas",p:2,b:"The (area) moment of inertia I = ∫y² dA measures a cross-section's resistance to bending — the further material sits from the axis, the more it contributes, since the distance is squared. Standard shapes have tabulated formulas (e.g., I = bh³/12 for a rectangle about its centroidal axis) that you'll use constantly in beam design.",q:[
+ {q:"Moment of inertia of an area about an axis is defined as:",c:["∫y dA","∫y² dA","∫dA","∫y³ dA"],a:1,e:"The squared-distance weighting is the defining feature of moment of inertia."},
+ {q:"Moment of inertia measures resistance to:",c:["Sliding","Bending/rotation about an axis","Melting","Corrosion"],a:1,e:"Higher I means a cross-section resists bending (or angular acceleration) more strongly."},
+ {q:"For a rectangle (base b, height h) about its centroidal horizontal axis, I =",c:["bh³/12","bh/2","b³h/12","bh²/6"],a:0,e:"This is the standard tabulated formula for a rectangular cross-section."},
+ {q:"Moment of inertia units in SI are:",c:["m²","m³","m⁴","m"],a:2,e:"Area (m²) times distance squared (m²) gives m⁴."},
+ {q:"Material farther from the axis contributes to I:",c:["Less, since distance matters less further out","More, since distance is squared","The same regardless of distance","Negatively"],a:1,e:"Because the integrand has y², distant material contributes disproportionately more."},
+ {q:"A larger moment of inertia generally means:",c:["Less resistance to bending","More resistance to bending","No effect on bending","Only affects weight"],a:1,e:"Higher I cross-sections are stiffer and resist bending better."},
+ {q:"For a circle of radius r about its centroidal axis, I =",c:["πr⁴/4","πr²","2πr","πr³/3"],a:0,e:"This is the standard tabulated result for a circular cross-section."}
+]},
+{t:"Parallel Axis Theorem",p:2,b:"The parallel axis theorem lets you find the moment of inertia about any axis parallel to the centroidal axis: I = Ic + Ad², where d is the distance between axes. This is what makes composite moment-of-inertia calculations possible — you shift each piece's inertia to a common reference axis before summing.",q:[
+ {q:"The parallel axis theorem states I =",c:["Ic − Ad²","Ic + Ad²","Ic·Ad","Ic/Ad²"],a:1,e:"Shifting axes always adds a positive Ad² term."},
+ {q:"In the parallel axis theorem, d represents:",c:["The area","The distance between the centroidal axis and the new axis","The moment","The radius"],a:1,e:"d is the perpendicular offset between the two parallel axes."},
+ {q:"The theorem lets you find inertia about a non-centroidal axis by starting from:",c:["The centroidal moment of inertia","Zero","The total area only","Random guessing"],a:0,e:"You always shift outward from the known centroidal value."},
+ {q:"Ic in the formula refers to moment of inertia about the:",c:["Base of the shape","Shape's own centroidal axis","Any arbitrary axis","The origin only"],a:1,e:"Ic is specifically the inertia about that piece's own centroid."},
+ {q:"For composite shapes, you apply the parallel axis theorem to each piece before:",c:["Ignoring the pieces","Summing all the adjusted inertias","Subtracting areas","Nothing further needed"],a:1,e:"Shift each piece to the common reference axis, then add them all together."},
+ {q:"The parallel axis theorem always increases I when moving away from the centroid because:",c:["d² is always positive, added to Ic","d² can be negative","Ic decreases automatically","It has no dependable effect"],a:0,e:"Since d² ≥ 0 always, shifting away from the centroid can only add to I."},
+ {q:"If d=0 (axis passes through centroid), I equals:",c:["Ic","Zero","Ad²","Infinite"],a:0,e:"With zero offset, the formula reduces to the centroidal value itself."}
+]},
+{t:"Distributed Loads",p:2,b:"A distributed load w(x) can be replaced by a single equivalent resultant force equal to the area under the load diagram, acting through the centroid of that area. This equivalence — total force = area, location = centroid — is what connects today's topic straight back to the centroid work from Days 26–27.",q:[
+ {q:"The resultant of a distributed load equals:",c:["The peak intensity","The area under the load-distance diagram","The average height only","Zero always"],a:1,e:"Integrating the load intensity over length gives the total equivalent force."},
+ {q:"The resultant force of a distributed load acts through the:",c:["Left end always","Centroid of the load diagram's area","Right end always","Midpoint of the beam regardless of load shape"],a:1,e:"The equivalent force's location matches the centroid of the load shape."},
+ {q:"A uniform (rectangular) distributed load w over length L has resultant:",c:["wL, at the midpoint","wL², at the end","w/L, at the midpoint","w, anywhere"],a:0,e:"Area of a rectangle = wL, centered at the midpoint by symmetry."},
+ {q:"A triangular distributed load (0 to w over length L) has resultant magnitude:",c:["wL","wL/2","wL/3","2wL"],a:1,e:"Area of a triangle = ½ × base × height = wL/2."},
+ {q:"The resultant of a triangular load (peak at the right end) acts at:",c:["The midpoint","L/3 from the peak end (2L/3 from the zero end)","The zero end","L/2 from either end"],a:1,e:"This matches the centroid location of a triangular area from its base."},
+ {q:"Converting a distributed load into a single resultant force is valid for purposes of:",c:["Internal stress distribution exactly","External equilibrium analysis (reactions)","Nothing useful","Only friction problems"],a:1,e:"It correctly reproduces external reactions, though internal stress still needs the actual distribution."},
+ {q:"Units of a distributed load w are typically:",c:["N","N/m","N·m","m"],a:1,e:"Load per unit length is expressed in Newtons per meter."}
+]},
+{t:"Rectilinear Kinematics — Constant Acceleration",p:3,b:"Rectilinear motion is straight-line motion described by position s, velocity v=ds/dt, and acceleration a=dv/dt. For constant acceleration, the three classic equations (v=v0+at, s=s0+v0t+½at², v²=v0²+2a(s−s0)) let you solve almost any straight-line motion problem directly.",q:[
+ {q:"Velocity is the derivative of position with respect to:",c:["Acceleration","Time","Force","Mass"],a:1,e:"v=ds/dt by definition."},
+ {q:"Acceleration is the derivative of velocity with respect to:",c:["Position","Time","Force","Distance"],a:1,e:"a=dv/dt by definition."},
+ {q:"For constant acceleration, v =",c:["v0 + at","v0·at","v0 − a/t","at²"],a:0,e:"Integrating constant a with respect to time gives this linear velocity formula."},
+ {q:"For constant acceleration, s = s0 + v0t +",c:["at²","½at²","at","a/t²"],a:1,e:"Integrating velocity gives the classic quadratic position formula."},
+ {q:"v² = v0² + 2a(s−s0) is useful when:",c:["Time is unknown/not needed","Position is unknown","Only for zero acceleration","Never useful"],a:0,e:"This equation directly relates velocity and position, bypassing time."},
+ {q:"A car accelerates from rest at 4 m/s² for 5s. Final velocity:",c:["9 m/s","20 m/s","0.8 m/s","45 m/s"],a:1,e:"v=0+4×5=20 m/s."},
+ {q:"Deceleration means acceleration is:",c:["Zero","Opposite in direction to velocity (slowing down)","Always positive","Undefined"],a:1,e:"Deceleration means the acceleration vector opposes the direction of motion."}
+]},
+{t:"Rectilinear Kinematics — Variable Acceleration",p:3,b:"When acceleration isn't constant, you go back to calculus: a=dv/dt and v=ds/dt, integrating or differentiating as needed, sometimes using a=v(dv/ds) when acceleration depends on position. These relationships are the toolbox you fall back on whenever the simple constant-acceleration formulas don't apply.",q:[
+ {q:"When acceleration varies with time, you find velocity by:",c:["Multiplying a by t","Integrating a(t) with respect to time","Differentiating a(t)","Ignoring it"],a:1,e:"Integration undoes the derivative relationship a=dv/dt."},
+ {q:"The relation a = v(dv/ds) is useful when acceleration depends on:",c:["Time only","Position","Nothing","Mass only"],a:1,e:"This chain-rule form relates acceleration directly to position-dependent velocity."},
+ {q:"If v(t) is given, position s(t) is found by:",c:["Differentiating v(t)","Integrating v(t) with respect to time","Multiplying by t only","Squaring v(t)"],a:1,e:"Integration undoes v=ds/dt."},
+ {q:"If a(t) = 6t, velocity (starting from v0 at t=0) is:",c:["v0 + 3t²","v0 + 6t","v0 + 6t²","v0 + 3t"],a:0,e:"Integrating 6t with respect to t gives 3t², added to v0."},
+ {q:"Graphically, the area under an a-t curve gives the change in:",c:["Position","Velocity","Nothing","Jerk"],a:1,e:"Integrating acceleration over time gives the velocity change."},
+ {q:"Graphically, the area under a v-t curve gives the change in:",c:["Acceleration","Position","Nothing","Force"],a:1,e:"Integrating velocity over time gives the displacement."},
+ {q:"The slope of a position-time graph at any instant gives:",c:["Acceleration","Velocity","Jerk","Force"],a:1,e:"Slope of s(t) is ds/dt, which is velocity."}
+]},
+{t:"Curvilinear Motion",p:3,b:"For motion along a curved path, position, velocity, and acceleration are all vectors that can be described using rectangular (x,y,z) components, each independently following the rectilinear equations — velocity is always tangent to the path, while acceleration generally is not.",q:[
+ {q:"In curvilinear motion, velocity is always directed:",c:["Perpendicular to the path","Tangent to the path","Toward the origin","Randomly"],a:1,e:"Velocity always points along the direction of motion — tangent to the path."},
+ {q:"Using rectangular components, x, y, and z motions are treated as:",c:["Coupled and inseparable","Independent, each following rectilinear equations","Impossible to separate","Always equal"],a:1,e:"Each axis can be analyzed with the same rectilinear kinematics tools separately."},
+ {q:"The velocity vector components are:",c:["vx=dx/dt, vy=dy/dt","vx=x², vy=y²","vx=dt/dx","vx=x/t only"],a:0,e:"Each component is simply the time derivative of its position coordinate."},
+ {q:"The magnitude of velocity in 2D curvilinear motion is:",c:["vx+vy","√(vx²+vy²)","vx·vy","vx−vy"],a:1,e:"Combine perpendicular components via the Pythagorean theorem."},
+ {q:"Acceleration in curvilinear motion is generally:",c:["Always tangent to the path","Not necessarily tangent to the path","Always zero","Always perpendicular only"],a:1,e:"Acceleration can have both tangential and normal components on a curved path."},
+ {q:"A projectile's horizontal and vertical motions are treated as:",c:["Dependent on each other","Independent (constant horizontal velocity, constant vertical acceleration)","The same equation","Impossible to separate"],a:1,e:"Rectangular component analysis decouples horizontal and vertical projectile motion."},
+ {q:"Rectangular component analysis is most convenient when:",c:["The path is circular only","Motion data is naturally given in x and y","Never useful","Only for 1D motion"],a:1,e:"It's the natural choice whenever data comes in x,y (or x,y,z) form."}
+]},
+{t:"Projectile Motion",p:3,b:"Projectile motion combines constant horizontal velocity with constant vertical acceleration (−g), analyzed as two independent rectilinear problems sharing the same time variable. Range, max height, and time of flight all fall out once you split the initial velocity into horizontal and vertical components.",q:[
+ {q:"In projectile motion (no air resistance), horizontal velocity is:",c:["Constantly increasing","Constant throughout flight","Constantly decreasing","Zero"],a:1,e:"With no horizontal force, horizontal velocity never changes."},
+ {q:"Vertical acceleration in projectile motion equals:",c:["Zero","g, directed downward","Variable","Horizontal velocity"],a:1,e:"Gravity provides a constant downward acceleration throughout flight."},
+ {q:"Time to reach maximum height is when:",c:["Horizontal velocity is zero","Vertical velocity is zero","Total velocity is zero","Never"],a:1,e:"At the peak, the projectile momentarily stops moving vertically."},
+ {q:"Range is maximized (for given speed, flat ground) at launch angle:",c:["30°","45°","60°","90°"],a:1,e:"45° balances horizontal and vertical components for maximum range."},
+ {q:"A ball launched horizontally from a height falls to the ground in a time determined by:",c:["Horizontal velocity only","Vertical motion equations (height and g) only","Both equally intertwined","Neither"],a:1,e:"Time of flight depends solely on the vertical drop, independent of horizontal speed."},
+ {q:"The horizontal distance (range) of a projectile equals:",c:["Horizontal velocity × time of flight","Vertical velocity × time","g × time²","Zero"],a:0,e:"With constant horizontal velocity, range = vx × total flight time."},
+ {q:"At the peak of a projectile's trajectory (non-zero horizontal launch), velocity is:",c:["Zero entirely","Purely horizontal (vertical component is zero)","Purely vertical","Undefined"],a:1,e:"Only the vertical component vanishes at the peak; horizontal velocity persists."}
+]},
+{t:"Normal & Tangential Components",p:3,b:"For curved-path motion, acceleration splits into tangential (at=dv/dt, changes speed) and normal (an=v²/ρ, changes direction, always pointing toward the center of curvature) components. This decomposition is the natural language for circular and curved motion problems, replacing x-y components.",q:[
+ {q:"Tangential acceleration at measures the rate of change of:",c:["Direction","Speed","Position only","Mass"],a:1,e:"at tracks how fast the speed itself is changing."},
+ {q:"Normal acceleration an is given by:",c:["v/ρ","v²/ρ","v·ρ","ρ/v²"],a:1,e:"This is the standard centripetal-style formula for curved motion."},
+ {q:"Normal acceleration always points:",c:["Away from the center of curvature","Toward the center of curvature","Tangent to the path","Nowhere specific"],a:1,e:"It's directed inward, toward the instantaneous center of curvature."},
+ {q:"If speed is constant along a curved path, tangential acceleration is:",c:["Maximum","Zero","Equal to an","Undefined"],a:1,e:"No change in speed means at=0, though an can still be nonzero."},
+ {q:"For straight-line motion, the radius of curvature ρ approaches:",c:["Zero","Infinity","1","Negative values"],a:1,e:"A straight line has no curvature, corresponding to an infinite radius."},
+ {q:"Total acceleration magnitude combining both components is:",c:["at + an","√(at²+an²)","at·an","at−an"],a:1,e:"The two components are perpendicular, so they combine via the Pythagorean theorem."},
+ {q:"A car rounding a curve at constant speed experiences:",c:["Only tangential acceleration","Only normal acceleration","Both components","Neither"],a:1,e:"Constant speed means at=0, but direction is still changing, so an≠0."}
+]},
+{t:"Relative Motion",p:3,b:"Relative motion analysis expresses one body's motion as seen from a moving reference frame: v_A = v_B + v_A/B, where v_A/B is A's velocity relative to B. This vector equation (and its acceleration counterpart) is essential for problems involving multiple moving bodies, like boats crossing currents or vehicles merging.",q:[
+ {q:"The relative velocity equation is:",c:["vA = vB + vA/B","vA = vB − vA/B","vA = vB · vA/B","vA/B = vA + vB"],a:0,e:"A's absolute velocity is B's velocity plus A's velocity relative to B."},
+ {q:"vA/B represents the velocity of A:",c:["In an absolute frame","As observed from B (relative to B)","Independent of B","Equal to vB always"],a:1,e:"It's specifically how A appears to move from a reference frame attached to B."},
+ {q:"If B is stationary, vA/B equals:",c:["Zero","vA (same as absolute velocity)","vB","Undefined"],a:1,e:"With B not moving, relative and absolute velocity of A coincide."},
+ {q:"A boat crossing a river uses relative motion to combine:",c:["Boat's velocity relative to water and water's velocity relative to ground","Only boat speed","Only current speed","Neither"],a:0,e:"Adding these two vectors gives the boat's actual velocity relative to the ground."},
+ {q:"Relative acceleration follows a similar vector equation:",c:["aA = aB + aA/B","aA = aB × aA/B","aA is unrelated to aB","aA = aB / aA/B"],a:0,e:"The same additive structure applies to acceleration as to velocity."},
+ {q:"Relative motion analysis is most useful for problems with:",c:["A single stationary object","Two or more moving reference frames/bodies","No motion at all","Only rotation"],a:1,e:"It's designed specifically for comparing or combining multiple moving frames."},
+ {q:"If two cars move in the same direction at equal speed, their relative velocity is:",c:["Double the speed","Zero","Equal to one car's speed","Undefined"],a:1,e:"Matching velocities means zero relative motion between them."}
+]},
+{t:"Rotation About a Fixed Axis",p:3,b:"Rigid body rotation about a fixed axis is described by angular position θ, angular velocity ω=dθ/dt, and angular acceleration α=dω/dt — direct rotational analogues of s, v, a. A point at radius r from the axis has speed v=ωr and tangential acceleration at=αr.",q:[
+ {q:"Angular velocity ω is the derivative of angular position θ with respect to:",c:["Radius","Time","Mass","Force"],a:1,e:"ω=dθ/dt, the rotational analogue of v=ds/dt."},
+ {q:"For a point at radius r on a rotating body, linear speed v =",c:["ωr","ω/r","ω+r","ω²r"],a:0,e:"Linear speed scales directly with radius and angular velocity."},
+ {q:"Angular acceleration α equals:",c:["dω/dt","dθ/dt","ω/t only for constant α","r·ω"],a:0,e:"α is the time derivative of angular velocity, mirroring a=dv/dt."},
+ {q:"For constant angular acceleration, ω =",c:["ω0 + αt","ω0·αt","ω0 − α/t","αt²"],a:0,e:"This mirrors the rectilinear v=v0+at exactly."},
+ {q:"Tangential acceleration of a point at radius r is:",c:["αr","α/r","ω²r","α·ω"],a:0,e:"Tangential acceleration scales with angular acceleration and radius."},
+ {q:"Normal (centripetal) acceleration of a point at radius r rotating at ω is:",c:["ω²r","αr","ωr","α/r"],a:0,e:"This follows from an=v²/ρ with v=ωr and ρ=r."},
+ {q:"A wheel rotating at constant ω has angular acceleration:",c:["Maximum","Zero","Equal to ω","Undefined"],a:1,e:"Constant angular velocity means no change in ω, so α=0."}
+]},
+{t:"Rigid Body Planar Kinematics",p:3,b:"General planar motion of a rigid body combines translation of a reference point with rotation about that point; velocities of two points on the body relate via vB = vA + ω × rB/A. This 'translation plus rotation' idea underlies rolling wheels, linkages, and every rigid body that isn't just spinning in place.",q:[
+ {q:"General planar motion of a rigid body is a combination of:",c:["Rotation only","Translation only","Translation and rotation together","Neither"],a:2,e:"Any rigid body motion in a plane can be decomposed into these two parts."},
+ {q:"The relative velocity equation for two points on a rigid body is:",c:["vB = vA + ω × rB/A","vB = vA − ω","vB = ω · rB/A only","vB = vA/rB/A"],a:0,e:"This standard equation links any two points' velocities on the same rigid body."},
+ {q:"For rolling without slipping, the velocity of the contact point is:",c:["Maximum","Zero","Equal to center velocity","Undefined"],a:1,e:"The instantaneous contact point has zero velocity — the defining rolling condition."},
+ {q:"The instantaneous center of zero velocity is a point that:",c:["Always moves fastest","Has zero velocity at that instant","Is always the center of mass","Doesn't exist for rigid bodies"],a:1,e:"It's the point (possibly outside the body) with zero velocity at that moment."},
+ {q:"For a wheel rolling without slipping with center velocity v and radius r, angular velocity ω =",c:["v/r","vr","v+r","r/v"],a:0,e:"This rolling constraint links translational and rotational speed directly."},
+ {q:"Relative acceleration between two points on a rigid body includes:",c:["Only a tangential term","Both a tangential (α×r) and a normal (ω²r) term","Only a normal term","Neither term"],a:1,e:"Both rotational effects contribute to the relative acceleration between points."},
+ {q:"Analyzing linkages (like a four-bar mechanism) relies on:",c:["Treating each link's motion independently with no connection","Relative velocity/acceleration equations linking connected points","Ignoring rotation entirely","Only Newton's second law"],a:1,e:"Connected links share velocities at their pin joints via the relative motion equations."}
+]},
+{t:"Newton's Second Law — Particles",p:4,b:"Newton's second law, ΣF=ma, connects the forces on a particle directly to its acceleration — draw a free body diagram, sum forces in convenient directions (often tangential/normal or x/y), and solve for the unknown acceleration or force. This is the bridge from statics (ΣF=0) into all of kinetics.",q:[
+ {q:"Newton's second law for a particle states:",c:["ΣF=0","ΣF=ma","ΣM=Iα","F=mv"],a:1,e:"Net force equals mass times acceleration — the foundation of kinetics."},
+ {q:"Units of force (N) equal:",c:["kg·m/s²","kg/m","kg·s","m/s²"],a:0,e:"From F=ma, Newtons decompose into kg·m/s²."},
+ {q:"For circular motion, the net force in the normal direction equals:",c:["m·at","m·v²/ρ","mg","Zero always"],a:1,e:"The normal (centripetal) force provides the mass times normal acceleration."},
+ {q:"A 10 kg object accelerates at 3 m/s². Net force is:",c:["3.33 N","30 N","13 N","7 N"],a:1,e:"F=ma=10×3=30N."},
+ {q:"If ΣF=0, Newton's second law reduces to:",c:["a is maximum","a=0 (equilibrium, static or constant velocity)","a is infinite","Undefined"],a:1,e:"Zero net force means zero acceleration — statics is a special case of dynamics."},
+ {q:"In kinetics problems, the free body diagram is paired with a:",c:["Nothing else needed","Kinetic (mass-acceleration) diagram showing ma","Static diagram only","Moment diagram only"],a:1,e:"Pairing an FBD with a kinetic diagram helps set up ΣF=ma correctly, direction by direction."},
+ {q:"Newton's second law applies directly to:",c:["Only rigid bodies","Particles (and the mass center of rigid bodies)","Only fluids","Only at rest objects"],a:1,e:"ΣF=ma is fundamentally a particle law, extended to a rigid body's mass center."}
+]},
+{t:"Work-Energy Principle",p:4,b:"The work-energy principle states that the net work done on a particle equals its change in kinetic energy: U1→2 = T2 − T1, where T=½mv². It's especially powerful when you need a relationship between force/position and speed, without ever solving for time or acceleration directly.",q:[
+ {q:"The work-energy principle states:",c:["U1→2 = T2 − T1","U1→2 = T1 + T2","F = ma always instead","U = 0 always"],a:0,e:"Net work done equals the change in kinetic energy."},
+ {q:"Kinetic energy T equals:",c:["mv","½mv²","mgh","Fd"],a:1,e:"Standard definition of translational kinetic energy."},
+ {q:"Work done by a constant force F over displacement d (same direction) is:",c:["F/d","F·d","F+d","F−d"],a:1,e:"Work is force times displacement (when aligned)."},
+ {q:"The work-energy method is especially useful when you need to relate:",c:["Force and time directly","Force/position and speed, without needing time","Mass and volume","Only angles"],a:1,e:"It links work (force over distance) directly to speed, bypassing time entirely."},
+ {q:"Work done by gravity as an object falls height h is:",c:["mgh","−mgh","mg/h","0"],a:0,e:"Gravity does positive work as the object moves in the direction of the force (downward)."},
+ {q:"If only conservative forces act, total mechanical energy (T+V) is:",c:["Always increasing","Conserved (constant)","Always zero","Always decreasing"],a:1,e:"Energy conservation holds exactly when no non-conservative forces (like friction) act."},
+ {q:"Work has the same units as:",c:["Force","Energy (Joules)","Power","Velocity"],a:1,e:"Work and energy share the same units — Joules (N·m)."}
+]},
+{t:"Impulse-Momentum Principle",p:4,b:"Linear impulse equals the change in linear momentum: ∫F dt = mv2 − mv1, ideal for problems involving force over time rather than distance — especially impacts, where force is huge but duration is tiny. This principle is the direct time-integral counterpart to work-energy's distance-integral.",q:[
+ {q:"Linear momentum is defined as:",c:["mv","½mv²","ma","Fd"],a:0,e:"Momentum is mass times velocity."},
+ {q:"The impulse-momentum principle states:",c:["∫F dt = mv2 − mv1","∫F dx = mv2 − mv1","F = ma only","U=T2−T1"],a:0,e:"Impulse (force integrated over time) equals the change in momentum."},
+ {q:"Impulse-momentum is especially useful for problems involving:",c:["Force over distance","Force over a short time interval (impacts)","Only static equilibrium","Only rotation"],a:1,e:"It's the natural tool when force acts briefly, as in collisions."},
+ {q:"If no external force acts on a system, total linear momentum is:",c:["Always zero","Conserved (constant)","Always increasing","Undefined"],a:1,e:"Momentum conservation is a direct consequence of zero net external impulse."},
+ {q:"Units of impulse match units of:",c:["Energy","Momentum (kg·m/s)","Power","Force alone"],a:1,e:"Impulse and momentum share the same units, since impulse causes the momentum change."},
+ {q:"In a two-body collision with no external forces, momentum conservation states:",c:["m1v1 = m2v2 always","Total momentum before = total momentum after","Energy is always conserved too","Nothing is conserved"],a:1,e:"Momentum is always conserved in an isolated collision, regardless of the collision type."},
+ {q:"A large force acting for a very short time can still produce a significant:",c:["Impulse (and momentum change)","Zero effect always","Only heat","Only sound"],a:0,e:"Impulse depends on the force-time product, so brief but intense forces still matter."}
+]},
+{t:"Impact & Collisions",p:4,b:"In impact problems, momentum is always conserved, but kinetic energy is conserved only in perfectly elastic collisions; the coefficient of restitution e (0 for perfectly plastic, 1 for perfectly elastic) relates the relative separation and approach velocities. Real collisions fall somewhere between these two extremes.",q:[
+ {q:"In any collision (no external forces), what is always conserved?",c:["Kinetic energy","Momentum","Both always","Neither"],a:1,e:"Momentum conservation holds regardless of collision type; kinetic energy does not."},
+ {q:"A perfectly elastic collision has coefficient of restitution e =",c:["0","1","Between 0 and 1 only","Undefined"],a:1,e:"e=1 defines the perfectly elastic (energy-conserving) case."},
+ {q:"A perfectly plastic (completely inelastic) collision has e =",c:["1","0","2","−1"],a:1,e:"e=0 means the bodies stick together after collision."},
+ {q:"The coefficient of restitution is defined as the ratio of:",c:["Approach speed to separation speed","Relative separation velocity to relative approach velocity","Masses","Momenta"],a:1,e:"e compares how fast the bodies separate versus how fast they approached."},
+ {q:"In a perfectly elastic collision, kinetic energy is:",c:["Lost entirely","Conserved","Doubled","Converted to heat only"],a:1,e:"By definition, elastic collisions conserve both momentum and kinetic energy."},
+ {q:"In a perfectly plastic collision, the two bodies:",c:["Bounce apart with maximum speed","Stick together and move with a common velocity","Pass through each other","Reverse direction"],a:1,e:"Zero restitution means the bodies move together after impact."},
+ {q:"Most real-world collisions have e:",c:["Exactly 0","Exactly 1","Between 0 and 1","Greater than 1"],a:2,e:"Real materials lose some energy but don't perfectly stick — e falls strictly between the two extremes."}
+]},
+{t:"Rigid Body Kinetics — Equations of Motion",p:4,b:"For a rigid body, translation follows ΣF=ma_G (mass center) while rotation follows ΣM_G=I_Gα — two coupled equations you solve together, often alongside a kinematic constraint like rolling without slipping. This extends Newton's second law from particles to bodies that can also spin.",q:[
+ {q:"For a rigid body's translational motion, ΣF =",c:["mα","ma_G (mass center acceleration)","Iα","Zero always"],a:1,e:"Translation of the mass center follows the same F=ma law as a particle."},
+ {q:"For rotation about the mass center, ΣM_G =",c:["ma_G","I_Gα","Fv","mgh"],a:1,e:"This is the rotational analogue of F=ma, using moment of inertia and angular acceleration."},
+ {q:"I_G represents the body's:",c:["Mass","Mass moment of inertia about its center of mass","Weight","Velocity"],a:1,e:"I_G measures rotational inertia specifically about the center of mass."},
+ {q:"A rigid body problem often needs an additional kinematic equation such as:",c:["Nothing extra, ever","Rolling without slipping (a = αr)","Only ΣF=0","Only conservation of energy"],a:1,e:"Constraint equations link translational and rotational unknowns together."},
+ {q:"Rigid body equations of motion couple:",c:["Only translation","Only rotation","Both translation and rotation equations together","Neither"],a:2,e:"Real rigid body kinetics problems usually require solving both sets of equations simultaneously."},
+ {q:"Mass moment of inertia (for kinetics) differs from area moment of inertia in that it involves:",c:["Area only","Mass distribution, not just area","Nothing different","Only length"],a:1,e:"Mass moment of inertia weights mass by distance squared, not area."},
+ {q:"For a rolling wheel accelerating down an incline, you typically need:",c:["Only ΣF=ma_G","Only ΣM=Iα","Both equations plus the rolling constraint","Neither equation"],a:2,e:"Solving for acceleration generally requires all three relationships together."}
+]},
+{t:"Energy Methods for Rigid Bodies",p:4,b:"For rigid bodies, kinetic energy includes both translational (½mv_G²) and rotational (½I_Gω²) terms, and the work-energy principle again lets you skip force/acceleration details when only speeds are needed. This mirrors Day 40's particle version but adds the rotational contribution.",q:[
+ {q:"Total kinetic energy of a rigid body in general planar motion is:",c:["½mv_G² only","½mv_G² + ½I_Gω²","½I_Gω² only","mgh"],a:1,e:"Both translational and rotational kinetic energy contribute for a moving, spinning body."},
+ {q:"For pure rotation about a fixed axis O, kinetic energy can be written as:",c:["½mv²","½I_Oω²","mgh","Fd"],a:1,e:"Using the moment of inertia about the fixed axis simplifies pure rotation to one term."},
+ {q:"Work-energy for rigid bodies states:",c:["U1→2 = T2 − T1 (same form as particles, with rigid-body T)","Energy is never conserved","Only applies to particles","U=ma"],a:0,e:"The same fundamental relationship holds, just with the expanded rigid-body kinetic energy."},
+ {q:"For a wheel rolling without slipping down an incline, energy methods relate height drop to:",c:["Only translational KE","Both translational and rotational KE gained","Only rotational KE","Neither"],a:1,e:"Potential energy converts into both forms of kinetic energy as the wheel rolls and speeds up."},
+ {q:"The work done by an internal moment (like a motor torque) on a rotating body is:",c:["Zero always","Torque × angular displacement","Force × linear displacement only","Undefined"],a:1,e:"Rotational work mirrors linear work, using torque and angle instead of force and distance."},
+ {q:"Energy methods for rigid bodies are especially convenient when you need:",c:["Detailed force-time history","A relationship between position/height and speed","Only reaction forces","Only impulse"],a:1,e:"Like the particle case, energy methods skip directly to speed without needing time or force history."},
+ {q:"Conservation of energy for a rigid body system (no friction/non-conservative forces) states total mechanical energy is:",c:["Always increasing","Constant","Always zero","Random"],a:1,e:"With only conservative forces acting, total mechanical energy stays constant."}
+]},
+{t:"Cumulative Review & Mixed Mastery Test",p:4,b:"The capstone day mixes core ideas from every phase — statics equilibrium, structural analysis, friction, and dynamics — to test whether the connections between topics have really stuck. Treat it like a comprehensive exam: identify what type of problem you're looking at before reaching for a formula.",q:[
+ {q:"Which single idea underlies both particle and rigid body statics equilibrium?",c:["ΣF=0 (net force zero)","ΣM=ma","Kinetic energy is conserved","Momentum is conserved"],a:0,e:"Zero net force is the shared foundation, with rigid bodies adding ΣM=0 on top."},
+ {q:"What connects trusses (method of joints) to particle equilibrium?",c:["Nothing","Each joint is analyzed as a particle in equilibrium","Trusses use moments only","Joints ignore forces"],a:1,e:"Treating each pin joint as a zero-size particle is exactly the particle equilibrium technique from Phase 1."},
+ {q:"What connects centroids to distributed loads?",c:["Nothing, they're unrelated","A distributed load's resultant acts through the centroid of its load diagram","Centroids are always at the load's peak","Distributed loads have no centroid"],a:1,e:"The centroid concept from Phase 3 directly locates the equivalent resultant force."},
+ {q:"What is the dynamics counterpart to the statics equation ΣF=0?",c:["ΣF=ma (Newton's second law)","ΣM=0","ΣF=0 still","U=T2-T1"],a:0,e:"Statics is the special case of dynamics where acceleration happens to be zero."},
+ {q:"Work-energy and impulse-momentum both derive from:",c:["Newton's second law, integrated differently (over distance vs. time)","Unrelated principles","Only static equilibrium","Friction laws"],a:0,e:"Both are just ΣF=ma integrated — one over displacement, one over time."},
+ {q:"The moment of inertia (area) from statics/mechanics of materials becomes what in dynamics?",c:["Unrelated concept — dynamics uses mass moment of inertia instead","Identical in every way","Never used again","Only for area, never mass"],a:0,e:"Area moment of inertia (bending resistance) and mass moment of inertia (rotational resistance) are related in name only — distinct physical quantities."},
+ {q:"The single biggest cross-cutting skill through this entire 45-day track is:",c:["Memorizing formulas without understanding","Correctly identifying the system, drawing an accurate FBD, then applying the right equilibrium/motion equations","Avoiding free body diagrams","Skipping units"],a:1,e:"Every phase, from statics to dynamics, rests on this same disciplined process."}
+]}
+];
+
+// Real per-account progress (via storage-shim.js) instead of a
+// browser-local blob — same idea as the site's other tracks (Matrix,
+// Reasoning Lab, 30-Day Prep), so this syncs across devices too.
+async function loadProgress(){
+  if(!(window.storage && typeof window.storage.get === 'function')) return {};
+  try{
+    const res = await window.storage.get('progress', false);
+    return (res && res.value) ? JSON.parse(res.value) : {};
+  }catch(e){ return {}; }
+}
+function saveProgress(p){
+  if(!(window.storage && typeof window.storage.set === 'function')) return;
+  window.storage.set('progress', JSON.stringify(p), false).catch(()=>{});
+}
+let progress = {};
+
+function render(){
+  const container = document.getElementById('phases');
+  container.innerHTML = '';
+  PHASES.forEach((phase, pIdx) => {
+    const phaseDays = DAYS.map((d,i)=>({...d, idx:i})).filter(d => d.p === pIdx);
+    const section = document.createElement('div');
+    section.className = 'phase';
+    section.innerHTML = `<div class="phase-head"><div class="phase-dot" style="background:${phase.color}"></div><div class="phase-name">${phase.name}</div><div class="phase-range">${phase.range}</div></div>`;
+    phaseDays.forEach(d => {
+      const rec = progress[d.idx];
+      const total = d.q.length;
+      const done = rec && rec.completed;
+      const partial = rec && !rec.completed && rec.answers && rec.answers.some(a=>a!=null);
+      const dayEl = document.createElement('div');
+      dayEl.className = 'day';
+      dayEl.id = 'day-'+d.idx;
+      let badge = '<span class="day-badge badge-todo">not started</span>';
+      if(done) badge = `<span class="day-badge badge-done">${rec.score}/${total}</span>`;
+      else if(partial) badge = '<span class="day-badge badge-partial">in progress</span>';
+      dayEl.innerHTML = `
+        <div class="day-row" onclick="toggleDay(${d.idx})">
+          <div class="day-num">D${String(d.idx+1).padStart(2,'0')}</div>
+          <div class="day-topic">${d.t}</div>
+          ${badge}
+          <div class="chevron">▸</div>
+        </div>
+        <div class="day-body" id="body-${d.idx}"></div>
+      `;
+      section.appendChild(dayEl);
+    });
+    container.appendChild(section);
+  });
+  updateStats();
+}
+
+function toggleDay(idx){
+  const el = document.getElementById('day-'+idx);
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.day.open').forEach(d=>d.classList.remove('open'));
+  if(!wasOpen){
+    el.classList.add('open');
+    renderDayBody(idx);
+  }
+}
+
+function renderDayBody(idx){
+  const d = DAYS[idx];
+  const total = d.q.length;
+  const body = document.getElementById('body-'+idx);
+  if(!progress[idx]) progress[idx] = {answers:new Array(total).fill(null), checked:false, completed:false, score:0};
+  const rec = progress[idx];
+  let html = `<p class="note">${d.b}</p>`;
+  d.q.forEach((q,qi)=>{
+    html += `<div class="q-block"><div class="q-text">${qi+1}. ${q.q}</div><div class="choices">`;
+    q.c.forEach((choice,ci)=>{
+      let cls = 'choice';
+      if(rec.checked){
+        if(ci===q.a) cls += ' correct';
+        else if(rec.answers[qi]===ci) cls += ' incorrect';
+      } else if(rec.answers[qi]===ci){
+        cls += ' selected';
+      }
+      html += `<label class="${cls}" onclick="selectAnswer(${idx},${qi},${ci})"><input type="radio" name="q-${idx}-${qi}" ${rec.answers[qi]===ci?'checked':''} ${rec.checked?'disabled':''}> ${choice}</label>`;
+    });
+    html += `</div><div class="explain ${rec.checked?'show':''}">${q.e}</div></div>`;
+  });
+  const answeredAll = rec.answers.every(a=>a!=null);
+  html += `<div class="day-actions">`;
+  if(!rec.checked){
+    html += `<button class="check" ${answeredAll?'':'disabled'} onclick="checkDay(${idx})">Check answers</button>`;
+    if(!answeredAll) html += `<div class="day-score">answer all ${total} to check</div>`;
+  } else {
+    html += `<div class="day-score">Score: ${rec.score}/${total} — <a href="#" onclick="retryDay(${idx});return false;" style="color:var(--steel-dim)">try again</a></div>`;
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+}
+
+function selectAnswer(dayIdx, qIdx, choiceIdx){
+  const rec = progress[dayIdx];
+  if(rec.checked) return;
+  rec.answers[qIdx] = choiceIdx;
+  saveProgress(progress);
+  renderDayBody(dayIdx);
+}
+
+function checkDay(idx){
+  const d = DAYS[idx];
+  const rec = progress[idx];
+  let score = 0;
+  rec.answers.forEach((a,i)=>{ if(a===d.q[i].a) score++; });
+  rec.checked = true;
+  rec.completed = true;
+  rec.score = score;
+  saveProgress(progress);
+  renderDayBody(idx);
+  render();
+  const el = document.getElementById('day-'+idx);
+  if(el) el.classList.add('open');
+}
+
+function retryDay(idx){
+  const total = DAYS[idx].q.length;
+  progress[idx] = {answers:new Array(total).fill(null), checked:false, completed:false, score:0};
+  saveProgress(progress);
+  renderDayBody(idx);
+  render();
+  document.getElementById('day-'+idx).classList.add('open');
+}
+
+function updateStats(){
+  const recs = Object.values(progress).filter(r=>r && r.completed);
+  const done = recs.length;
+  document.getElementById('statDone').textContent = done + '/45';
+  if(done>0){
+    let totalCorrect=0, totalQ=0;
+    Object.keys(progress).forEach(k=>{
+      const r = progress[k];
+      if(r && r.completed){ totalCorrect += r.score; totalQ += DAYS[k].q.length; }
+    });
+    const acc = Math.round((totalCorrect/totalQ)*100);
+    document.getElementById('statAcc').textContent = acc + '%';
+  } else {
+    document.getElementById('statAcc').textContent = '—';
+  }
+  let streak = 0;
+  for(let i=0;i<45;i++){
+    if(progress[i] && progress[i].completed) streak++;
+    else break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+
+  const pts = [];
+  for(let i=0;i<45;i++){
+    if(progress[i] && progress[i].completed) pts.push(progress[i].score/DAYS[i].q.length*100);
+  }
+  drawSparkline(pts);
+}
+
+function drawSparkline(pts){
+  const svg = document.getElementById('sparkline');
+  if(pts.length < 2){
+    svg.innerHTML = `<text x="10" y="30" fill="#6b7360" font-family="JetBrains Mono, monospace" font-size="11">complete a few days to see your trend</text>`;
+    return;
+  }
+  const w=400,h=52,pad=4;
+  const stepX = (w-2*pad)/(pts.length-1);
+  const pts2 = pts.map((p,i)=>[pad+i*stepX, h-pad-(p/100)*(h-2*pad)]);
+  const path = pts2.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const dots = pts2.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#c99a3e"/>`).join('');
+  svg.innerHTML = `<path d="${path}" fill="none" stroke="#c99a3e" stroke-width="2"/>${dots}`;
+}
+
+function resetProgress(){
+  if(!confirm('Reset all 45 days of progress? This cannot be undone.')) return;
+  progress = {};
+  saveProgress(progress);
+  render();
+}
+
+(async function init(){
+  progress = await loadProgress();
+  render();
+})();
+</script>
+</body>
+</html>

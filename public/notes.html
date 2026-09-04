@@ -225,9 +225,7 @@ async function openNote(id){
       e.preventDefault();
       try{
         const blob = await fetchAuthedBlob('/api/notes/' + id + '/document');
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener');
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        window.HubBlobDeliver(blob, data.note.document_original_name, blob.type, true);
       }catch(err){ showToast(err.message || 'Could not open document.', 'error'); }
     });
     docMount.appendChild(link);
@@ -315,9 +313,7 @@ function setupNoteMediaControls(note){
       e.preventDefault();
       try{
         const blob = await fetchAuthedBlob('/api/notes/' + note.id + '/document');
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener');
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        window.HubBlobDeliver(blob, note.document_original_name, blob.type, true);
       }catch(err){ showToast(err.message || 'Could not open document.', 'error'); }
     });
     docCurrent.appendChild(link);

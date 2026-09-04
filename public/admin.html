@@ -14,6 +14,22 @@
   .role-pill.facilitator{ background:var(--blue-soft); color:var(--blue); font-weight:700; }
   .admin-actions{ display:flex; gap:6px; flex-wrap:wrap; }
   .admin-actions button{ white-space:nowrap; }
+  /* Inline per-row role changer — same pill look, but an actual <select>
+     so changing one person's role is a single interaction (pick from the
+     dropdown) instead of ticking a checkbox and reaching for the bulk bar
+     below, which only makes sense for changing several people at once. */
+  .role-pill-select{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+    padding:3px 22px 3px 9px; border-radius:20px; border:none; cursor:pointer;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238C8172' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 8px center;
+  }
+  .role-pill-select.admin{ background-color:var(--blue-soft); color:var(--blue); }
+  .role-pill-select.facilitator{ background-color:var(--blue-soft); color:var(--blue); }
+  .role-pill-select.user{ background-color:#f1f0eb; color:var(--muted); }
+  .role-pill-select:disabled{ opacity:.55; cursor:not-allowed; }
+  .role-pill-select.saving{ opacity:.6; }
   .admin-actions button.danger:hover{ border-color:var(--red); color:var(--red); }
   .admin-actions button.warn:hover{ border-color:var(--amber); color:var(--amber); }
   .admin-section-title{ font-family:'Newsreader',serif; font-style:italic; font-weight:600; font-size:20px; color:var(--ink); margin:36px 0 4px; }
@@ -317,7 +333,13 @@ async function loadUsers(){
       <td><input type="checkbox" class="row-select"></td>
       <td>${u.email}</td>
       <td>${u.name || '—'}</td>
-      <td><span class="role-pill ${u.role}">${u.role}</span></td>
+      <td>
+        <select class="role-pill-select ${u.role}" data-id="${u.id}" data-email="${u.email}" title="Change this user's role">
+          <option value="user" ${u.role==='user'?'selected':''}>user</option>
+          <option value="facilitator" ${u.role==='facilitator'?'selected':''}>facilitator</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>admin</option>
+        </select>
+      </td>
       <td>${u.suspended ? '<span class="role-pill suspended">paused</span>' : '<span class="mono" style="color:var(--muted);">active</span>'}</td>
       <td class="mono">${(u.created_at||'').slice(0,10)}</td>
       <td class="mono">${u.activity.matrix || 0}</td>
@@ -355,8 +377,42 @@ document.getElementById('selectAllUsers').addEventListener('change', (e) => {
   document.querySelectorAll('.row-select').forEach(cb => { cb.checked = e.target.checked; });
   updateBulkBar();
 });
-document.getElementById('usersBody').addEventListener('change', (e) => {
-  if(e.target.classList.contains('row-select')) updateBulkBar();
+document.getElementById('usersBody').addEventListener('change', async (e) => {
+  if(e.target.classList.contains('row-select')){ updateBulkBar(); return; }
+  if(!e.target.classList.contains('role-pill-select')) return;
+
+  const select = e.target;
+  const id = select.getAttribute('data-id');
+  const email = select.getAttribute('data-email');
+  const newRole = select.value;
+  const prevRole = select.className.replace('role-pill-select', '').trim();
+
+  const me = window.__rhMe; // set once at page init — see init() below
+  if(me && String(me.id) === String(id) && newRole === 'user'){
+    showToast("You can't demote your own account — have another admin do it.", 'error');
+    select.value = prevRole;
+    return;
+  }
+  if(!confirm(`Set ${email}'s role to "${newRole}"?`)) { select.value = prevRole; return; }
+
+  select.disabled = true;
+  select.classList.add('saving');
+  try{
+    const res = await fetch('/api/admin/users/' + id + '/role', {
+      method: 'POST', headers: authHeaders(true), body: JSON.stringify({ role: newRole })
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || 'Could not update role');
+    select.className = 'role-pill-select ' + newRole;
+    select.closest('tr').setAttribute('data-role', newRole);
+    showToast(email + ' is now ' + newRole + '.', 'success');
+  }catch(err){
+    showToast(err.message || 'Could not update role', 'error');
+    select.value = prevRole;
+  }finally{
+    select.disabled = false;
+    select.classList.remove('saving');
+  }
 });
 
 document.getElementById('bulkBar').addEventListener('click', async (e) => {
@@ -758,6 +814,7 @@ async function loadAuditLog(){
     document.querySelector('.hub-wrap').innerHTML = '<p class="mono" style="padding:40px 0;color:var(--red);">Admin access required.</p>';
     return;
   }
+  window.__rhMe = user; // used by the inline per-row role selector's self-demotion check
   loadStats();
   loadUsers();
   loadFiles();

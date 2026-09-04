@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signals & Systems — Days 1–20 (ECE / Telecommunications)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F5EF;
+    --bg-panel:#FFFFFF;
+    --bg-raised:#EFEBDE;
+    --line:#DEDACB;
+    --text:#23282E;
+    --text-muted:#5B6470;
+    --text-dim:#838C93;
+    --copper:#1F5FA8;
+    --copper-dim:#163F73;
+    --cyan:#1F8A57;
+    --cyan-dim:#146641;
+    --big-flag:#C97A22;
+    --caution:#B94A40;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Atkinson Hyperlegible',sans-serif;
+    font-size:16.5px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    font-feature-settings:"kern" 1, "liga" 1;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:0.05;
+    pointer-events:none;
+    z-index:0;
+  }
+  h1,h2,h3,h4{font-family:'Sora',sans-serif; font-weight:700; letter-spacing:-0.015em; margin:0; color:var(--text);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh; position:relative; z-index:1;}
+
+  .sidebar{
+    width:340px; flex:none;
+    background:var(--bg-panel);
+    border-right:1px solid var(--line);
+    height:100vh; position:sticky; top:0;
+    overflow-y:auto;
+    padding:28px 0 60px;
+  }
+  .sidebar-head{padding:0 24px 20px; border-bottom:1px solid var(--line); margin-bottom:8px;}
+  .sidebar-head .kicker{color:var(--copper); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; font-weight:500;}
+  .sidebar-head h1{font-size:23px; line-height:1.25; margin-top:8px; font-weight:800; letter-spacing:-0.02em;}
+  .sidebar-head p{color:var(--text-muted); font-size:13.5px; line-height:1.55; margin-top:10px; font-family:'Atkinson Hyperlegible',sans-serif;}
+
+  details.week{border-bottom:1px solid var(--line);}
+  details.week summary{
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    font-family:'Sora',sans-serif; font-weight:600; font-size:14.5px; letter-spacing:-0.01em;
+    color:var(--text);
+  }
+  details.week summary::-webkit-details-marker{display:none;}
+  details.week summary .wk-range{color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:400; letter-spacing:0.02em;}
+  details.week summary::after{
+    content:"+"; color:var(--copper); font-family:'IBM Plex Mono',monospace; font-size:16px; margin-left:8px;
+  }
+  details.week[open] summary::after{content:"–";}
+
+  .day-list{padding:0 14px 14px;}
+  .day-btn{
+    width:100%; text-align:left;
+    background:none; border:none; color:var(--text-muted);
+    font-family:'Atkinson Hyperlegible',sans-serif; font-size:13.5px;
+    padding:9px 12px; border-radius:var(--radius);
+    cursor:pointer; display:flex; gap:10px; align-items:baseline;
+  }
+  .day-btn:hover{background:var(--bg-raised); color:var(--text);}
+  .day-btn.active{background:var(--bg-raised); color:var(--text); box-shadow:inset 2px 0 0 var(--copper);}
+  .day-btn .num{font-family:'IBM Plex Mono',monospace; color:var(--cyan); font-size:12px; min-width:20px;}
+  .day-btn .flag{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--big-flag); opacity:0.9;}
+
+  /* ---------- Main ---------- */
+  main{flex:1; padding:56px 64px 120px; max-width:900px;}
+  .top-progress{color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.04em; margin-bottom:26px;}
+  .day-meta{display:flex; align-items:center; gap:14px; margin-bottom:10px;}
+  .day-tag{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--copper);}
+  .step-tag{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-dim); border:1px solid var(--line); padding:3px 9px; border-radius:20px;}
+  .step-tag.big{color:var(--big-flag); border-color:var(--copper-dim);}
+  .day-title{font-size:36px; line-height:1.16; font-weight:800; letter-spacing:-0.02em; margin-bottom:8px;}
+  .core-idea{color:var(--text-muted); font-size:17px; line-height:1.6; font-style:italic; font-family:'Atkinson Hyperlegible',sans-serif; font-weight:400; margin:14px 0 34px; padding-left:16px; border-left:2px solid var(--cyan-dim);}
+
+  section.block{margin-bottom:36px;}
+  .block h3{font-size:12.5px; font-family:'IBM Plex Mono',monospace; color:var(--cyan); font-weight:500; letter-spacing:0.06em; margin-bottom:14px;}
+  .notes p{color:var(--text); font-size:16px; line-height:1.75; margin:0 0 15px; max-width:74ch;}
+  .notes p:last-child{margin-bottom:0;}
+
+  .formula-list{display:flex; flex-direction:column; gap:10px;}
+  .formula{
+    background:rgba(185,74,64,0.06); border:1px solid var(--caution); border-left:4px solid var(--caution);
+    padding:12px 16px; border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:600; color:var(--caution);
+  }
+
+  /* ---------- Diagram ---------- */
+  .diagram-wrap{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 28px 18px; margin-bottom:32px;
+  }
+  .diagram-wrap .diagram-cap{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text-dim);
+    margin-top:10px; text-align:center;
+  }
+  .diagram-svg{width:100%; height:auto; display:block; max-height:460px;}
+
+  @keyframes dashflow{ to{ stroke-dashoffset:-24; } }
+  @keyframes pulseGlow{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.3); opacity:0.55; } }
+  .diagram-svg [marker-end="url(#ac)"],
+  .diagram-svg [marker-end="url(#ao)"],
+  .diagram-svg [marker-end="url(#am)"]{
+    stroke-dasharray:7 6;
+    animation:dashflow 1.3s linear infinite;
+  }
+  .diagram-svg circle[fill="#1F5FA8"],
+  .diagram-svg circle[fill="#1F8A57"]{
+    transform-box:fill-box; transform-origin:center;
+    animation:pulseGlow 2.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .diagram-svg *{ animation:none !important; }
+  }
+
+  /* ---------- Key facts (color-coded highlights) ---------- */
+  .facts{display:flex; flex-direction:column; gap:10px;}
+  .fact{
+    padding:11px 16px; border-radius:var(--radius);
+    font-size:14.5px; color:var(--text);
+    background:var(--bg-panel); border:1px solid var(--line);
+    border-left:3px solid var(--line);
+  }
+  .fact .tag{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;
+    margin-right:9px; letter-spacing:0.03em;
+  }
+  .fact.insight{border-left-color:var(--cyan);}
+  .fact.insight .tag{color:var(--cyan);}
+  .fact.key{border-left-color:var(--copper);}
+  .fact.key .tag{color:var(--copper);}
+  .fact.caution{border-left-color:var(--caution);}
+  .fact.caution .tag{color:var(--caution);}
+
+  /* ---------- MCQ quiz ---------- */
+  .mcq-score{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--text-dim); margin-bottom:16px;}
+  .mcq-list{display:flex; flex-direction:column; gap:18px;}
+  .mcq-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px 18px;}
+  .mcq-q{font-size:15.5px; color:var(--text); margin-bottom:12px; line-height:1.55; font-weight:500;}
+  .mcq-options{display:flex; flex-direction:column; gap:8px;}
+  .mcq-opt{
+    text-align:left; background:var(--bg-raised); border:1px solid var(--line); color:var(--text-muted);
+    padding:9px 13px; border-radius:var(--radius); cursor:pointer;
+    font-family:'Atkinson Hyperlegible',sans-serif; font-size:14px; transition:border-color .15s;
+  }
+  .mcq-opt:hover:not(.disabled){border-color:var(--copper); color:var(--text);}
+  .mcq-opt.correct{border-color:var(--cyan); color:var(--cyan); background:rgba(95,184,201,0.09);}
+  .mcq-opt.incorrect{border-color:var(--caution); color:var(--caution); background:rgba(217,83,79,0.09);}
+  .mcq-opt.disabled{cursor:default;}
+  .mcq-explain{
+    margin-top:11px; padding-top:11px; border-top:1px dashed var(--line);
+    font-size:13.5px; color:var(--text-dim); display:none;
+  }
+  .mcq-explain.show{display:block;}
+
+  .qlist{display:flex; flex-direction:column; gap:14px;}
+  .qcard{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .qcard .qtype{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.05em; color:var(--big-flag); margin-bottom:8px;}
+  .qcard p{margin:0; font-size:15.5px; line-height:1.6; color:var(--text);}
+
+  .daynav{display:flex; justify-content:space-between; margin-top:52px; padding-top:24px; border-top:1px solid var(--line);}
+  .daynav button{
+    background:none; border:1px solid var(--line); color:var(--text-muted);
+    font-family:'Atkinson Hyperlegible',sans-serif; font-size:13.5px; padding:10px 16px; border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .daynav button:hover:not(:disabled){border-color:var(--copper); color:var(--text);}
+  .daynav button:disabled{opacity:0.3; cursor:default;}
+
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg-panel);}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:6px;}
+
+  @media (max-width:860px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%; height:auto; position:relative; max-height:60vh;}
+    main{padding:36px 22px 90px;}
+    .day-title{font-size:26px;}
+  }
+</style>
+</head>
+<body>
+<div id="siteNav"></div>
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="kicker">ECE · SIGNALS &amp; SYSTEMS</div>
+      <h1>Signals &amp; Systems</h1>
+      <p>Days 1–20 — CT/DT signals, LTI systems, convolution, Fourier &amp; Laplace/Z-transforms, sampling, and frequency response, framed for electronics &amp; telecommunication engineering (filters, modulation, DSP).</p>
+    </div>
+    <div id="week-list"></div>
+  </nav>
+  <main>
+    <div class="top-progress" id="crumb"></div>
+    <article id="content"></article>
+  </main>
+</div>
+
+<script>window.APP_NAME = 'signals-systems';</script>
+<script src="/js/nav.js"></script>
+<script src="/js/file-input-enhance.js"></script>
+<script src="/js/storage-shim.js"></script>
+<script>(function(){ window.HubNav.init('signals-systems', true); })();</script>
+
+<script>
+const WEEKS = [
+  {n:1, title:"Signal & System Fundamentals", range:"Days 1–5"},
+  {n:2, title:"Time-Domain Analysis of LTI Systems", range:"Days 6–10"},
+  {n:3, title:"Fourier Analysis & Sampling", range:"Days 11–15"},
+  {n:4, title:"Laplace, Z-Transform & Frequency Response", range:"Days 16–20"},
+];
+
+const DAYS = [
+
+{d:1,week:1,title:"Signals & Their Classification",big:true,steps:6,
+diagram:"sigclass",
+facts:[{tag:"KEY FACT", text:"A continuous-time (CT) signal x(t) is defined for every real t; a discrete-time (DT) signal x[n] is defined only at integer n -- sampling turns one into the other."}, {tag:"CAUTION", text:"A DT sequence is NOT 'a CT signal with gaps' -- x[n] is undefined between integers, it isn't zero there."}],
+mcqs:[
+{q:"A signal defined at every instant of time is called:", options:["Discrete-time", "Continuous-time", "Digital", "Periodic"], correct:1, explain:"CT signals are defined for all real-valued t, e.g. a voltage waveform v(t)."},
+{q:"A signal is periodic with period T if:", options:["x(t)=x(t) for some t", "x(t+T)=x(t) for ALL t", "It repeats only once", "Its energy is finite"], correct:1, explain:"Periodicity must hold for every t, not just one instance, and T is the smallest such positive value (fundamental period)."},
+{q:"An energy signal is one for which:", options:["Total energy is finite and power is zero", "Power is finite and nonzero", "Both energy and power are infinite", "It must be periodic"], correct:0, explain:"Energy signals (e.g. a single pulse) have finite total energy; averaged over infinite time, their power is zero."},
+{q:"Every periodic signal (other than x(t)=0) is classified as a:", options:["Energy signal", "Power signal", "Neither", "Random signal"], correct:1, explain:"Periodic signals repeat forever, so their total energy is infinite but their average power over one period is finite and nonzero."},
+{q:"An even signal satisfies:", options:["x(-t) = -x(t)", "x(-t) = x(t)", "x(t) = 0 for t<0", "x(t) is always positive"], correct:1, explain:"Even signals are symmetric about the vertical axis; odd signals satisfy x(-t) = -x(t)."}
+],
+core:"Every signal you will ever process -- a voice waveform, a sampled sensor reading, a modulated RF carrier -- first has to be sorted along these axes, because the axis you're on decides which entire branch of the course (CT Fourier/Laplace vs. DT Fourier/Z) actually applies to it.",
+notes:[
+"A signal is any function that carries information by varying over an independent variable, usually time: x(t) for continuous-time (CT), x[n] for discrete-time (DT), where n is an integer index. CT signals arise from physical phenomena (voltage, sound pressure); DT signals arise from sampling a CT signal, or from inherently discrete data (daily stock prices).",
+"Periodic vs aperiodic: x(t) is periodic if x(t+T)=x(t) for all t and some T>0; the smallest such T is the fundamental period, and f0=1/T (or ω0=2π/T) is the fundamental frequency. A signal that never exactly repeats is aperiodic (e.g. a single decaying pulse).",
+"Energy vs power classification: energy E=∫|x(t)|²dt (or Σ|x[n]|² in DT). If 0<E<∞, x is an energy signal (power=0). If E=∞ but average power P=lim(1/2T)∫|x(t)|²dt is finite and nonzero, x is a power signal. Periodic and random signals are almost always power signals; finite-duration pulses are energy signals.",
+"Even/odd decomposition: any signal can be split as x(t)=xe(t)+xo(t), where xe(t)=[x(t)+x(-t)]/2 (even part) and xo(t)=[x(t)-x(-t)]/2 (odd part). This decomposition underlies why real, even signals have purely real Fourier/Laplace transforms -- a fact used constantly in circuit and filter analysis.",
+"<strong>Worked example:</strong> Classify x(t)=cos(2t): it is periodic with T=2π/2=π; since it's periodic and bounded, it is a power signal with average power 1/2 (using P=A²/2 for a cosine of amplitude A).",
+"<strong>Self-check:</strong> before computing anything, always ask 'CT or DT?' and 'periodic or not?' first -- these two answers alone tell you whether you'll eventually need the Fourier Series (periodic) or Fourier/Laplace Transform (aperiodic), and whether formulas use integrals or sums.",
+"<strong>Application:</strong> A transmitted RF carrier is treated as a power signal (it runs indefinitely), while a single detected radar pulse is treated as an energy signal -- this distinction changes which normalization (energy spectral density vs power spectral density) a communications engineer uses."
+],
+formulas:["T is fundamental period: x(t+T)=x(t) ∀t","E=∫|x(t)|²dt  (energy);  P=lim(1/2T)∫_{-T}^{T}|x(t)|²dt  (power)","xe(t)=[x(t)+x(-t)]/2 ,  xo(t)=[x(t)-x(-t)]/2"],
+questions:[
+{type:"Conceptual", q:"Explain why a signal cannot simultaneously have finite nonzero energy AND finite nonzero average power. What does it mean physically for a signal to have zero average power?"},
+{type:"ECE application", q:"A microphone captures a 30-second voice clip. Is this an energy signal or a power signal? Now consider an FM radio station broadcasting continuously, 24/7 -- classify that signal and explain why your answer differs from the voice clip."},
+{type:"Reasoning", q:"Is the sum of two periodic signals always periodic? Investigate x(t)=cos(t)+cos(πt) and explain, in terms of the ratio of the two periods, when a sum of periodics fails to be periodic."}
+]},
+
+{d:2,week:1,title:"Basic Operations on Signals",big:false,steps:4,
+diagram:"sigops",
+facts:[{tag:"KEY FACT", text:"Time shifting x(t-t0) delays the signal if t0>0 (shifts right) and advances it if t0<0 (shifts left)."}, {tag:"INSIGHT", text:"Time scaling x(at) compresses the signal along the time axis if |a|>1 and expands it if |a|<1 -- the opposite of what many students first guess."}],
+mcqs:[
+{q:"x(t-3) shifts the graph of x(t):", options:["Left by 3", "Right by 3", "Up by 3", "Compresses by 3"], correct:1, explain:"Subtracting a positive constant from t delays (right-shifts) the waveform."},
+{q:"x(2t) compared to x(t) is:", options:["Expanded by factor 2", "Compressed by factor 2", "Shifted by 2", "Reflected"], correct:1, explain:"Multiplying t by 2 makes events happen twice as fast in t, compressing the waveform along the time axis."},
+{q:"x(-t) represents:", options:["Time shifting", "Time scaling", "Time reversal (reflection about t=0)", "Amplitude scaling"], correct:2, explain:"Negating the time argument flips the signal about the vertical axis."},
+{q:"To sketch x(2t-4), the standard safe order is to:", options:["Shift first, then scale", "Scale first, then shift", "It never matters", "Reflect first always"], correct:1, explain:"Writing x(2t-4)=x(2(t-2)) shows: scale (compress by 2) FIRST, then shift right by 2 -- doing shift-then-scale on the raw argument gives the wrong answer."},
+{q:"Amplitude scaling y(t)=A·x(t) changes:", options:["The time axis", "The vertical/amplitude axis only", "The period only", "Nothing"], correct:1, explain:"Amplitude scaling multiplies the signal's values, stretching or compressing it vertically, with no effect on timing."}
+],
+core:"Every LTI system you'll analyze this term is built from signals that have been shifted, scaled, and reflected -- convolution itself (Day 6-7) is nothing more than systematically flipping one signal, sliding it, and multiplying, so getting these operations exactly right now prevents almost every convolution mistake later.",
+notes:[
+"Time shifting: y(t)=x(t-t0). If t0>0, the signal is delayed (moves right, later in time); if t0<0, it's advanced (moves left, earlier). In DT, y[n]=x[n-n0] shifts the sequence by n0 samples -- crucial for describing delay lines and digital filter taps.",
+"Time scaling: y(t)=x(at). If |a|>1, the signal is compressed (events happen faster/sooner); if 0<|a|<1, it's expanded (stretched out in time). This is the opposite of amplitude scaling and is the single most commonly reversed operation by beginners.",
+"Time reversal (reflection): y(t)=x(-t) flips the signal about the vertical axis t=0 -- what happened at t=+5 now happens at t=-5. This is the special case a=-1 of time scaling, and it is exactly the operation convolution performs on one of its two signals.",
+"Combined operations, e.g. y(t)=x(at-b), must be handled in the correct order: rewrite as x(a(t-b/a)) and apply SCALE first, then SHIFT (by b/a). Reversing this order (shift first, then scale) gives a different, incorrect result -- always factor out the coefficient of t before identifying the shift amount.",
+"<strong>Worked example:</strong> Sketch x(2t-4) given a known x(t). Rewrite: x(2t-4)=x(2(t-2)). Step 1 (scale): compress x(t) by factor 2 to get x(2t). Step 2 (shift): shift that compressed signal right by 2 to get x(2(t-2)). This two-step order always works.",
+"<strong>Self-check:</strong> a fast sanity test for shifting direction -- plug in the value of t that makes the argument zero. For x(t-3), argument=0 at t=3, so the feature that was at t=0 in x(t) now appears at t=3: confirms a RIGHT shift.",
+"<strong>Application:</strong> In digital communication receivers, time shifting models propagation delay and time scaling models clock-rate mismatches (Doppler effect) between transmitter and receiver -- both must be estimated and corrected before demodulation."
+],
+formulas:["Shift: y(t)=x(t-t0)  (t0>0 → delay/right-shift)","Scale: y(t)=x(at)  (|a|>1 → compression, |a|<1 → expansion)","Reversal: y(t)=x(-t)  (special case a=-1)"],
+questions:[
+{type:"Conceptual", q:"Explain, step by step and in the correct order, how you would sketch y(t)=x(-3t+6) given a plot of x(t). Why does order matter here?"},
+{type:"ECE application", q:"A digital delay line in an audio effects unit implements y[n]=x[n-D] for some integer D. Explain, using the shifting operation, what happens to a musical note if D is doubled, and why this operation alone cannot change the note's pitch (frequency content)."},
+{type:"Reasoning", q:"For a DISCRETE-TIME signal, x[2n] ('downsampling') is defined only at even n and is a genuinely different, lossy operation compared to CT time scaling x(2t). Explain why compressing a DT signal by keeping every other sample can lose information that CT time scaling never loses."}
+]},
+
+{d:3,week:1,title:"Elementary / Standard Signals",big:false,steps:5,
+diagram:"elemsignals",
+facts:[{tag:"KEY FACT", text:"The unit impulse δ(t) is zero everywhere except t=0, has infinite height there, and unit area -- it is the building block every LTI system's response is characterized against (Day 5)."}, {tag:"INSIGHT", text:"The unit step u(t) is the running integral of δ(t), and δ(t) is the derivative of u(t) -- step and impulse are a matched pair under integration/differentiation."}],
+mcqs:[
+{q:"The unit step function u(t) equals:", options:["1 for t<0, 0 for t≥0", "0 for t<0, 1 for t≥0", "1 everywhere", "0 everywhere except t=0"], correct:1, explain:"u(t) 'switches on' at t=0: it is 0 before and 1 from t=0 onward."},
+{q:"The defining sifting property of the impulse is:", options:["∫x(t)δ(t-t0)dt = x(t0)", "∫x(t)δ(t-t0)dt = 0", "δ(t)=u(t)", "δ(t) has amplitude 1"], correct:0, explain:"Multiplying any signal by a shifted impulse and integrating 'sifts out' exactly the value of the signal at that shift."},
+{q:"The unit ramp r(t) = t·u(t) is related to the step by:", options:["r(t) is the derivative of u(t)", "r(t) is the integral of u(t)", "They are identical", "r(t) is the reversal of u(t)"], correct:1, explain:"Integrating u(t) from -∞ to t gives t for t≥0 and 0 for t<0 -- exactly the ramp."},
+{q:"A real exponential signal x(t)=e^{at} with a>0 is:", options:["Decaying", "Growing without bound", "Periodic", "Always an energy signal"], correct:1, explain:"A positive exponent makes the signal grow unboundedly as t→∞ -- e.g. an unstable feedback loop."},
+{q:"A complex exponential e^{jω0t} can be expanded using Euler's formula as:", options:["cos(ω0t) - j sin(ω0t) only", "cos(ω0t) + j sin(ω0t)", "j·cos(ω0t)", "sin(ω0t)/cos(ω0t)"], correct:1, explain:"Euler's identity: e^{jθ}=cos θ + j sin θ, the foundation for representing sinusoids as rotating phasors."}
+],
+core:"These handful of elementary signals -- impulse, step, ramp, real and complex exponential, sinusoid -- are the alphabet of the entire course: every input, every impulse response, and every basis function in Fourier/Laplace analysis is built from exactly these pieces.",
+notes:[
+"The unit step u(t)=1 for t≥0 and 0 for t<0 models an idealized 'switch-on' event (e.g. applying a DC voltage at t=0). In discrete time, u[n]=1 for n≥0, 0 otherwise, with no ambiguity at the origin.",
+"The unit impulse δ(t) (Dirac delta) is defined by two properties: δ(t)=0 for t≠0, and ∫_{-∞}^{∞}δ(t)dt=1 (unit area concentrated at a single instant). Its most important property is SIFTING: ∫x(t)δ(t-t0)dt=x(t0) -- multiplying by a shifted impulse and integrating extracts one exact sample value.",
+"δ(t) and u(t) are related by calculus: u(t)=∫_{-∞}^{t}δ(τ)dτ (step is the running integral of impulse), and equivalently δ(t)=du/dt (impulse is the derivative of the step, in the generalized/distributional sense). The unit ramp r(t)=t·u(t) continues this ladder: r(t)=∫_{-∞}^{t}u(τ)dτ.",
+"The real exponential x(t)=Ce^{at} decays toward 0 as t→∞ if a<0 (models capacitor discharge, RC circuit transients) and grows unbounded if a>0 (models instability). The complex exponential e^{jω0t}=cos(ω0t)+j sin(ω0t) (Euler's formula) traces a unit circle in the complex plane and is THE basis function of Fourier analysis.",
+"<strong>Worked example:</strong> Evaluate ∫_{-∞}^{∞} (t²+3) δ(t-2) dt using sifting: substitute t=2 directly into (t²+3), giving 4+3=7. No integration is actually performed -- sifting always reduces to plug-in-and-evaluate.",
+"<strong>Self-check:</strong> in DT, the impulse δ[n] is simply 1 at n=0 and 0 elsewhere -- an ordinary, well-defined sequence (unlike its CT counterpart, which is a generalized function/limit concept). Don't import CT intuition about 'infinite height' into the DT impulse.",
+"<strong>Application:</strong> An impulse δ(t) is the idealized test input engineers use to characterize any black-box LTI system in one shot (Day 5); the unit step models a switch closing in a circuit, and its system response (the 'step response') is a standard specification (rise time, overshoot) in control and communication system datasheets."
+],
+formulas:["u(t): 0 for t<0, 1 for t≥0","∫x(t)δ(t-t0)dt = x(t0)  (sifting property)","u(t)=∫δ(τ)dτ ,  δ(t)=du/dt ,  e^{jω0t}=cos(ω0t)+j sin(ω0t)"],
+questions:[
+{type:"Conceptual", q:"Explain why δ(t) cannot be an ordinary function in the everyday sense (no ordinary function is zero everywhere except one point yet integrates to 1), and what 'generalized function' or 'distribution' means in this context."},
+{type:"ECE application", q:"A power supply is switched on at t=0, producing v(t)=5u(t) volts. Using the ramp and step relationship, sketch (in words) what ∫v(t)dt looks like, and identify a real circuit quantity this integral could represent (hint: charge, or capacitor voltage under constant current)."},
+{type:"Reasoning", q:"Using Euler's formula, express cos(ω0t) purely in terms of complex exponentials e^{jω0t} and e^{-jω0t}. Why is this decomposition exactly what allows a real-valued sinusoid to be analyzed using the (complex) exponential Fourier series in Week 3?"}
+]},
+
+{d:4,week:1,title:"Classification of Systems",big:true,steps:6,
+diagram:"sysclass",
+facts:[{tag:"KEY FACT", text:"A system is LINEAR if it obeys superposition: response to a·x1+b·x2 must equal a·y1+b·y2, for ALL a, b, x1, x2 -- both additivity and homogeneity must hold."}, {tag:"CAUTION", text:"y(t)=x(t)+1 LOOKS simple but is NOT linear -- test with x=0: output is 1, not 0, violating homogeneity. Always test the zero-input case first as a quick linearity filter."}],
+mcqs:[
+{q:"A system is time-invariant if:", options:["Its output never changes", "A shifted input produces an identically shifted output", "It only works for periodic inputs", "It has no memory"], correct:1, explain:"Time-invariance means x(t-t0)→y(t-t0): delaying the input by t0 just delays the output by t0, with no other change."},
+{q:"A system is causal if:", options:["The output at time t depends only on present and past inputs", "The output depends on future inputs", "It is always stable", "It is memoryless"], correct:0, explain:"Causality (realizability) forbids the output from depending on inputs that haven't happened yet."},
+{q:"A memoryless (static) system's output at time t depends on:", options:["Only x(t) at that same instant t", "All past values of x", "Future values of x", "The system's initial conditions only"], correct:0, explain:"y(t)=2x(t) is memoryless; y(t)=x(t-1) is NOT (it depends on a past value, so it has memory)."},
+{q:"BIBO stability means:", options:["Bounded input always produces bounded output", "The system has zero output for zero input", "The system is linear", "The output grows without bound"], correct:0, explain:"Bounded-Input-Bounded-Output stability guarantees that if |x(t)|<∞ for all t, then |y(t)|<∞ for all t too."},
+{q:"y(t) = x(2t) (time scaling) as a system is:", options:["Time-invariant", "Time-varying", "Unstable", "Non-causal only if scaled by a negative number"], correct:1, explain:"Shifting the input x(t-t0) and comparing to shifting the output shows a mismatch -- the compression system is time-VARYING, a classic trap."}
+],
+core:"Linearity and time-invariance are the two properties that together define 'LTI' -- and LTI is the single most powerful assumption in this entire course, because it's the ONLY class of system fully characterized by one function (the impulse response) and solvable with convolution, Fourier, and Laplace tools all at once.",
+notes:[
+"LINEARITY requires superposition to hold exactly: for inputs x1→y1 and x2→y2, the system is linear iff (a·x1+b·x2) → (a·y1+b·y2) for every choice of constants a, b. This bundles two sub-properties: additivity (x1+x2→y1+y2) and homogeneity/scaling (a·x1→a·y1). A fast disqualifying test: if x(t)=0 doesn't produce y(t)=0, the system is automatically nonlinear.",
+"TIME-INVARIANCE requires that delaying the input by any t0 produces the exact same output shape, just delayed by that same t0: x(t-t0)→y(t-t0). Systems whose defining equation explicitly contains 't' outside of x (like y(t)=t·x(t), or a time-scaling y(t)=x(2t)) are almost always time-VARYING.",
+"CAUSALITY: y(t) depends only on x(τ) for τ≤t (present and past, never future). All real-time physical systems (a filter, an amplifier) MUST be causal; non-causal systems (e.g. y[n]=x[n+1]) can only be implemented with a processing delay, or exist purely for offline signal processing.",
+"STABILITY (BIBO): every bounded input (|x(t)|≤Mx<∞) must produce a bounded output (|y(t)|≤My<∞). For LTI systems specifically, this reduces to a clean, checkable condition on the impulse response: BIBO-stable ⟺ ∫|h(t)|dt<∞ (absolutely integrable impulse response) -- this single test will resurface constantly once Day 5's h(t) is introduced.",
+"MEMORY: a system is memoryless (static) if y(t) depends only on x(t) at the SAME instant t (e.g. a resistor, y(t)=Rx(t)); otherwise it has memory (dynamic), depending on past and/or future values (e.g. any system with a delay, derivative, or integral, like a capacitor or inductor).",
+"<strong>Worked example:</strong> Test y(t)=x(t)·cos(t) for linearity and time-invariance. Linearity: a·x1(t)cos(t)+b·x2(t)cos(t) = a·y1(t)+b·y2(t) — holds, so it IS linear. Time-invariance: shift input, x(t-t0)cos(t) ≠ x(t-t0)cos(t-t0) (the output for a delayed input isn't simply the old output delayed) — so it is time-VARYING. This is a linear but time-varying system, a common exam trap.",
+"<strong>Application:</strong> An amplitude modulator in a communication transmitter, y(t)=x(t)·cos(ωct), is exactly this linear-but-time-varying system -- which is precisely WHY modulation can shift a signal's frequency content (something no LTI system can ever do, since LTI systems only scale existing frequencies, never create new ones -- see Day 14)."
+],
+formulas:["Linear: a·x1+b·x2 → a·y1+b·y2  (∀ a,b)","Time-invariant: x(t-t0) → y(t-t0)","BIBO-stable (LTI): ∫_{-∞}^{∞}|h(t)|dt < ∞"],
+questions:[
+{type:"Conceptual", q:"Prove that y(t)=x(t)+5 is NOT linear by explicitly showing which sub-property (additivity or homogeneity) fails, using specific numeric inputs."},
+{type:"ECE application", q:"An RF power amplifier is designed to be memoryless and time-invariant, but its real characteristic is y(t)=x(t)+0.01·x(t)³ (a nonlinear 'compression' term). Explain, without doing Fourier math yet, why engineers still care about linearity even though a small nonlinearity like this is common in real amplifiers."},
+{type:"Reasoning", q:"Is the DT ideal predictor system y[n]=x[n+1] linear? Is it time-invariant? Is it causal? Justify each answer, and explain in what kind of processing scenario (real-time vs. stored/offline data) a non-causal system like this could still be legitimately used."}
+]},
+
+{d:5,week:1,title:"LTI Systems & the Impulse Response",big:false,steps:5,
+diagram:"ltiimpulse",
+facts:[{tag:"KEY FACT", text:"An LTI system is completely and uniquely characterized by its impulse response h(t) -- the output when the input is exactly δ(t)."}, {tag:"INSIGHT", text:"Once h(t) is known, the output for ANY input x(t) whatsoever is found by convolution: y(t)=x(t)*h(t) -- this single fact is why Days 6-7 exist."}],
+mcqs:[
+{q:"The impulse response h(t) of an LTI system is defined as:", options:["The output when input is u(t)", "The output when input is δ(t)", "The system's transfer function", "The input signal itself"], correct:1, explain:"h(t) is, by definition, the system's response to a unit impulse applied at t=0."},
+{q:"For an LTI system, knowing h(t) lets you find the output for:", options:["Only impulse inputs", "Only sinusoidal inputs", "ANY arbitrary input x(t)", "Only periodic inputs"], correct:2, explain:"Because any x(t) can be represented as a (continuous) sum of scaled, shifted impulses, and the system is linear and time-invariant, h(t) alone determines the response to every possible input."},
+{q:"Why does time-invariance matter for characterizing a system by h(t) alone?", options:["It doesn't matter", "It guarantees the response to a shifted impulse δ(t-τ) is just h(t-τ)", "It only matters for DT systems", "It guarantees stability"], correct:1, explain:"Without time-invariance, the response to each shifted impulse δ(t-τ) could be a DIFFERENT function of t, and one h(t) would not suffice."},
+{q:"A system's causality can be read directly off h(t) by checking:", options:["h(t)=0 for t<0", "h(t)=0 for t>0", "h(0)=1", "h(t) is bounded"], correct:0, explain:"A causal LTI system cannot respond before the impulse arrives at t=0, so its impulse response must vanish for all negative time."},
+{q:"A system's BIBO stability can be read directly off h(t) by checking:", options:["h(t) is periodic", "∫|h(t)|dt is finite", "h(t)=δ(t)", "h(t) is causal"], correct:1, explain:"Absolute integrability of the impulse response is the exact necessary-and-sufficient BIBO stability test for LTI systems."}
+],
+core:"This is the single most important idea in the entire course: linearity plus time-invariance together mean ONE experiment -- hit the system with an impulse and record what comes out -- fully determines how the system will respond to literally any signal you ever feed it, forever.",
+notes:[
+"The impulse response h(t) is the system's output when x(t)=δ(t). This is not just a convenient test signal -- because δ(t) is the 'atom' every other signal can be built from (via the sifting property), h(t) is genuinely enough information to predict the output for ANY input.",
+"The reasoning chain: any x(t) can be written as x(t)=∫x(τ)δ(t-τ)dτ (this is just the sifting property in reverse). By LINEARITY, the system's response to this integral (sum) of scaled impulses is the same integral (sum) of the corresponding scaled RESPONSES. By TIME-INVARIANCE, the response to δ(t-τ) is exactly h(t-τ). Combining both gives y(t)=∫x(τ)h(t-τ)dτ -- the convolution integral, derived directly rather than pulled from nowhere.",
+"Causal LTI systems have h(t)=0 for all t<0 -- the system physically cannot 'respond' to an impulse before that impulse has occurred. This gives an instant causality check on any impulse response you're handed.",
+"BIBO-stable LTI systems have ∫_{-∞}^{∞}|h(t)|dt<∞ (absolutely integrable h(t)); an unbounded or non-decaying h(t), like h(t)=u(t) (a pure integrator) or h(t)=e^{t}u(t) (growing exponential), is BIBO-unstable.",
+"<strong>Worked example:</strong> An LTI system has h(t)=e^{-2t}u(t). Causal? Yes -- h(t)=0 for t<0. Stable? ∫_0^∞ e^{-2t}dt = 1/2, finite, so YES, BIBO-stable. This single function h(t) also tells you (via Day 16's Laplace transform) the system's pole location and frequency response.",
+"<strong>Self-check:</strong> resist the urge to think of h(t) as 'just another signal' -- it plays a structurally different role: it's the DNA of the system itself, not a signal passing through it. Convolving x(t) with h(t) is how that DNA gets 'expressed' for a specific input.",
+"<strong>Application:</strong> Loudspeaker and room acoustics engineers measure a room's impulse response with a test pop/sweep, then convolve ANY audio with that h(t) to simulate exactly how that room would color the sound -- this is literally how 'convolution reverb' plugins work."
+],
+formulas:["h(t) = system response to δ(t)","y(t) = x(t) * h(t) = ∫x(τ)h(t-τ)dτ  (derived from linearity + time-invariance)","Causal ⟺ h(t)=0 for t<0;   BIBO-stable ⟺ ∫|h(t)|dt<∞"],
+questions:[
+{type:"Conceptual", q:"Walk through, in your own words, exactly where LINEARITY is used and exactly where TIME-INVARIANCE is used in the derivation of y(t)=∫x(τ)h(t-τ)dτ from x(t)=∫x(τ)δ(t-τ)dτ. Why would this derivation fail for a system that is linear but NOT time-invariant?"},
+{type:"ECE application", q:"An equalizer in an audio system is designed as an LTI filter with impulse response h(t). Explain why a designer can fully specify and test this equalizer's behavior in the lab using only a single impulse (or its DT equivalent, a unit sample) rather than testing it against every possible music track."},
+{type:"Reasoning", q:"h(t)=δ(t) (the 'do-nothing' impulse response) -- what is y(t) for an arbitrary x(t) in this case? Use the convolution formula to justify your answer, and explain what physical system (if any) this represents."}
+]},
+
+{d:6,week:2,title:"Discrete-Time Convolution (Convolution Sum)",big:true,steps:6,
+diagram:"dtconv",
+facts:[{tag:"KEY FACT", text:"The convolution sum y[n] = Σ x[k]h[n-k] computes an LTI system's output by flipping h[k], sliding it across x[k], multiplying overlapping samples, and summing."}, {tag:"INSIGHT", text:"Convolution is commutative: x[n]*h[n] = h[n]*x[n] -- you may always flip and slide whichever of the two sequences is more convenient."}],
+mcqs:[
+{q:"The DT convolution sum is defined as y[n] =", options:["Σ x[k]+h[n-k]", "Σ x[k]h[n-k]", "Σ x[n]h[n]", "x[n]/h[n]"], correct:1, explain:"Convolution sums the products of x[k] with the TIME-REVERSED-AND-SHIFTED h[n-k], over all k."},
+{q:"In the 'flip and slide' procedure, which signal is conventionally flipped?", options:["x[k]", "h[k], to form h[n-k]", "Neither -- both stay fixed", "Both are flipped simultaneously"], correct:1, explain:"By convention h[k] is time-reversed to h[-k] then shifted by n to form h[n-k], while x[k] remains fixed as k varies."},
+{q:"If x[n] has length Lx and h[n] has length Lh (both finite, starting at n=0), the convolution y[n] has length:", options:["Lx + Lh", "Lx + Lh - 1", "max(Lx,Lh)", "Lx × Lh"], correct:1, explain:"Convolving two finite sequences of length Lx and Lh always produces a result of length Lx+Lh-1."},
+{q:"Convolving any x[n] with the unit impulse δ[n] gives:", options:["0", "δ[n]", "x[n] unchanged", "x[n]+1"], correct:2, explain:"δ[n] is the identity element of convolution: x[n]*δ[n]=x[n] exactly, by the sifting property applied in DT."},
+{q:"Convolution is associative, meaning:", options:["(x*h1)*h2 = x*(h1*h2)", "x*h = h+x", "x*h is never equal to h*x", "Associativity doesn't apply to convolution"], correct:0, explain:"This lets two cascaded LTI systems be replaced, for analysis purposes, by one system whose impulse response is h1*h2."}
+],
+core:"Convolution is THE computational engine of LTI system theory: once you can mechanically flip, slide, multiply, and sum, you can find the exact output of any LTI system to any input -- this is the DT half of the single most-tested skill in a signals course.",
+notes:[
+"The convolution sum y[n] = Σ_{k=-∞}^{∞} x[k]h[n-k], written y[n]=x[n]*h[n], gives the output of an LTI system with impulse response h[n] to input x[n]. Mechanically it has four steps for each output index n: (1) flip h[k] to get h[-k], (2) shift by n to get h[n-k], (3) multiply pointwise with x[k], (4) sum all the products -- repeat for every n you need.",
+"For finite-length sequences, the sum only runs over the overlap where both x[k] and h[n-k] are nonzero -- this makes hand computation tractable: tabulate x[k] and h[n-k] side by side for each n and sum only the overlapping nonzero products.",
+"The identity property: x[n]*δ[n]=x[n] (convolving with the unit impulse leaves a signal unchanged), and more generally x[n]*δ[n-n0]=x[n-n0] (convolving with a SHIFTED impulse just shifts the signal) -- this is the DT sifting property in convolution form and a fast sanity-check tool.",
+"For two finite sequences of length Lx and Lh, y[n] has length Lx+Lh-1 -- e.g. two length-3 sequences convolve to a length-5 result. This length formula is a quick way to check whether a computed convolution result is even plausible.",
+"<strong>Worked example:</strong> x[n]={1,2,3} (n=0,1,2), h[n]={1,1} (n=0,1). y[0]=x[0]h[0]=1. y[1]=x[0]h[1]+x[1]h[0]=1+2=3. y[2]=x[1]h[1]+x[2]h[0]=2+3=5. y[3]=x[2]h[1]=3. Result: y[n]={1,3,5,3} for n=0,1,2,3 -- length 3+2-1=4. ✓ matches the length formula.",
+"<strong>Self-check:</strong> after computing each y[n], verify against the length formula (Lx+Lh-1) and check that the very first and very last output samples equal x[0]h[0] and x[Lx-1]h[Lh-1] respectively -- a fast way to catch an off-by-one indexing error before it propagates.",
+"<strong>Application:</strong> A digital FIR (Finite Impulse Response) filter, used constantly in audio/telecom DSP chips, computes its output as literally a convolution sum of the input samples with the filter's fixed coefficient sequence h[n] -- this is not an analogy, it is the exact operation the hardware performs sample by sample."
+],
+formulas:["y[n] = x[n]*h[n] = Σ_{k=-∞}^{∞} x[k]h[n-k]","x[n]*δ[n]=x[n] ,  x[n]*δ[n-n0]=x[n-n0]","length(y) = length(x) + length(h) - 1  (finite sequences)"],
+questions:[
+{type:"Conceptual", q:"Explain, mechanically, why flipping h[k] (rather than leaving it un-flipped) is the necessary step in convolution -- what would (incorrectly) computing Σx[k]h[k+n] instead represent, and why is that a different operation (correlation, Day 9)?"},
+{type:"ECE application", q:"A 3-tap FIR filter has coefficients h[n]={0.25, 0.5, 0.25}. Compute, by hand, the output y[n] for input x[n]={1,1,1,1} (n=0..3), and describe in words what this particular h[n] does to the input (hint: compare it to a moving average)."},
+{type:"Reasoning", q:"If x[n] is an infinite-length signal (e.g. x[n]=u[n], the unit step) and h[n] is a finite-length filter, is y[n]=x[n]*h[n] finite or infinite in length? Explain how the summation limits in the convolution sum change compared to the finite-finite case in the worked example."}
+]},
+
+{d:7,week:2,title:"Continuous-Time Convolution (Convolution Integral)",big:true,steps:6,
+diagram:"ctconv",
+facts:[{tag:"KEY FACT", text:"The convolution integral y(t)=∫x(τ)h(t-τ)dτ is the exact CT analogue of the DT convolution sum -- same flip-slide-multiply-integrate procedure, with integration replacing summation."}, {tag:"CAUTION", text:"The integration limits are NOT always -∞ to ∞ in practice -- for causal signals (zero for t<0), the effective limits collapse to 0 to t, which is where most computational mistakes happen."}],
+mcqs:[
+{q:"The CT convolution integral is y(t) =", options:["∫x(τ)h(t-τ)dτ", "∫x(t)h(t)dt", "x(t)+h(t)", "d/dt[x(t)h(t)]"], correct:0, explain:"Exactly parallel to the DT sum, but with continuous integration over the dummy variable τ."},
+{q:"If both x(t) and h(t) are causal (zero for t<0), the convolution integral's effective limits become:", options:["-∞ to ∞", "0 to t", "-t to t", "0 to ∞ always"], correct:1, explain:"Causality on both signals forces the integrand to vanish outside 0≤τ≤t, collapsing the limits to exactly that range."},
+{q:"x(t)*δ(t-t0) equals:", options:["x(t)", "x(t-t0)", "δ(t-t0)", "0"], correct:1, explain:"Convolving with a shifted impulse reproduces the signal shifted by that same amount -- the CT sifting-in-convolution property."},
+{q:"Convolving a rectangular pulse of width 1 with ITSELF produces:", options:["Another rectangular pulse", "A triangular pulse of width 2", "An impulse", "A sinusoid"], correct:1, explain:"This is a classic worked result: rect*rect gives a triangle whose base is the sum of the two widths."},
+{q:"The distributive property of convolution states:", options:["x*(h1+h2) = x*h1 + x*h2", "x*(h1·h2) = (x*h1)·(x*h2)", "x*h = h-x", "x*(h1+h2) = x·h1+x·h2 always fails"], correct:0, explain:"Convolution distributes over addition -- this models two LTI systems combined in PARALLEL as one system whose impulse response is h1+h2."}
+],
+core:"Continuous-time convolution is the mathematical machinery behind circuit step/impulse responses, RF channel effects, and acoustic reverberation -- almost every physically continuous LTI system you'll design or analyze in ECE gets solved with exactly this integral.",
+notes:[
+"y(t) = x(t)*h(t) = ∫_{-∞}^{∞} x(τ)h(t-τ)dτ. The graphical procedure mirrors DT exactly: flip h(τ) to get h(-τ), slide it by t to get h(t-τ), multiply pointwise against x(τ), then find the AREA under the product curve (integrate) -- repeat conceptually as t sweeps from -∞ to ∞.",
+"When both signals are causal (x(t)=0 and h(t)=0 for t<0, the overwhelmingly common case for real physical systems), the nonzero overlap of x(τ) and h(t-τ) restricts to 0≤τ≤t, so y(t)=∫_0^t x(τ)h(t-τ)dτ for t≥0, and y(t)=0 for t<0.",
+"Key properties carry over directly from DT: commutative (x*h=h*x), associative ((x*h1)*h2=x*(h1*h2), models cascaded/series LTI systems as one equivalent system h1*h2), distributive over addition (x*(h1+h2)=x*h1+x*h2, models parallel LTI systems), and identity (x(t)*δ(t)=x(t), x(t)*δ(t-t0)=x(t-t0)).",
+"<strong>Worked example:</strong> Let x(t)=u(t) and h(t)=e^{-t}u(t) (both causal). For t≥0: y(t)=∫_0^t (1)(e^{-(t-τ)})dτ = e^{-t}∫_0^t e^{τ}dτ = e^{-t}(e^t-1) = 1-e^{-t}. So y(t)=(1-e^{-t})u(t) -- this is exactly the familiar RC-circuit step response shape.",
+"<strong>Self-check:</strong> before integrating, always sketch (mentally or on paper) which values of τ make BOTH x(τ) and h(t-τ) simultaneously nonzero -- getting these overlap limits right is 90% of the difficulty in a convolution integral; the algebra afterward is usually routine.",
+"<strong>Application:</strong> The RC low-pass filter's step response (1-e^{-t/RC})u(t) derived above is the textbook model for how quickly a digital logic gate's output can transition -- convolution with the circuit's own impulse response directly predicts rise-time and settling behavior used in timing analysis."
+],
+formulas:["y(t) = x(t)*h(t) = ∫_{-∞}^{∞} x(τ)h(t-τ)dτ","Causal x,h: y(t) = ∫_0^t x(τ)h(t-τ)dτ  for t≥0 ,  y(t)=0 for t<0","x(t)*δ(t-t0) = x(t-t0)"],
+questions:[
+{type:"Conceptual", q:"Explain why, for two causal signals, the convolution integral's limits collapse from (-∞,∞) to (0,t). What physically would it mean if this collapse did NOT happen -- i.e. if the system's output depended on x(τ) for τ>t?"},
+{type:"ECE application", q:"An antenna's impulse response h(t) models multipath echoes in a wireless channel. If the transmitted signal is x(t), explain in plain language what y(t)=x(t)*h(t) represents at the receiver, and why a channel with a 'longer' h(t) (more delayed echoes) causes more inter-symbol interference in digital communication."},
+{type:"Reasoning", q:"Two identical RC low-pass filters are placed in cascade (series). Using the associative property, explain how you would find the single equivalent impulse response of the combined system, and what this implies about needing to convolve h(t) with itself once versus never at all when analyzing the two-stage circuit."}
+]},
+
+{d:8,week:2,title:"Properties of Convolution & LTI Interconnections",big:false,steps:5,
+diagram:"convprops",
+facts:[{tag:"KEY FACT", text:"Two LTI systems in SERIES (cascade) combine into one system with impulse response h1(t)*h2(t) -- and remarkably, the ORDER of cascaded LTI systems doesn't matter (commutativity)."}, {tag:"INSIGHT", text:"Two LTI systems in PARALLEL combine into one system with impulse response h1(t)+h2(t) -- convolution's distributive property, applied to system block diagrams rather than raw signals."}],
+mcqs:[
+{q:"Two LTI systems h1 and h2 in series (cascade) have an overall impulse response of:", options:["h1(t)+h2(t)", "h1(t)*h2(t)", "h1(t)-h2(t)", "max(h1,h2)"], correct:1, explain:"Cascading systems corresponds exactly to convolving their individual impulse responses, via convolution's associative property."},
+{q:"Two LTI systems h1 and h2 in parallel (same input, outputs summed) have an overall impulse response of:", options:["h1(t)*h2(t)", "h1(t)+h2(t)", "h1(t)/h2(t)", "0"], correct:1, explain:"Parallel combination sums the individual responses, directly reflecting convolution's distributive property over addition."},
+{q:"Swapping the order of two cascaded LTI systems (h1 then h2, vs h2 then h1):", options:["Changes the overall output", "Never changes the overall output, since convolution is commutative", "Is only valid for causal systems", "Only works for stable systems"], correct:1, explain:"Because h1*h2=h2*h1, LTI cascade order is fully interchangeable -- a genuinely useful design freedom, e.g. in filter/amplifier ordering."},
+{q:"An LTI system h(t) is invertible if there exists h_inv(t) such that:", options:["h(t)*h_inv(t) = δ(t)", "h(t)+h_inv(t) = 0", "h(t)·h_inv(t) = 1", "h_inv(t) = h(-t) always"], correct:0, explain:"Convolving a system with its inverse must produce the identity element of convolution, δ(t), meaning the cascade does nothing overall."},
+{q:"If h1 is BIBO-stable and h2 is BIBO-stable, the cascade h1*h2 is:", options:["Always unstable", "Always BIBO-stable", "Stability cannot be determined", "Only stable if h1=h2"], correct:1, explain:"∫|h1*h2|dt ≤ (∫|h1|dt)(∫|h2|dt) < ∞ when both factors are finite, so cascading stable LTI systems preserves stability."}
+],
+core:"These interconnection rules are why block-diagram thinking works at all in ECE: a complicated signal chain of filters, amplifiers, and channels can always be collapsed algebraically into ONE equivalent impulse response using nothing more than convolution's own algebraic properties.",
+notes:[
+"SERIES (cascade): output of system 1 feeds directly into system 2. Overall impulse response h(t)=h1(t)*h2(t), which follows directly from associativity: y=(x*h1)*h2=x*(h1*h2). This is a genuinely powerful design tool -- a designer can analyze one combined transfer characteristic instead of two separate stages.",
+"Cascade order is interchangeable: h1*h2=h2*h1 means physically swapping the ORDER of two cascaded LTI blocks (e.g. an amplifier then a filter, vs. a filter then an amplifier) produces the exact same overall system -- provided both remain LTI (this breaks down completely once nonlinearity, e.g. amplifier saturation, is introduced).",
+"PARALLEL: the same input x(t) feeds both systems simultaneously, and their outputs are summed. Overall impulse response h(t)=h1(t)+h2(t), directly from distributivity: x*h1+x*h2=x*(h1+h2). This models, e.g., a signal split across two filter paths (say, a low-pass and a band-pass branch) that are recombined.",
+"INVERTIBILITY: a system h(t) is invertible if some h_inv(t) exists with h(t)*h_inv(t)=δ(t) -- cascading the system with its inverse gives back exactly the original input unchanged (the identity system). Not every system is invertible (e.g. a system that discards information, like an ideal rectifier |x(t)|, has no LTI inverse).",
+"<strong>Worked example:</strong> System A has h1(t)=δ(t-1) (pure 1-second delay); System B has h2(t)=δ(t-2) (pure 2-second delay). Cascade: h1*h2 = δ(t-1)*δ(t-2) = δ(t-3) (delays add, using the shift-identity property twice) -- confirming that cascading two delays gives one larger delay, exactly as physical intuition demands.",
+"<strong>Application:</strong> A receiver's signal chain -- antenna, bandpass filter, low-noise amplifier, mixer -- is analyzed by ECE engineers as a cascade of LTI blocks precisely so that the WHOLE chain's impulse response (and later, frequency response, Day 20) can be computed once via successive convolutions rather than tracking every stage's output separately."
+],
+formulas:["Series/cascade: h(t) = h1(t)*h2(t)  (order-independent: h1*h2=h2*h1)","Parallel: h(t) = h1(t)+h2(t)","Invertible: h(t)*h_inv(t) = δ(t)"],
+questions:[
+{type:"Conceptual", q:"Prove that cascade order doesn't matter for LTI systems using ONLY the commutative property of convolution -- state clearly what physical assumption (LTI) is required for this proof to remain valid."},
+{type:"ECE application", q:"A telecom receiver chain has a bandpass filter (h1) followed by an amplifier (h2), both LTI. An engineer proposes swapping their physical order to simplify the PCB layout. Under the idealized LTI model this is provably fine -- but name one realistic, practical (not purely mathematical) reason a real RF engineer might still object to swapping this order."},
+{type:"Reasoning", q:"Is the ideal differentiator system (output = dx/dt) invertible? If so, describe (in words, without necessarily computing it formally) what its inverse system does, and connect this to the step/impulse relationship from Day 3."}
+]},
+
+{d:9,week:2,title:"Correlation of Signals",big:false,steps:4,
+diagram:"correlation",
+facts:[{tag:"KEY FACT", text:"Cross-correlation Rxy(τ)=∫x(t)y(t+τ)dt measures the SIMILARITY between two signals as a function of relative time shift τ -- unlike convolution, there is NO flipping involved."}, {tag:"INSIGHT", text:"Autocorrelation (correlating a signal with itself) always peaks at τ=0 -- a signal is always maximally similar to an un-shifted copy of itself."}],
+mcqs:[
+{q:"The key mechanical difference between correlation and convolution is:", options:["Correlation uses summation, convolution uses integration", "Correlation does NOT flip one of the signals; convolution does", "They are exactly the same operation", "Correlation only works on periodic signals"], correct:1, explain:"Both slide one signal across the other, but correlation skips the time-reversal step that convolution requires."},
+{q:"The autocorrelation of a signal x(t) always achieves its MAXIMUM value at:", options:["τ=∞", "τ=0", "τ=-1", "It depends entirely on the signal"], correct:1, explain:"A signal correlated with an exact, un-shifted copy of itself has the highest possible similarity, giving the peak at zero lag."},
+{q:"Cross-correlation is used in radar/sonar systems primarily to:", options:["Amplify the signal", "Detect the time delay between a transmitted pulse and its received echo", "Filter out noise completely", "Change the signal's frequency"], correct:1, explain:"The lag τ at which Rxy(τ) peaks directly reveals the round-trip delay to a target, from which range is computed."},
+{q:"For real signals, Rxy(τ) and Ryx(τ) are related by:", options:["Rxy(τ) = Ryx(τ)", "Rxy(τ) = Ryx(-τ)", "They are always equal to zero", "Rxy(τ) = -Ryx(τ)"], correct:1, explain:"Swapping which signal is 'shifted' reverses the sign of the lag, so Rxy(τ)=Ryx(-τ) -- correlation is NOT commutative in the way convolution is."},
+{q:"Correlation can be computed from convolution using the relationship:", options:["Rxy(τ) = x(τ)*y(τ)", "Rxy(τ) = x(-τ)*y(τ)", "Rxy(τ) = x(τ)+y(τ)", "There is no relationship"], correct:1, explain:"Pre-flipping x(t) to x(-t) before convolving with y(t) exactly reproduces cross-correlation -- correlation is 'convolution without the built-in flip', so flipping one signal manually recovers it."}
+],
+core:"Correlation answers a fundamentally different question than convolution -- not 'what comes out of this system' but 'how alike are these two signals, and by how much are they offset' -- which is exactly the question radar ranging, GPS timing, and digital receiver synchronization all need answered.",
+notes:[
+"Cross-correlation: Rxy(τ)=∫_{-∞}^{∞} x(t)y(t+τ)dt (continuous-time; for DT, sum replaces integral). It measures how well y(t), shifted by τ, matches x(t), for every possible lag τ. Critically, NEITHER signal is time-reversed -- this is the key mechanical distinction from convolution.",
+"Autocorrelation Rxx(τ)=∫x(t)x(t+τ)dt is the special case y=x. Rxx(τ) is always maximized at τ=0 (a signal matches an unshifted copy of itself better than any shifted copy), and for real signals Rxx(τ)=Rxx(-τ) (it is an EVEN function of lag).",
+"Correlation and convolution ARE related: Rxy(τ) = x(-τ)*y(τ). This means every correlation calculation can be performed mechanically using the same flip-slide-multiply-integrate machinery from Days 6-7, simply by pre-flipping one signal before convolving -- so no new computational skill is actually required, only a new INTERPRETATION.",
+"Correlation is not commutative the way convolution is: Rxy(τ)=Ryx(-τ), not Rxy(τ)=Ryx(τ). Swapping which signal you call 'x' and which you call 'y' flips the sign of the lag axis, since 'how much does y lag behind x' and 'how much does x lag behind y' are naturally opposite questions.",
+"<strong>Worked example:</strong> A radar transmits a known pulse p(t) and receives echo r(t)=A·p(t-td)+noise. Computing the cross-correlation Rpr(τ) produces a sharp peak located at τ=td (since the echo most resembles a τ=td-shifted copy of the transmitted pulse) -- reading off the peak location directly gives the round-trip delay td, and hence target range = c·td/2.",
+"<strong>Application:</strong> Beyond radar, cross-correlation is the core mechanism behind GPS receivers locking onto satellite signals (correlating the received signal against known pseudorandom codes to find timing offset), and behind digital modem synchronization (finding exactly where a known 'preamble' sequence starts within a noisy received bitstream)."
+],
+formulas:["Rxy(τ) = ∫x(t)y(t+τ)dt   (cross-correlation)","Rxx(τ) = ∫x(t)x(t+τ)dt ,  peak always at τ=0,  Rxx(τ)=Rxx(-τ)","Rxy(τ) = x(-τ)*y(τ)   (correlation via convolution)"],
+questions:[
+{type:"Conceptual", q:"Explain, using the formula Rxy(τ)=x(-τ)*y(τ), exactly which one signal gets flipped in a correlation calculation, and why -- unlike convolution -- this flip is NOT considered part of the 'meaning' of correlation, just a computational trick to reuse convolution machinery."},
+{type:"ECE application", q:"A GPS receiver must identify which satellite a faint signal is coming from and its exact timing offset, using cross-correlation against a bank of known reference codes. Explain, in terms of the correlation peak, what a HIGH peak (vs. a flat, low correlation everywhere) tells the receiver about whether it has found the right satellite code."},
+{type:"Reasoning", q:"If x(t) is pure white noise (random, uncorrelated with itself at any nonzero lag), describe qualitatively what its autocorrelation function Rxx(τ) looks like for τ≠0 versus τ=0, and explain why this specific shape makes noise-like signals useful as radar/sonar test pulses (hint: a 'sharp' autocorrelation peak gives precise ranging)."}
+]},
+
+{d:10,week:2,title:"Differential & Difference Equation Representation",big:false,steps:5,
+diagram:"diffeq",
+facts:[{tag:"KEY FACT", text:"An Nth-order LTI system can equivalently be described by a linear constant-coefficient differential equation (CT) or difference equation (DT) relating y(t)/y[n] and its derivatives/past values to x(t)/x[n]."}, {tag:"INSIGHT", text:"Solving these equations requires BOTH a natural (homogeneous, zero-input) response from initial conditions AND a forced (particular, zero-state) response driven by the input -- total response = natural + forced."}],
+mcqs:[
+{q:"A linear constant-coefficient differential equation description of an LTI system relates:", options:["x(t) to itself only", "y(t) and its derivatives to x(t) and its derivatives", "Only initial conditions", "The system's stability margin"], correct:1, explain:"E.g. dy/dt + 2y(t) = x(t) is a first-order LTI differential equation relating output and input directly."},
+{q:"The DT equivalent of a differential equation is a:", options:["Convolution sum", "Difference equation, e.g. y[n] = ay[n-1]+bx[n]", "Fourier series", "Correlation function"], correct:1, explain:"Difference equations relate the CURRENT output sample to past output samples and current/past input samples -- the DT analogue of derivatives."},
+{q:"The 'natural response' (homogeneous solution) of an LTI system arises from:", options:["The forcing input x(t) alone", "Initial conditions, with input set to zero", "Random noise", "It never exists for stable systems"], correct:1, explain:"The natural response is the system's own internal behavior (e.g. decay/oscillation) that would occur even with zero input, driven purely by stored energy/initial conditions."},
+{q:"The 'forced response' (particular solution) of an LTI system is:", options:["Independent of the input", "The component of the output directly driven by x(t), assuming zero initial conditions", "Always zero", "Only relevant for unstable systems"], correct:1, explain:"The forced response is exactly what convolution y=x*h computes -- the zero-state response due entirely to the input."},
+{q:"A first-order RC circuit's differential equation is typically:", options:["RC dy/dt + y(t) = x(t)", "y(t) = x(t)", "d²y/dt² = 0", "y(t) = ∫x(t)dt only"], correct:0, explain:"The classic first-order RC low-pass has time constant RC and satisfies RC·dy/dt + y(t) = x(t) relating capacitor voltage y(t) to source x(t)."}
+],
+core:"Differential/difference equations are the OTHER standard language for describing LTI systems, alongside impulse response h(t) -- and Day 16's Laplace transform (plus its DT cousin, the Z-transform) exists specifically to turn these equations into simple algebra, which is why this representation matters even before you can fully solve one by hand.",
+notes:[
+"CT LTI systems are commonly specified by a linear, constant-coefficient differential equation: a_N y^(N)(t) + ... + a1 y'(t) + a0 y(t) = b_M x^(M)(t) + ... + b0 x(t), where superscripts denote derivative order. This is exactly how physical circuits (RLC networks) and mechanical systems are naturally modeled from first principles (Kirchhoff's laws, Newton's laws).",
+"DT LTI systems are analogously specified by a linear, constant-coefficient DIFFERENCE equation: y[n] = -Σa_k y[n-k] + Σb_m x[n-m] -- the current output sample as a weighted combination of past outputs (feedback) and current/past inputs (feedforward). This is exactly the form implemented by digital IIR filter hardware/software.",
+"The total solution splits into two parts: the NATURAL (homogeneous/zero-input) response, found by solving the equation with x(t)=0 using only the given initial conditions, and the FORCED (particular/zero-state) response, found assuming zero initial conditions and driven entirely by x(t) -- total response = natural + forced, a direct consequence of linearity (superposition).",
+"The forced response computed this way is IDENTICAL to what convolution y(t)=x(t)*h(t) produces -- differential/difference equations and the impulse-response/convolution view are two equivalent descriptions of the same LTI system, and Laplace/Z-transforms (Days 16-18) are the standard bridge that converts between them with far less algebra.",
+"<strong>Worked example:</strong> RC circuit: RC·dy/dt + y(t) = x(t), with x(t)=Vs·u(t) (step input) and y(0)=0 (capacitor initially uncharged). Natural response form: Ae^{-t/RC}. Forced response (steady-state, since d/dt of a constant is 0): y=Vs. Total: y(t)=Vs+Ae^{-t/RC}; applying y(0)=0 gives A=-Vs, so y(t)=Vs(1-e^{-t/RC})u(t) -- matching Day 7's convolution result exactly.",
+"<strong>Application:</strong> Every analog filter (Butterworth, Chebyshev) used in radio receivers is designed FROM a target differential equation (or, equivalently, a target transfer function derived via Laplace transform, Day 16-17); every digital IIR filter on a DSP chip is directly IMPLEMENTED as a difference equation, executed sample-by-sample in real time."
+],
+formulas:["CT: a_N y^(N)+...+a0 y = b_M x^(M)+...+b0 x","DT: y[n] = -Σ_{k=1}^{N} a_k y[n-k] + Σ_{m=0}^{M} b_m x[n-m]","Total response = Natural (zero-input) response + Forced (zero-state) response"],
+questions:[
+{type:"Conceptual", q:"Explain why the 'natural response' and the 'zero-input response' are the same thing, and why the 'forced response' equals the convolution result y=x*h -- connect this explicitly to the superposition principle from Day 4."},
+{type:"ECE application", q:"A digital audio equalizer is implemented as the difference equation y[n] = 0.6y[n-1] + 0.4x[n]. Identify whether this filter has memory, and explain, in terms of the feedback term 0.6y[n-1], why this is called an IIR (Infinite Impulse Response) filter rather than an FIR filter like Day 6's moving average."},
+{type:"Reasoning", q:"For the RC circuit example, what happens to the natural response component Ae^{-t/RC} as t→∞, for a physically realizable circuit (RC>0)? Explain why engineers often care only about the FORCED (steady-state) response when characterizing a stable filter's long-term behavior."}
+]},
+
+{d:11,week:3,title:"Fourier Series — Representing Periodic Signals",big:true,steps:6,
+diagram:"fourierseries",
+facts:[{tag:"KEY FACT", text:"Any periodic signal x(t) satisfying mild (Dirichlet) conditions can be written as a sum of harmonically related sinusoids/complex exponentials at frequencies 0, ω0, 2ω0, 3ω0, ... where ω0=2π/T."}, {tag:"INSIGHT", text:"The exponential Fourier series form, x(t)=Σck e^{jkω0t}, is mathematically cleaner than the trigonometric (sin/cos) form and is what Days 12-14 build on directly."}],
+mcqs:[
+{q:"The fundamental frequency ω0 of a periodic signal with period T is:", options:["ω0 = T", "ω0 = 2π/T", "ω0 = 2πT", "ω0 = 1/(2πT)"], correct:1, explain:"Angular fundamental frequency is inversely proportional to the period, scaled by 2π."},
+{q:"The exponential Fourier series expresses x(t) as:", options:["A single sinusoid", "Σck e^{jkω0t}, a sum over ALL integers k (positive, negative, zero)", "Only positive-frequency terms", "A polynomial in t"], correct:1, explain:"The exponential form sums over both positive and negative harmonic indices k, unlike the trigonometric form which uses only k≥0."},
+{q:"The Fourier coefficient c0 (k=0 term) represents:", options:["The signal's peak value", "The DC (average) value of the signal over one period", "The fundamental frequency", "Always zero"], correct:1, explain:"c0=(1/T)∫x(t)dt over one period is exactly the time-average, i.e. the DC component."},
+{q:"For a REAL-valued periodic signal, the Fourier coefficients satisfy:", options:["ck = c(-k) always", "c(-k) = ck* (complex conjugate symmetry)", "All ck are real numbers", "ck = 0 for k≠0"], correct:1, explain:"Real signals always have conjugate-symmetric Fourier coefficients, which is why their magnitude spectrum is even and phase spectrum is odd."},
+{q:"A signal's Fourier series coefficients ck, plotted vs. k (or kω0), are called the:", options:["Impulse response", "Line spectrum", "Convolution sum", "Correlation function"], correct:1, explain:"Because only discrete frequencies (harmonics) are present, the spectrum consists of discrete 'lines' rather than a continuous curve."}
+],
+core:"Fourier series is the mathematical proof that every periodic signal -- no matter how jagged (a square wave!) -- is secretly built from pure sinusoids, and this single idea is the entire foundation of frequency-domain thinking: filters, spectrum analyzers, and channel bandwidth all describe signals in terms of THESE harmonic components, not the time waveform.",
+notes:[
+"Any periodic signal x(t) with period T (satisfying the mild Dirichlet conditions: finite number of discontinuities/extrema per period, absolutely integrable) can be written as x(t)=Σ_{k=-∞}^{∞} ck e^{jkω0t}, where ω0=2π/T is the fundamental frequency and ck are complex Fourier series coefficients.",
+"The coefficients are computed by ck = (1/T)∫_T x(t)e^{-jkω0t}dt (integrating over any one full period). c0 is always the signal's DC/average value; larger |k| corresponds to higher harmonic frequencies kω0 contributing progressively finer detail (sharper edges, faster variations) to the reconstructed waveform.",
+"The equivalent trigonometric (sine-cosine) form, x(t)=a0+Σ(ak cos(kω0t)+bk sin(kω0t)), is more intuitive for real signals but algebraically messier; the two forms are related by simple conversion formulas, and virtually all modern analysis (Days 12-14) uses the exponential form exclusively.",
+"For REAL x(t), the coefficients obey conjugate symmetry: c(-k)=ck* . This guarantees the magnitude spectrum |ck| is an EVEN function of k and the phase spectrum ∠ck is an ODD function of k -- a fast consistency check on any computed spectrum.",
+"<strong>Worked example:</strong> A symmetric square wave (period T, amplitude ±1) has Fourier coefficients ck=0 for even k, and ck = (2/(jkπ)) for odd k (specific constants depend on the exact square wave definition/phase chosen). The KEY qualitative takeaway: only ODD harmonics are present, and their magnitude falls off as 1/k -- so a 'sharp-edged' square wave requires infinitely many higher harmonics to reconstruct its edges exactly (this partial-sum ringing near jumps is the Gibbs phenomenon).",
+"<strong>Self-check:</strong> compute c0 first, always -- it should equal the visually obvious time-average of the waveform (e.g. c0=0 for a symmetric square wave straddling zero) -- an instant sanity check before computing any harder ck.",
+"<strong>Application:</strong> A power-line signal's Fourier series (60 Hz fundamental plus odd harmonics from non-linear loads) is exactly how power-quality engineers quantify 'harmonic distortion'; in telecom, understanding which harmonics a periodic clock or carrier signal contains is essential for predicting interference with adjacent channels."
+],
+formulas:["x(t) = Σ_{k=-∞}^{∞} ck e^{jkω0t} ,  ω0=2π/T","ck = (1/T)∫_T x(t) e^{-jkω0t} dt","Real x(t): c(-k) = ck*  (conjugate symmetry)"],
+questions:[
+{type:"Conceptual", q:"Explain why a signal must be PERIODIC for a Fourier SERIES (as opposed to a Fourier TRANSFORM, Day 13) to apply, and what specifically about the derivation (the integral limits) requires this."},
+{type:"ECE application", q:"A digital clock signal (an ideal square wave at frequency f0) is used on a PCB. Using the fact that only odd harmonics are present with magnitude falling as 1/k, explain why a clock's higher-order harmonics (3f0, 5f0, 7f0, ...) are a realistic EMI (electromagnetic interference) concern for a telecom engineer, even though the 'intended' signal is only at f0."},
+{type:"Reasoning", q:"The Gibbs phenomenon describes persistent 'ringing'/overshoot near a signal's discontinuities, no matter how many Fourier terms are summed. Explain, in terms of which frequency components are missing from a TRUNCATED (finite-term) Fourier series, why this overshoot doesn't shrink away even as more (but still finitely many) harmonics are added."}
+]},
+
+{d:12,week:3,title:"Properties of the Fourier Series & Parseval's Theorem",big:false,steps:5,
+diagram:"fsprops",
+facts:[{tag:"KEY FACT", text:"Time-shifting a periodic signal only changes the PHASE of its Fourier coefficients (ck·e^{-jkω0t0}), never their magnitude -- the spectrum's shape is shift-invariant."}, {tag:"INSIGHT", text:"Parseval's theorem states the average power of a periodic signal equals the sum of the powers in EACH individual harmonic: P = Σ|ck|² -- power in the time domain equals power in the frequency domain."}],
+mcqs:[
+{q:"If x(t) has Fourier coefficients ck, then x(t-t0) has coefficients:", options:["ck unchanged", "ck·e^{-jkω0t0}", "ck²", "ck/t0"], correct:1, explain:"Time-shifting adds a linear phase term across harmonics but leaves each |ck| exactly the same."},
+{q:"Parseval's theorem for periodic signals states:", options:["Energy is always infinite", "Average power P = Σ_{k=-∞}^{∞} |ck|²", "P = c0 only", "Power is undefined for periodic signals"], correct:1, explain:"Total average power splits exactly across all harmonics, each contributing |ck|² -- a direct energy-conservation statement between time and frequency domains."},
+{q:"If x(t) is REAL and EVEN, its Fourier coefficients ck are:", options:["Purely imaginary", "Purely real", "Always zero", "Complex with random phase"], correct:1, explain:"Real+even symmetry in time forces the coefficients to be real-valued (no phase/imaginary component) in frequency."},
+{q:"Linearity of the Fourier series means that for x(t)=Ax1(t)+Bx2(t):", options:["ck = A·c1k + B·c2k", "ck = A+B", "ck cannot be found without recomputing from scratch", "ck = c1k · c2k"], correct:0, explain:"Fourier coefficients combine linearly exactly like the signals themselves -- a direct consequence of the integral defining ck being linear."},
+{q:"Scaling time as x(at) (a>0) changes the fundamental frequency to:", options:["ω0 unchanged", "a·ω0 (harmonics move to new frequencies, but ck values are unchanged)", "ω0/a²", "It destroys periodicity entirely"], correct:1, explain:"Compressing/expanding time compresses/expands the period by 1/a, which scales the fundamental (and all harmonic) frequencies by a, while the coefficient VALUES themselves stay the same."}
+],
+core:"These properties turn Fourier analysis from 'recompute the integral every time' into 'look up how a simple time-domain operation predictably reshapes the spectrum' -- exactly the shortcut-based reasoning that lets engineers quickly predict a modulator, filter, or delay's effect on a signal's spectrum without redoing calculus.",
+notes:[
+"Linearity: x(t)=Ax1(t)+Bx2(t) → ck=A·c1k+B·c2k (assuming a common period exists). This lets you build the spectrum of a complicated periodic signal by summing the KNOWN spectra of simpler pieces, rather than integrating the whole thing from scratch.",
+"Time-shift: x(t-t0) → ck·e^{-jkω0t0}. Only the PHASE of each coefficient changes (a linear phase ramp across k); the magnitude spectrum |ck| is completely unaffected by time-shifting -- this is exactly why a spectrum analyzer can't tell you WHEN a periodic event started, only what frequencies are present.",
+"Time-scaling: x(at) is periodic with a NEW fundamental frequency a·ω0 (period scales by 1/a), while the coefficient values ck themselves are unchanged -- compressing a signal in time stretches its spectrum out along the frequency axis (harmonics move further apart), a direct time-frequency trade-off that reappears throughout Fourier theory.",
+"Parseval's theorem: average power P=(1/T)∫_T|x(t)|²dt = Σ_{k=-∞}^{∞}|ck|². This says the total power can be computed EITHER by integrating |x(t)|² in the time domain OR by summing |ck|² across every harmonic in the frequency domain -- they must agree, giving a powerful cross-check on any computed Fourier series.",
+"<strong>Worked example:</strong> A signal has c0=0, c1=c-1=0.5 (only a fundamental sinusoid present, no DC, no higher harmonics). By Parseval, P=|c0|²+|c1|²+|c-1|²=0+0.25+0.25=0.5 -- which matches the known result that a sinusoid of amplitude 1 has average power 1/2 (A²/2 with A=2·0.5=1... consistent with Day 1's power formula).",
+"<strong>Application:</strong> Parseval's theorem is exactly how a spectrum analyzer's power reading is justified -- summing (integrating) the power in each displayed frequency bin gives the SAME total power a power meter would read directly from the time-domain waveform, which is why engineers trust frequency-domain power measurements at all."
+],
+formulas:["Time-shift: x(t-t0) ↔ ck e^{-jkω0t0}  (magnitude unchanged, phase shifts linearly)","Time-scale: x(at) has fundamental freq a·ω0; ck values unchanged","Parseval: P = (1/T)∫_T|x(t)|²dt = Σ_{k=-∞}^{∞}|ck|²"],
+questions:[
+{type:"Conceptual", q:"Explain why time-shifting a periodic signal changes only the PHASE, never the magnitude, of its Fourier coefficients -- connect this to the fact that a magnitude spectrum plot alone cannot tell you when a periodic signal 'starts'."},
+{type:"ECE application", q:"A spectrum analyzer displays the magnitude spectrum |ck| of a periodic test signal from a signal generator. If the engineer delays the trigger point (effectively time-shifting the observed waveform), explain, using the time-shift property, whether the displayed magnitude spectrum plot would change at all."},
+{type:"Reasoning", q:"Using Parseval's theorem, explain why a signal with energy concentrated in just a FEW low-order harmonics (small k) is generally 'easier' to transmit through a band-limited communication channel than a signal whose power is spread across many high-order harmonics -- connect this to the practical idea of channel bandwidth."}
+]},
+
+{d:13,week:3,title:"Fourier Transform of Aperiodic Signals",big:true,steps:6,
+diagram:"fouriertransform",
+facts:[{tag:"KEY FACT", text:"The Fourier Transform X(ω)=∫x(t)e^{-jωt}dt extends Fourier analysis to APERIODIC signals by treating them as the limit of a periodic signal whose period T→∞, turning the discrete line spectrum into a CONTINUOUS spectrum."}, {tag:"INSIGHT", text:"A signal that is narrow/short in TIME has a spectrum that is wide/spread-out in FREQUENCY, and vice versa -- this time-bandwidth trade-off is unavoidable and appears everywhere in communication system design."}],
+mcqs:[
+{q:"The Fourier Transform X(ω) of x(t) is defined as:", options:["Σck e^{jkω0t}", "∫_{-∞}^{∞} x(t)e^{-jωt}dt", "x(t)*h(t)", "∫x(t)dt"], correct:1, explain:"This integral extends the Fourier series idea to a continuous frequency variable ω, valid for aperiodic (as well as suitably well-behaved periodic) signals."},
+{q:"The Fourier Transform of a rectangular pulse in time is:", options:["Another rectangular pulse", "A sinc function", "An impulse", "A pure sinusoid"], correct:1, explain:"rect(t) and sinc(ω) form one of the most important, frequently-reused transform pairs in signal processing."},
+{q:"For the Fourier Transform to exist in the ordinary sense, x(t) generally must satisfy:", options:["Be periodic", "Be absolutely integrable (Dirichlet conditions)", "Have infinite energy", "Be a pure sinusoid"], correct:1, explain:"∫|x(t)|dt<∞ (plus mild extra conditions) guarantees convergence of the Fourier integral; some special signals (like sinusoids) are handled using impulses in the frequency domain as an extension."},
+{q:"A signal that is very SHORT/narrow in time will have a Fourier Transform that is:", options:["Also narrow in frequency", "Wide/spread out in frequency", "Zero everywhere", "Impossible to compute"], correct:1, explain:"Time and frequency 'widths' are inversely related -- compressing a pulse in time necessarily spreads its energy across a wider band of frequencies."},
+{q:"The inverse Fourier Transform recovers x(t) from X(ω) via:", options:["x(t) = (1/2π)∫X(ω)e^{jωt}dω", "x(t) = X(ω) directly", "x(t) = ΣX(ω)", "x(t) cannot be recovered"], correct:0, explain:"The inverse transform is structurally symmetric to the forward transform, differing by a 1/2π scaling and the sign in the exponent."}
+],
+core:"The Fourier Transform is the single tool that lets an ECE engineer look at ANY signal -- periodic or not, a voice clip, a radar chirp, a data packet -- and see exactly what frequencies it's made of, which is the non-negotiable first step before designing any filter, modulator, or channel around that signal.",
+notes:[
+"The Fourier Transform: X(ω)=∫_{-∞}^{∞} x(t)e^{-jωt}dt, and its inverse: x(t)=(1/2π)∫_{-∞}^{∞} X(ω)e^{jωt}dω. Conceptually, X(ω) is obtained by letting a periodic signal's period T→∞ in the Fourier series: the harmonic spacing ω0=2π/T shrinks to zero, turning the discrete set of coefficients ck into a CONTINUOUS function X(ω).",
+"Existence requires x(t) to satisfy the Dirichlet conditions (absolutely integrable, finite discontinuities/extrema in any finite interval) -- most practical, finite-duration or decaying signals qualify. Signals that don't decay (like a pure sinusoid or a step) require impulse functions IN the frequency domain to represent their transform, an extension covered alongside Day 14's properties.",
+"A cornerstone pair: a rectangular pulse rect(t/τ) of width τ in time transforms to a sinc function X(ω)=τ·sinc(ωτ/2π) in frequency, whose main-lobe width is inversely proportional to τ. This single pair captures the entire time-bandwidth trade-off: shrink the pulse in time (smaller τ) and its spectral width GROWS (wider main lobe) -- you cannot simultaneously confine a signal tightly in both domains.",
+"|X(ω)| is called the magnitude spectrum and ∠X(ω) the phase spectrum; together they completely describe the aperiodic signal in the frequency domain, exactly parallel to |ck| and ∠ck for periodic signals in Fourier series.",
+"<strong>Worked example:</strong> x(t)=e^{-at}u(t), a>0 (a causal decaying exponential). X(ω)=∫_0^∞ e^{-at}e^{-jωt}dt = ∫_0^∞ e^{-(a+jω)t}dt = 1/(a+jω). This is one of the most-reused transform pairs in the entire course -- it reappears in Day 16's Laplace transform (simply setting s=jω) and describes the frequency response of a basic RC low-pass filter.",
+"<strong>Application:</strong> The time-bandwidth trade-off directly explains why a very SHORT radar pulse (good range resolution -- it can distinguish closely-spaced targets in time) REQUIRES a correspondingly WIDE receiver bandwidth to capture it faithfully -- a fundamental design constraint radar and wideband communication engineers cannot avoid, only manage."
+],
+formulas:["X(ω) = ∫_{-∞}^{∞} x(t)e^{-jωt}dt   (forward Fourier Transform)","x(t) = (1/2π)∫_{-∞}^{∞} X(ω)e^{jωt}dω   (inverse)","rect(t/τ) ↔ τ·sinc(ωτ/2π)  ;  e^{-at}u(t) ↔ 1/(a+jω), a>0"],
+questions:[
+{type:"Conceptual", q:"Explain, conceptually, how letting the period T→∞ in a Fourier SERIES turns the discrete harmonic spacing ω0=2π/T into a continuous frequency variable ω, motivating why the Fourier TRANSFORM naturally applies to aperiodic signals."},
+{type:"ECE application", q:"A radar system needs very fine range resolution, which requires a very short transmitted pulse. Using the rect-sinc transform pair and the time-bandwidth trade-off, explain why this design requirement forces the radar's RF front-end and receiver to support a wide bandwidth, and why this is a genuine engineering cost (more bandwidth = more noise, more spectrum regulation to navigate)."},
+{type:"Reasoning", q:"Why can't an ordinary (non-impulse-extended) Fourier Transform be computed directly for x(t)=cos(ω0t) using the defining integral ∫x(t)e^{-jωt}dt as written -- what property of cos(ω0t) makes this integral fail to converge in the ordinary sense, and why does Day 14 need impulses in frequency to handle it?"}
+]},
+
+{d:14,week:3,title:"Properties of the Fourier Transform",big:false,steps:5,
+diagram:"ftprops",
+facts:[{tag:"KEY FACT", text:"The Convolution Theorem: convolution in the TIME domain becomes simple MULTIPLICATION in the frequency domain, y(t)=x(t)*h(t) ⟺ Y(ω)=X(ω)H(ω) -- this is the single most consequential property in the entire course."}, {tag:"INSIGHT", text:"Duality: the Fourier Transform's forward and inverse formulas are nearly mirror images of each other, meaning every time-domain property has a matching, symmetric frequency-domain property (and vice versa)."}],
+mcqs:[
+{q:"The Convolution Theorem states that convolution in time corresponds, in frequency, to:", options:["Convolution again", "Multiplication: Y(ω)=X(ω)H(ω)", "Addition: Y(ω)=X(ω)+H(ω)", "Division"], correct:1, explain:"This is precisely why LTI system analysis is done almost exclusively in the frequency domain -- multiplying two functions is far easier than convolving them."},
+{q:"Modulation (multiplying x(t) by cos(ω0t)) in the frequency domain:", options:["Leaves X(ω) unchanged", "Shifts X(ω) up and down in frequency by ±ω0", "Squares X(ω)", "Deletes all frequencies below ω0"], correct:1, explain:"Multiplying by a cosine in time SHIFTS the spectrum to be centered at ±ω0 -- this is literally how AM radio modulation works."},
+{q:"By the duality property, if x(t) has transform X(ω), then a signal shaped like X(t) has a transform that looks like:", options:["x(ω), exactly, with no sign change", "2π·x(-ω)", "Zero", "X(ω) again unchanged"], correct:1, explain:"Duality reflects the near-symmetric roles of time and frequency in the forward/inverse transform definitions, up to a 2π scaling and a sign flip."},
+{q:"Multiplication in the TIME domain, x(t)·y(t), corresponds in frequency to:", options:["X(ω)·Y(ω)", "(1/2π)X(ω)*Y(ω), i.e. convolution in frequency", "X(ω)+Y(ω)", "It has no frequency-domain equivalent"], correct:1, explain:"This is the 'dual' statement of the Convolution Theorem: multiplying in one domain always corresponds to convolving in the other."},
+{q:"Parseval's/Rayleigh's energy theorem for the Fourier Transform states:", options:["Energy is always zero", "∫|x(t)|²dt = (1/2π)∫|X(ω)|²dω", "Energy only exists at ω=0", "It only applies to periodic signals"], correct:1, explain:"Just like Day 12's Parseval theorem for periodic power, this states total signal ENERGY is identical whether computed in time or frequency."}
+],
+core:"The Convolution Theorem is the payoff for everything since Day 6: instead of grinding through a flip-slide-multiply-integrate convolution, an engineer can transform both signals to the frequency domain, simply MULTIPLY their spectra, and transform back -- this is the actual computational basis of virtually all practical filter design and analysis.",
+notes:[
+"CONVOLUTION THEOREM: x(t)*h(t) ⟺ X(ω)H(ω). Convolution (hard, requires an integral for every output point) in time becomes ordinary multiplication (easy, pointwise) in frequency. This single fact is WHY frequency-domain analysis dominates practical filter design: a filter's effect on ANY input spectrum is found by simply multiplying by H(ω), the filter's frequency response.",
+"MODULATION property: x(t)cos(ω0t) ⟺ (1/2)[X(ω-ω0)+X(ω+ω0)]. Multiplying a signal by a sinusoid in time shifts its ENTIRE spectrum to be centered around ±ω0 in frequency. This is literally the mathematical description of AM (amplitude) modulation -- moving a baseband signal's spectrum up to a radio carrier frequency for transmission.",
+"DUALITY: because the forward and inverse Fourier Transform formulas are nearly symmetric (differing only by a 1/2π factor and a sign in the exponent), every time-domain property has a mirror-image frequency-domain property. E.g. multiplication-in-time↔convolution-in-frequency is the dual of convolution-in-time↔multiplication-in-frequency (the Convolution Theorem above).",
+"Linearity, time-shift (x(t-t0)↔X(ω)e^{-jωt0}, phase-only change, exactly parallel to Day 12's Fourier series property), and time-scaling (x(at)↔(1/|a|)X(ω/a), confirming the time-bandwidth trade-off from Day 13 as a formal property) all carry over from the Fourier series with the sum replaced by an integral.",
+"<strong>Worked example:</strong> An ideal low-pass filter has H(ω)=1 for |ω|<ωc and 0 otherwise (a 'brick wall' filter). By the Convolution Theorem, ANY input signal x(t) passed through this filter has output spectrum Y(ω)=X(ω)H(ω) -- meaning the output spectrum is simply X(ω) with everything above ωc chopped off to zero. This is the cleanest possible description of 'what a filter does', and it's why H(ω) itself is called the system's FREQUENCY RESPONSE.",
+"<strong>Application:</strong> Every radio transmitter uses the modulation property to shift an audio/data baseband signal up to its assigned RF carrier frequency (so it can be radiated efficiently and multiple stations can share the spectrum without overlapping), and every receiver uses the SAME property in reverse (demodulation) to shift the RF signal back down to baseband for the listener/decoder."
+],
+formulas:["Convolution Theorem: x(t)*h(t) ↔ X(ω)H(ω)","Modulation: x(t)cos(ω0t) ↔ (1/2)[X(ω-ω0)+X(ω+ω0)]","Multiplication (dual): x(t)y(t) ↔ (1/2π)X(ω)*Y(ω)"],
+questions:[
+{type:"Conceptual", q:"Using the Convolution Theorem, explain in your own words why an engineer analyzing an LTI filter almost always prefers to work with H(ω) (frequency response) rather than h(t) (impulse response) directly, even though both contain exactly the same information about the system."},
+{type:"ECE application", q:"An AM radio transmitter multiplies a baseband audio signal x(t) (bandwidth ~5 kHz) by a carrier cos(ω0t) where f0=1000 kHz. Using the modulation property, describe where the transmitted signal's spectrum is now located, and explain why this shift is what allows many different radio stations to broadcast simultaneously without their signals overlapping."},
+{type:"Reasoning", q:"An 'ideal brick-wall' low-pass filter H(ω) (1 inside a band, 0 outside, with a perfectly sharp cutoff) is mathematically convenient but its IMPULSE response h(t) turns out to be a sinc function stretching from t=-∞ to t=+∞. Explain why this means an ideal brick-wall filter is NON-CAUSAL, and therefore physically unrealizable exactly -- connect this back to Day 4's causality condition on h(t)."}
+]},
+
+{d:15,week:3,title:"Sampling Theorem & Aliasing",big:true,steps:6,
+diagram:"sampling",
+facts:[{tag:"KEY FACT", text:"The Nyquist–Shannon Sampling Theorem: a band-limited signal with maximum frequency fm can be perfectly reconstructed from its samples if the sampling rate fs > 2fm (the Nyquist rate)."}, {tag:"CAUTION", text:"Sampling BELOW the Nyquist rate causes ALIASING -- high frequencies fold back and masquerade as false, lower frequencies in the sampled data, an error that CANNOT be undone after the fact by any filter."}],
+mcqs:[
+{q:"The Nyquist rate for a signal band-limited to fm Hz is:", options:["fm", "2fm", "fm/2", "4fm"], correct:1, explain:"Sampling must occur at a rate STRICTLY GREATER than twice the highest frequency present to avoid aliasing (fs>2fm)."},
+{q:"Sampling a signal in time corresponds, in frequency, to:", options:["Erasing the spectrum entirely", "Periodically repeating (replicating) the original spectrum at multiples of fs", "Shrinking the spectrum to zero width", "No change to the spectrum at all"], correct:1, explain:"Ideal sampling creates infinitely many shifted copies of X(ω), spaced fs apart along the frequency axis -- this is the mathematical heart of the sampling theorem."},
+{q:"Aliasing occurs when:", options:["fs > 2fm (oversampling)", "fs < 2fm, causing the shifted spectral copies to overlap", "The signal is perfectly band-limited", "The signal has zero bandwidth"], correct:1, explain:"If the sampling rate is too low, the replicated spectral copies overlap, and high frequencies get irreversibly mixed with (mistaken for) low frequencies."},
+{q:"An anti-aliasing filter is placed:", options:["After the ADC, to fix aliasing after the fact", "Before the ADC (sampler), to band-limit the signal before sampling", "It doesn't matter where it's placed", "Only in digital systems, never analog"], correct:1, explain:"Aliasing must be PREVENTED before sampling by removing frequencies above fs/2 -- it fundamentally cannot be corrected afterward, since the information is already irretrievably folded together."},
+{q:"Ideal signal reconstruction from samples uses interpolation with a:", options:["Rectangular pulse", "sinc function (ideal low-pass filter)", "Impulse train only", "Ramp function"], correct:1, explain:"Passing the sampled impulse train through an ideal low-pass (reconstruction) filter -- equivalently, sinc interpolation between samples -- perfectly recovers x(t) when the Nyquist condition was satisfied."}
+],
+core:"The Sampling Theorem is the bridge between the entire analog (CT) half of this course and the digital (DT) world every modern communication system, smartphone, and DSP chip actually operates in -- get the sampling rate wrong, and NO amount of clever digital processing afterward can undo the damage.",
+notes:[
+"The Nyquist–Shannon Sampling Theorem: a signal x(t) that is band-limited (X(ω)=0 for |ω|>ωm, i.e. no frequency content above fm=ωm/2π) can be EXACTLY reconstructed from uniformly spaced samples x(nTs) if the sampling rate fs=1/Ts satisfies fs>2fm. The quantity 2fm is called the Nyquist rate.",
+"Mathematically, ideal sampling multiplies x(t) by an impulse train (a periodic sequence of impulses spaced Ts apart). By the Convolution Theorem's dual (multiplication in time ↔ convolution in frequency), this REPLICATES X(ω) periodically in frequency, creating identical copies of the original spectrum spaced fs apart along the frequency axis.",
+"ALIASING: if fs<2fm, these replicated spectral copies overlap. Within the overlap region, a HIGH original frequency component becomes indistinguishable from (folds onto) a DIFFERENT, LOWER apparent frequency in the sampled signal -- and once sampled, this corruption is mathematically irreversible; no digital filter, however clever, can separate the tangled frequencies back apart.",
+"Because aliasing cannot be fixed after sampling, practical ADC (analog-to-digital converter) systems always place an ANALOG anti-aliasing filter BEFORE the sampler, removing (or sufficiently attenuating) any frequency content above fs/2 so it never gets the chance to fold back and corrupt the sampled data.",
+"Reconstruction: given samples satisfying the Nyquist condition, the original x(t) is recovered EXACTLY by passing the impulse train of samples through an ideal low-pass filter with cutoff at fs/2 (equivalently, sinc-function interpolation between the sample points) -- this is the theoretical basis for every digital-to-analog converter (DAC).",
+"<strong>Worked example:</strong> Audio CDs sample at fs=44.1 kHz. Human hearing extends to roughly fm=20 kHz. Nyquist rate = 2×20=40 kHz < 44.1 kHz, so CDs sample comfortably ABOVE the Nyquist rate, with headroom left for a realistic (non-ideal, non-brick-wall) anti-aliasing filter to roll off the response before fs/2=22.05 kHz.",
+"<strong>Application:</strong> Software-defined radios and telecom baseband processors MUST place an anti-aliasing filter before every ADC stage; violating the Nyquist condition in a receiver design causes out-of-band interference (e.g. an adjacent, unwanted radio channel) to alias directly into the desired signal's band, corrupting reception in a way no downstream digital filtering can ever repair."
+],
+formulas:["Nyquist rate = 2·fm  ;  sampling requires fs > 2fm","Sampling x(t) ↔ periodic replication of X(ω) at multiples of fs, in frequency","Reconstruction: ideal LPF with cutoff fs/2 (sinc interpolation)"],
+questions:[
+{type:"Conceptual", q:"Explain, using the fact that sampling replicates the spectrum periodically at spacing fs, exactly why fs>2fm (not fs≥2fm, and specifically 2fm and not, say, fm or 3fm) is the precise dividing line between overlapping and non-overlapping spectral copies."},
+{type:"ECE application", q:"A telecom engineer is designing an ADC front-end for a signal known to be band-limited to 3.5 MHz, but the raw antenna signal also picks up strong interference at 20 MHz. Explain why an anti-aliasing filter is essential here even though the DESIRED signal itself satisfies Nyquist at a sampling rate of, say, 8 MHz."},
+{type:"Reasoning", q:"A strobe light flashing at a fixed rate can make a rotating fan blade appear to move slowly backward, forward, or stand still, depending on the fan's speed relative to the flash rate -- this is a mechanical/visual analogy for aliasing. Explain, in signals-and-systems terms (sampling rate vs. signal frequency), which of these three visual effects corresponds to fs slightly less than, exactly equal to, or slightly more than the rotational frequency."}
+]},
+
+{d:16,week:4,title:"Laplace Transform — Definition & Region of Convergence",big:true,steps:6,
+diagram:"laplace",
+facts:[{tag:"KEY FACT", text:"The (bilateral) Laplace Transform X(s)=∫x(t)e^{-st}dt generalizes the Fourier Transform by allowing a COMPLEX frequency s=σ+jω, letting it handle signals (like growing exponentials) for which the ordinary Fourier Transform doesn't converge."}, {tag:"INSIGHT", text:"X(s) alone is meaningless without its Region of Convergence (ROC) -- the exact same algebraic expression for X(s) can correspond to two entirely DIFFERENT time signals, distinguished only by which ROC is specified."}],
+mcqs:[
+{q:"The Laplace Transform is defined as X(s) =", options:["∫x(t)e^{-jωt}dt", "∫x(t)e^{-st}dt, s=σ+jω complex", "Σx[n]z^{-n}", "x(t)*h(t)"], correct:1, explain:"Replacing the purely imaginary jω of the Fourier Transform with the general complex variable s=σ+jω is exactly what defines the Laplace Transform."},
+{q:"Setting s=jω (i.e. σ=0) in the Laplace Transform recovers:", options:["The Z-transform", "The Fourier Transform (when the ROC includes the jω-axis)", "The convolution sum", "Nothing meaningful"], correct:1, explain:"The Fourier Transform is a special case/slice of the Laplace Transform along the imaginary axis, valid precisely when the ROC contains that axis."},
+{q:"The Region of Convergence (ROC) of X(s) is:", options:["Always the entire s-plane", "The set of s values for which the defining integral converges", "Irrelevant to correctly interpreting X(s)", "Always a single point"], correct:1, explain:"Different time signals can share the exact same algebraic X(s) formula but differ ENTIRELY in their ROC -- so the ROC is not optional extra information, it's part of the transform's definition."},
+{q:"For a RIGHT-SIDED (causal) signal x(t)u(t-t0), the ROC is typically:", options:["A vertical strip", "A right-half-plane, Re(s) > some value", "A left-half-plane", "The entire s-plane"], correct:1, explain:"Causal, right-sided signals converge for s sufficiently far to the RIGHT in the complex plane (large enough real part)."},
+{q:"For a LEFT-SIDED (anti-causal) signal, the ROC is typically:", options:["A right-half-plane", "A left-half-plane, Re(s) < some value", "A single vertical line only", "It never converges"], correct:1, explain:"Left-sided signals converge for s sufficiently far to the LEFT (small enough, i.e. very negative, real part)."}
+],
+core:"The Laplace Transform is the tool that finally converts differential equations (Day 10) into simple algebra, and it does this specifically by extending Fourier's jω axis into the full complex s-plane -- a generalization that both fixes Fourier's convergence limitations AND, via the ROC, encodes information about a signal's growth/decay and a system's stability all at once.",
+notes:[
+"The (bilateral) Laplace Transform: X(s)=∫_{-∞}^{∞} x(t)e^{-st}dt, where s=σ+jω is a complex variable. The extra real part σ (compared to Fourier's purely imaginary jω) provides an exponential 'convergence factor' e^{-σt} that can force even a GROWING signal's integral to converge, for a suitable range of σ.",
+"The Region of Convergence (ROC) is the set of s (equivalently, the range of σ=Re(s)) for which the defining integral converges to a finite value. Crucially, the exact same rational function X(s) can be the transform of TWO DIFFERENT time signals (one causal/right-sided, one anti-causal/left-sided) -- distinguishable ONLY by stating which ROC goes with which. X(s) without its ROC is an incomplete, ambiguous answer.",
+"ROC shape rules (for rational X(s), the overwhelmingly common case): a right-sided signal has an ROC that is a right-half-plane (Re(s)>σmax, bounded on the left by the rightmost pole); a left-sided signal has an ROC that is a left-half-plane (Re(s)<σmin); a two-sided signal has an ROC that is a vertical STRIP between two poles. The ROC never contains any pole of X(s).",
+"When the ROC includes the imaginary (jω) axis (i.e. Re(s)=0 lies inside the ROC), the Fourier Transform exists and can be obtained simply by evaluating X(s) at s=jω. This is precisely why causal, STABLE systems (whose poles all lie in the left half-plane, so the ROC extends rightward from there and always includes the jω-axis) always have a well-defined, ordinary frequency response.",
+"<strong>Worked example:</strong> x1(t)=e^{-at}u(t) (causal, a>0) has X(s)=1/(s+a), ROC: Re(s)>-a (right-half-plane). x2(t)=-e^{-at}u(-t) (anti-causal) has the IDENTICAL formula X(s)=1/(s+a), but ROC: Re(s)<-a (left-half-plane). Same algebra, opposite time signals -- proving the ROC is not optional bookkeeping.",
+"<strong>Application:</strong> Circuit and control engineers routinely work with 'unstable' intermediate systems (e.g. an op-amp circuit during transient analysis) where growing exponentials appear -- the Laplace Transform's σ-axis flexibility is precisely what lets these be analyzed algebraically at all, something the plain Fourier Transform cannot do since its integral simply fails to converge for growing signals."
+],
+formulas:["X(s) = ∫_{-∞}^{∞} x(t)e^{-st} dt ,  s = σ+jω","Right-sided (causal) signal: ROC is Re(s) > σmax (right-half-plane)","Fourier Transform = Laplace Transform evaluated at s=jω, IF jω-axis ⊂ ROC"],
+questions:[
+{type:"Conceptual", q:"Explain precisely what algebraic feature of e^{-st}=e^{-σt}e^{-jωt} (compared to Fourier's e^{-jωt} alone) allows the Laplace Transform integral to converge for a signal like e^{2t}u(t), which has NO ordinary Fourier Transform."},
+{type:"ECE application", q:"Two engineers are each given the SAME algebraic expression X(s)=1/(s-2) and asked to identify the time-domain signal x(t) it represents. Explain why this task is IMPOSSIBLE to answer uniquely without also being told the ROC, and give the two different possible x(t) answers (one causal, one anti-causal) for the two possible ROC choices."},
+{type:"Reasoning", q:"A system's poles (values of s where X(s) blows up) all lie in the left-half s-plane (Re(s)<0). Explain why, for a CAUSAL system, this specific pole location guarantees the ROC automatically includes the jω-axis, and connect this to why 'poles in the left-half-plane' has become shorthand for 'the system is stable' among ECE engineers (foreshadowing Day 19)."}
+]},
+
+{d:17,week:4,title:"Properties of the Laplace Transform & Inverse Laplace",big:false,steps:5,
+diagram:"laplaceprops",
+facts:[{tag:"KEY FACT", text:"Differentiation in time becomes multiplication by s in the s-domain: dx/dt ⟺ sX(s) (for zero initial conditions) -- this single property is what converts a differential equation into an algebraic equation."}, {tag:"INSIGHT", text:"Just like Fourier, convolution in time becomes multiplication in the s-domain: y(t)=x(t)*h(t) ⟺ Y(s)=X(s)H(s), and H(s) is called the system's TRANSFER FUNCTION."}],
+mcqs:[
+{q:"The Laplace Transform of dx/dt (assuming zero initial conditions) is:", options:["X(s)/s", "sX(s)", "X(s)²", "s+X(s)"], correct:1, explain:"Differentiation in time maps to multiplication by s in the s-domain -- the key property enabling algebraic solution of differential equations."},
+{q:"The Laplace Transform of ∫x(t)dt (integration, zero initial conditions) is:", options:["sX(s)", "X(s)/s", "X(s)·s²", "It has no Laplace Transform"], correct:1, explain:"Integration is the inverse operation of differentiation, so it maps to DIVISION by s, exactly the algebraic inverse of the differentiation property."},
+{q:"The transfer function H(s) of an LTI system is defined as:", options:["The input signal's transform", "Y(s)/X(s), the ratio of output to input transforms (equivalently, the Laplace Transform of h(t))", "Always equal to 1", "The system's impulse response in time"], correct:1, explain:"H(s)=Y(s)/X(s)=L{h(t)} -- the s-domain fingerprint of an LTI system, algebraically equivalent to convolving with h(t) in time."},
+{q:"To find the inverse Laplace Transform of a rational X(s), the standard technique is:", options:["Direct integration only", "Partial fraction expansion, then look up known transform pairs term by term", "Guessing", "It cannot be done for rational functions"], correct:1, explain:"Breaking a rational X(s) into simple terms like A/(s+a) lets each piece be matched directly against a table of standard Laplace pairs."},
+{q:"The Initial Value Theorem states x(0+) equals:", options:["lim_{s→0} sX(s)", "lim_{s→∞} sX(s)", "X(0)", "It cannot be found from X(s) alone"], correct:1, explain:"The Initial Value Theorem extracts the signal's value at t=0+ directly from the s-domain, without ever computing the full inverse transform."}
+],
+core:"This is the payoff day: with these properties, an entire differential equation (Day 10) -- derivatives, integrals, initial conditions and all -- collapses into ONE algebraic equation in s that can be solved with ordinary algebra, then converted back to a time-domain answer via partial fractions and a lookup table.",
+notes:[
+"Differentiation property: L{dx/dt} = sX(s) - x(0-) (the -x(0-) term vanishes for zero initial conditions). Higher derivatives introduce higher powers of s. This is the master property: it is exactly why an Nth-order differential equation transforms into an Nth-degree POLYNOMIAL equation in s, solvable by ordinary algebra instead of calculus.",
+"Integration property: L{∫_{-∞}^{t}x(τ)dτ} = X(s)/s (zero initial conditions) -- the exact algebraic inverse of differentiation, consistent with integration and differentiation being inverse operations in time.",
+"Convolution property: L{x(t)*h(t)} = X(s)H(s), directly paralleling Day 14's Fourier Convolution Theorem. This defines the TRANSFER FUNCTION H(s)=Y(s)/X(s)=L{h(t)}: the s-domain description of an LTI system, from which poles/zeros (Day 19) and frequency response (Day 20, via H(jω)) are both read off directly.",
+"Inverse Laplace Transform via PARTIAL FRACTIONS: any proper rational X(s)=N(s)/D(s) is decomposed into a sum of simple terms (e.g. A/(s+a), or B/(s+a)² for repeated poles, or terms with complex-conjugate pole pairs), each of which matches a standard, memorized transform pair (like e^{-at}u(t)↔1/(s+a)) -- inverting term-by-term and summing gives x(t).",
+"<strong>Worked example:</strong> Solve RC dy/dt + y = Vs·u(t), y(0)=0, using Laplace. Transform: RC(sY(s)) + Y(s) = Vs/s. Solve algebraically: Y(s)(RCs+1)=Vs/s → Y(s)=Vs/[s(RCs+1)]. Partial fractions: Y(s)=Vs[1/s - 1/(s+1/RC)]. Inverting term by term: y(t)=Vs(1-e^{-t/RC})u(t) -- identical to Day 7's convolution result and Day 10's differential-equation solution, obtained here with pure algebra.",
+"<strong>Application:</strong> Circuit simulators (SPICE) and control-system design tools work internally with transfer functions H(s) precisely because cascading, feedback, and stability analysis (Day 19) are all far simpler as s-domain algebra (multiplying/dividing rational functions) than as time-domain convolutions or differential equations."
+],
+formulas:["L{dx/dt} = sX(s) - x(0-)  ;  L{∫x dt} = X(s)/s","Transfer function: H(s) = Y(s)/X(s) = L{h(t)}","Inverse: partial-fraction expand X(s), invert each term via table lookup"],
+questions:[
+{type:"Conceptual", q:"Explain exactly why the differentiation property L{dx/dt}=sX(s) is the specific mathematical fact that allows an Nth-order LINEAR CONSTANT-COEFFICIENT differential equation to be converted into an Nth-degree polynomial (algebraic) equation in s."},
+{type:"ECE application", q:"A control engineer is given a transfer function H(s)=10/(s+5) for a motor-speed control system. Using the transfer function definition, explain what H(s) tells you about the system without needing to know the exact input signal being applied -- i.e. why H(s) alone is considered a complete 'fingerprint' of the LTI system."},
+{type:"Reasoning", q:"Redo the RC-circuit worked example but for a SINUSOIDAL input x(t)=cos(ω0t)u(t) instead of a step. Without fully solving it, explain qualitatively (in terms of X(s) for a sinusoid having poles ON the jω-axis) why this problem is algebraically messier than the step-input case, and why engineers often prefer to analyze sinusoidal steady-state behavior using H(jω) directly (Day 20) rather than full Laplace inversion."}
+]},
+
+{d:18,week:4,title:"The Z-Transform for Discrete-Time Systems",big:true,steps:6,
+diagram:"ztransform",
+facts:[{tag:"KEY FACT", text:"The Z-Transform X(z)=Σx[n]z^{-n} is the exact DT analogue of the Laplace Transform, converting difference equations (Day 10) into algebra the same way Laplace converts differential equations."}, {tag:"INSIGHT", text:"Setting z=e^{jω} (i.e. evaluating on the UNIT CIRCLE, |z|=1) recovers the Discrete-Time Fourier Transform (DTFT) -- exactly parallel to Laplace's s=jω giving the Fourier Transform."}],
+mcqs:[
+{q:"The (bilateral) Z-Transform is defined as X(z) =", options:["∫x(t)e^{-st}dt", "Σ_{n=-∞}^{∞} x[n]z^{-n}", "x[n]*h[n]", "Σx[n]"], correct:1, explain:"The Z-Transform replaces continuous integration with a summation over all discrete-time samples, weighted by powers of the complex variable z."},
+{q:"Setting z=e^{jω} in X(z) (evaluating on the unit circle) recovers:", options:["The Laplace Transform", "The Discrete-Time Fourier Transform (DTFT)", "The Z-transform's inverse only", "Nothing meaningful"], correct:1, explain:"The unit circle |z|=1 in the z-plane plays exactly the role the jω-axis plays in the s-plane for the Laplace/Fourier relationship."},
+{q:"For a causal (right-sided) DT signal, the ROC of X(z) is typically:", options:["|z| > some radius (outside a circle)", "|z| < some radius (inside a circle)", "A single point", "The entire z-plane always"], correct:0, explain:"Causal sequences converge for z sufficiently large in magnitude, giving an ROC that is the exterior of a circle in the z-plane."},
+{q:"For an anti-causal (left-sided) DT signal, the ROC of X(z) is typically:", options:["|z| > some radius", "|z| < some radius (inside a circle)", "Only |z|=1", "It never converges"], correct:1, explain:"Left-sided sequences converge for small |z|, giving an ROC that is the interior of a circle -- the mirror image of the causal case."},
+{q:"The Z-transform's convolution property states y[n]=x[n]*h[n] corresponds to:", options:["Y(z) = X(z) + H(z)", "Y(z) = X(z)·H(z)", "Y(z) = X(z)/H(z) always", "There is no such property"], correct:1, explain:"Exactly parallel to Laplace and Fourier, convolution in the discrete time domain becomes ordinary multiplication in the z-domain."}
+],
+core:"The Z-Transform is the DT world's answer to Laplace -- it's the tool that turns difference equations (the native language of every digital filter, DSP algorithm, and microcontroller-based signal chain) into algebra, and is absolutely central to any telecom engineer working with digital receivers, software-defined radio, or digital filter design.",
+notes:[
+"The Z-Transform: X(z)=Σ_{n=-∞}^{∞} x[n]z^{-n}, where z is a complex variable. This is the DT counterpart to the Laplace Transform's integral, with summation replacing integration and z^{-n} replacing e^{-st} -- the entire theory (ROC, poles/zeros, transfer functions) mirrors Laplace almost term for term.",
+"The Region of Convergence follows analogous rules: causal (right-sided) sequences have an ROC that is the EXTERIOR of a circle, |z|>r (outside the outermost pole); anti-causal (left-sided) sequences have an ROC that is the INTERIOR of a circle, |z|<r; two-sided sequences have an annular (ring-shaped) ROC between two circles.",
+"Setting z=e^{jω} evaluates X(z) on the UNIT CIRCLE (|z|=1) in the z-plane, giving the Discrete-Time Fourier Transform (DTFT) -- exactly analogous to Laplace's s=jω recovering the Fourier Transform. This means: whenever the ROC of X(z) includes the unit circle, the system's DTFT (frequency response) exists.",
+"Properties mirror Laplace closely: linearity, time-shift (x[n-n0]↔z^{-n0}X(z), directly modeling a delay element/register in digital hardware), and the CONVOLUTION property y[n]=x[n]*h[n] ↔ Y(z)=X(z)H(z), which defines the DT transfer function H(z)=Y(z)/X(z) -- the s-domain-style 'fingerprint' of a digital filter, from which its poles/zeros (Day 19) are read directly.",
+"<strong>Worked example:</strong> x[n]=a^n u[n] (causal geometric sequence, |a|<1 for eventual decay). X(z)=Σ_{n=0}^{∞}a^n z^{-n} = Σ(a/z)^n = 1/(1-az^{-1}) = z/(z-a), valid (converges) for |z|>|a| -- an ROC that is the exterior of a circle of radius |a|, exactly matching the causal-signal rule.",
+"<strong>Application:</strong> Every digital IIR filter running on a DSP chip or software-defined radio is designed and analyzed directly in terms of its Z-transform H(z) -- the filter's difference-equation coefficients (Day 10) are read directly off the numerator/denominator of H(z), making Z-domain design the standard workflow for real digital filter implementation."
+],
+formulas:["X(z) = Σ_{n=-∞}^{∞} x[n] z^{-n}","Causal x[n]: ROC is |z| > r (exterior of a circle)","Convolution: y[n]=x[n]*h[n] ↔ Y(z)=X(z)H(z) ; DTFT = X(z) at z=e^{jω}"],
+questions:[
+{type:"Conceptual", q:"Explain the direct structural parallel between the Laplace Transform/s-plane and the Z-Transform/z-plane -- specifically, why 'exterior of a circle' in the z-plane plays the same role that 'right-half-plane' plays in the s-plane for causal signals."},
+{type:"ECE application", q:"A digital FIR filter has the difference equation y[n]=0.5x[n]+0.5x[n-1]. Find its transfer function H(z) directly from this equation (hint: apply the time-shift property to each term), and identify what this H(z) tells a DSP engineer about the filter without needing to test it against any specific input signal."},
+{type:"Reasoning", q:"For x[n]=a^n u[n] with |a|>1 (a GROWING geometric sequence), does the same X(z)=z/(z-a) formula still apply? Discuss what changes (if anything) about the ROC in this case, and connect this to Day 16's observation that a growing CT signal still has a well-defined (Laplace) transform provided the ROC is chosen appropriately."}
+]},
+
+{d:19,week:4,title:"System Analysis via Poles, Zeros & Stability",big:true,steps:6,
+diagram:"stability",
+facts:[{tag:"KEY FACT", text:"For a CAUSAL LTI system, BIBO stability holds if and only if ALL poles of H(s) lie strictly in the LEFT-HALF s-plane (Re(s)<0), or equivalently, all poles of H(z) lie strictly INSIDE the unit circle (|z|<1)."}, {tag:"CAUTION", text:"A pole exactly ON the boundary (the jω-axis in s, or the unit circle in z) makes the system MARGINALLY stable, not stable -- a bounded input at exactly that pole's frequency can still produce an unbounded (resonant) output."}],
+mcqs:[
+{q:"Poles of H(s) are the values of s where:", options:["H(s)=0", "H(s) becomes infinite (denominator=0)", "H(s)=1", "The input is zero"], correct:1, explain:"Poles are the roots of the transfer function's DENOMINATOR polynomial, where H(s) blows up to infinity."},
+{q:"Zeros of H(s) are the values of s where:", options:["H(s) becomes infinite", "H(s)=0 (numerator=0)", "The system is unstable", "s=0 always"], correct:1, explain:"Zeros are the roots of the transfer function's NUMERATOR polynomial, where H(s) evaluates to exactly zero."},
+{q:"A causal CT LTI system is BIBO stable if and only if all its poles lie:", options:["On the jω-axis", "In the right-half s-plane", "Strictly in the left-half s-plane (Re(s)<0)", "At the origin only"], correct:2, explain:"Left-half-plane poles correspond to decaying exponential terms in h(t); any pole with Re(s)≥0 introduces a non-decaying or growing term, violating BIBO stability."},
+{q:"A causal DT LTI system is BIBO stable if and only if all its poles lie:", options:["Outside the unit circle", "Strictly inside the unit circle (|z|<1)", "Exactly on the unit circle", "At z=0 only"], correct:1, explain:"Poles inside the unit circle correspond to decaying geometric terms in h[n]; poles on or outside the unit circle break BIBO stability."},
+{q:"A pole located exactly on the s-plane's jω-axis (or on the z-plane's unit circle) makes a system:", options:["Definitely stable", "Definitely unstable, always", "Marginally stable (borderline case)", "Impossible to have"], correct:2, explain:"This borderline case (e.g. a pure oscillator, poles at ±jω0) produces a bounded natural response for MOST inputs, but resonates unboundedly for an input exactly matching that frequency -- hence 'marginal', not fully stable."}
+],
+core:"Poles and zeros are where all the previous weeks' work pays off in one clean geometric picture: plot a handful of points in the complex plane, and you can read off a system's stability, its natural response's shape (decaying? oscillating? growing?), and even sketch its frequency response -- all without touching another integral.",
+notes:[
+"Given a rational transfer function H(s)=N(s)/D(s), the POLES are the roots of D(s) (where H(s)→∞) and the ZEROS are the roots of N(s) (where H(s)=0). Plotting these as points in the complex s-plane (poles as ×, zeros as ○) is called the pole-zero plot, and it visually encodes almost everything about the system's time-domain behavior.",
+"Each pole corresponds to a term in the system's natural response: a real pole at s=-a (a>0) gives a decaying exponential e^{-at}; a complex-conjugate pole pair at s=-σ±jωd gives a decaying oscillation e^{-σt}cos(ωdt+φ); a pole at s=+a (a>0, right-half-plane) gives a GROWING exponential. Reading the pole locations directly tells you the qualitative SHAPE of the natural response, without solving anything further.",
+"STABILITY criterion (causal systems): BIBO-stable ⟺ every pole strictly in the left-half s-plane (Re(s)<0) for CT, or strictly inside the unit circle (|z|<1) for DT. This is a direct consequence of Day 5's ∫|h(t)|dt<∞ condition: only strictly-decaying natural-response terms (left-half-plane/inside-unit-circle poles) can produce an absolutely integrable/summable h(t).",
+"Poles ON the boundary (jω-axis for CT, unit circle for DT) give MARGINALLY STABLE systems: their natural response neither decays nor grows (e.g. a pure sinusoidal oscillation, or a DT system with a pole at z=1, an accumulator/integrator). These systems have bounded output for MOST bounded inputs, but resonate unboundedly if driven at exactly the pole's own frequency -- a subtlety full BIBO stability testing must catch.",
+"<strong>Worked example:</strong> H(s)=(s+1)/[(s+2)(s+5)] has poles at s=-2 and s=-5 (both strictly left-half-plane) and a zero at s=-1. Since BOTH poles have Re(s)<0, this causal system is BIBO stable, and its natural response is a sum of two decaying exponentials, e^{-2t} and e^{-5t}, with no oscillation (both poles are real, not complex).",
+"<strong>Application:</strong> Control and filter designers routinely PLACE poles deliberately (via feedback design) to shape a system's transient response -- pulling poles further left in the s-plane makes a system respond FASTER (faster decay) but often at the cost of requiring more control effort/gain; this pole-placement design philosophy underlies everything from op-amp filter design to autopilot control-loop tuning."
+],
+formulas:["Poles: roots of D(s) where H(s)=N(s)/D(s)→∞ ; Zeros: roots of N(s), H(s)=0","CT stability (causal): all poles have Re(s)<0 (strict left-half-plane)","DT stability (causal): all poles have |z|<1 (strictly inside unit circle)"],
+questions:[
+{type:"Conceptual", q:"Explain, using Day 5's absolute-integrability stability condition on h(t), WHY a pole with Re(s)=0 exactly (on the jω-axis) fails to be BIBO stable -- what specific TERM does this pole contribute to h(t), and why does that specific term fail the ∫|h(t)|dt<∞ test?"},
+{type:"ECE application", q:"An audio equalizer is implemented as a DT (digital) filter with transfer function H(z), and a bug in the design accidentally places one pole at z=1.02 (just outside the unit circle). Explain what would happen, in practice, to the digital audio signal being processed by this filter -- describe the failure mode a listener or engineer would actually observe."},
+{type:"Reasoning", q:"An LC (inductor-capacitor) circuit with NO resistance ideally has a complex-conjugate pole pair located EXACTLY on the jω-axis (at s=±jω0), corresponding to an undamped, perpetual oscillation. Explain why real, physical LC circuits ALWAYS have at least some small resistance, and connect this to why real oscillator circuits' poles are never quite exactly on the jω-axis in practice."}
+]},
+
+{d:20,week:4,title:"Frequency Response, Bode Plots & System Synthesis",big:true,steps:6,
+diagram:"bode",
+facts:[{tag:"KEY FACT", text:"The frequency response H(jω) = H(s)|_{s=jω} tells you EXACTLY how a stable LTI system scales the amplitude and shifts the phase of a sinusoidal input at every frequency ω -- the single most-used engineering summary of a filter's behavior."}, {tag:"INSIGHT", text:"A Bode plot displays |H(jω)| in DECIBELS (20log10|H(jω)|) versus LOG-scale frequency, turning multiplicative filter cascades (Day 8) into simple ADDITION of dB curves -- an enormous practical simplification."}],
+mcqs:[
+{q:"For a stable LTI system with sinusoidal input x(t)=cos(ω0t), the steady-state output is:", options:["A completely different waveform shape", "|H(jω0)|·cos(ω0t + ∠H(jω0)) -- same frequency, scaled amplitude, shifted phase", "Zero always", "A DC signal only"], correct:1, explain:"LTI systems can only scale amplitude and shift phase of a sinusoidal input -- they can NEVER create new frequencies (only nonlinear or time-varying systems, like Day 4's modulator, can do that)."},
+{q:"A Bode magnitude plot displays:", options:["|H(jω)| on a linear scale vs. linear frequency", "20log10|H(jω)| (in dB) vs. log10(ω)", "The impulse response h(t)", "Only the phase response"], correct:1, explain:"Both axes use logarithmic-style scaling (dB for magnitude, log frequency for the x-axis), which is what makes Bode plots so useful for spanning wide frequency ranges."},
+{q:"Why are Bode plots so practically useful for cascaded systems (Day 8)?", options:["They aren't useful for cascades", "Because dB magnitudes of cascaded H(jω)'s simply ADD, turning multiplication into addition", "Because they eliminate the need for stability analysis", "They only work for a single system, never combinations"], correct:1, explain:"Since |H1H2| in dB = 20log|H1|+20log|H2|, cascaded systems' Bode magnitude plots can simply be added graphically -- a huge practical shortcut over multiplying raw magnitude curves."},
+{q:"An ideal LOW-PASS filter's frequency response |H(jω)| is:", options:["Large for high ω, small for low ω", "Large (passes) for low ω, small/zero (blocks) for high ω above a cutoff", "Constant for all ω", "Zero everywhere"], correct:1, explain:"A low-pass filter is defined precisely by this behavior -- passing low frequencies through largely unchanged while attenuating frequencies above its cutoff."},
+{q:"The -3 dB cutoff frequency of a filter is the frequency at which:", options:["The output is completely zero", "The power gain has dropped to half its maximum value (magnitude ≈0.707 of max)", "The phase is exactly 0", "The system becomes unstable"], correct:1, explain:"-3 dB corresponds to a magnitude ratio of 1/√2≈0.707, and hence half the POWER (since power ∝ magnitude²) -- the standard, universally used definition of a filter's bandwidth edge."}
+],
+core:"This is where the whole course arrives at practice: a filter's frequency response H(jω), read straight off its pole-zero plot and displayed as a Bode plot, is THE document an ECE engineer actually hands to a colleague to specify a real analog or digital filter, RF front-end, or communication channel's behavior -- everything from Day 1's signal classification to Day 19's stability now culminates in this one design/analysis tool.",
+notes:[
+"For a STABLE LTI system, the steady-state response to a sinusoidal input x(t)=cos(ω0t) is y(t)=|H(jω0)|cos(ω0t+∠H(jω0)) -- the OUTPUT is a sinusoid at the EXACT SAME frequency ω0, only scaled in amplitude by |H(jω0)| and shifted in phase by ∠H(jω0). This is the formal statement of why LTI systems cannot create new frequencies (only modulators/mixers, which are time-varying, can do that -- Day 4/14).",
+"H(jω) is obtained by evaluating the transfer function H(s) (Day 17) at s=jω, valid whenever the system is stable (poles in the left-half-plane, guaranteeing the jω-axis lies inside the ROC, per Day 16). |H(jω)| is the MAGNITUDE (gain) response and ∠H(jω) is the PHASE response, together fully describing the filter's effect at every frequency.",
+"A Bode plot displays 20log10|H(jω)| (magnitude, in decibels) and ∠H(jω) (phase, in degrees) both against log10(ω) on the x-axis. Log-log-style scaling lets a single plot span many decades of frequency, and — crucially — because dB is a logarithm of magnitude, CASCADED systems' Bode magnitude plots simply ADD (20log|H1H2|=20log|H1|+20log|H2|), turning Day 8's cascade-multiplication rule into simple graphical addition.",
+"Standard filter types are classified entirely by their |H(jω)| SHAPE: low-pass (passes low ω, blocks high), high-pass (opposite), band-pass (passes a middle band only), and band-stop/notch (blocks a middle band only). The -3 dB point(s) (where |H(jω)| drops to 1/√2 of its passband value, i.e. half power) define the filter's cutoff frequency/frequencies and hence its BANDWIDTH.",
+"<strong>Worked example:</strong> The RC low-pass filter from Days 7/10/17 has H(s)=1/(RCs+1), so H(jω)=1/(1+jωRC). Magnitude: |H(jω)|=1/√(1+(ωRC)²) -- equals 1 (0 dB) at ω=0 and falls to 1/√2 (-3 dB) exactly at ω=1/RC, confirming ωc=1/RC (or fc=1/(2πRC)) is this filter's cutoff frequency, matching its known time-constant τ=RC from the step-response analysis.",
+"<strong>Application:</strong> Every RF receiver's channel-selectivity spec, every audio system's frequency-response graph, and every telecom standard's spectral mask requirement is communicated using EXACTLY this Bode-style |H(jω)| language -- 'this filter must provide at least 40 dB of attenuation by 2×fc' is a sentence every practicing ECE/telecom engineer reads and writes routinely, and it is now fully decodable using everything from this 20-day course."
+],
+formulas:["Steady-state sinusoidal response: y(t) = |H(jω0)|cos(ω0t+∠H(jω0))","H(jω) = H(s)|_{s=jω}  (valid when system is stable)","Bode magnitude: 20log10|H(jω)| (dB) vs. log10(ω) ; -3dB point: |H(jω)|=1/√2 of max"],
+questions:[
+{type:"Conceptual", q:"Explain carefully why an LTI system can NEVER create a frequency component in its output that wasn't already present in its input -- connect this directly to the steady-state sinusoidal response formula and to the Convolution Theorem (Day 14)."},
+{type:"ECE application", q:"A telecom filter spec requires 'at least 40 dB attenuation at twice the cutoff frequency.' Using the cascade-addition property of Bode magnitude plots, explain why a designer might choose to cascade TWO identical, simpler filter stages (each providing 20 dB at that frequency) rather than trying to design one single, more complex filter stage that meets the full 40 dB requirement alone."},
+{type:"Reasoning", q:"Reflecting back across all 20 days: trace the SINGLE conceptual thread connecting Day 5's impulse response h(t), Day 14's convolution theorem H(ω), Day 17's transfer function H(s), Day 19's pole-zero stability criterion, and today's H(jω) frequency response -- explain, in one connected narrative, how these are all really just DIFFERENT VIEWS of the exact same underlying LTI system."}
+]}
+
+];
+
+const DEFS = `<defs>
+<marker id="ac" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="#1F8A57"/></marker>
+<marker id="ao" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="#1F5FA8"/></marker>
+<marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="#B94A40"/></marker>
+</defs>`;
+function svg(inner, vb){ return `<svg class="diagram-svg" viewBox="${vb||'0 0 440 170'}" xmlns="http://www.w3.org/2000/svg">${DEFS}${inner}</svg>`; }
+const T = 'font:11px \'IBM Plex Mono\',monospace;fill:#5B6470';
+
+const DIAGRAMS = {
+sigclass: svg(`
+<text x="55" y="20" style="font:11px monospace;fill:#1F5FA8">Continuous-time x(t)</text>
+<path d="M55,55 C90,25 110,85 145,55 S200,25 235,55" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<line x1="50" y1="55" x2="240" y2="55" stroke="#DEDACB"/>
+<text x="270" y="20" style="font:11px monospace;fill:#1F8A57">Discrete-time x[n]</text>
+<line x1="265" y1="90" x2="400" y2="90" stroke="#DEDACB"/>
+<line x1="280" y1="90" x2="280" y2="65" stroke="#1F8A57" stroke-width="2.5"/><circle cx="280" cy="65" r="3" fill="#1F8A57"/>
+<line x1="300" y1="90" x2="300" y2="50" stroke="#1F8A57" stroke-width="2.5"/><circle cx="300" cy="50" r="3" fill="#1F8A57"/>
+<line x1="320" y1="90" x2="320" y2="70" stroke="#1F8A57" stroke-width="2.5"/><circle cx="320" cy="70" r="3" fill="#1F8A57"/>
+<line x1="340" y1="90" x2="340" y2="40" stroke="#1F8A57" stroke-width="2.5"/><circle cx="340" cy="40" r="3" fill="#1F8A57"/>
+<line x1="360" y1="90" x2="360" y2="75" stroke="#1F8A57" stroke-width="2.5"/><circle cx="360" cy="75" r="3" fill="#1F8A57"/>
+<text x="55" y="150" style="${T}">x(t): defined for every real t   ·   x[n]: defined only at integers n</text>`),
+
+sigops: svg(`
+<text x="55" y="18" style="${T}">original x(t)</text>
+<path d="M60,60 L100,60 L100,35 L140,35 L140,60 L180,60" fill="none" stroke="#5B6470" stroke-width="2"/>
+<text x="200" y="18" style="font:11px monospace;fill:#1F5FA8">shifted x(t-2)</text>
+<path d="M205,95 L245,95 L245,70 L285,70 L285,95 L325,95" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="55" y="130" style="font:11px monospace;fill:#1F8A57">scaled x(2t) — compressed</text>
+<path d="M60,155 L80,155 L80,142 L100,142 L100,155 L120,155" fill="none" stroke="#1F8A57" stroke-width="2"/>
+<text x="230" y="130" style="font:11px monospace;fill:#C97A22">reversed x(-t)</text>
+<path d="M240,155 L280,155 L280,142 L300,142 L300,155 L340,155" fill="none" stroke="#C97A22" stroke-width="2" transform="scale(-1,1) translate(-580,0)"/>`),
+
+elemsignals: svg(`
+<text x="55" y="18" style="font:10.5px monospace;fill:#1F5FA8">u(t)</text>
+<line x1="55" y1="45" x2="100" y2="45" stroke="#1F5FA8" stroke-width="2"/><line x1="100" y1="45" x2="100" y2="20" stroke="#1F5FA8" stroke-width="2"/><line x1="100" y1="20" x2="145" y2="20" stroke="#1F5FA8" stroke-width="2"/>
+<text x="160" y="18" style="font:10.5px monospace;fill:#1F8A57">δ(t)</text>
+<line x1="180" y1="45" x2="215" y2="45" stroke="#1F8A57"/><line x1="215" y1="45" x2="215" y2="15" stroke="#1F8A57" stroke-width="2.5" marker-end="url(#ac)"/><line x1="215" y1="45" x2="250" y2="45" stroke="#1F8A57"/>
+<text x="280" y="18" style="font:10.5px monospace;fill:#C97A22">r(t) ramp</text>
+<line x1="280" y1="45" x2="310" y2="45" stroke="#C97A22"/><line x1="310" y1="45" x2="380" y2="15" stroke="#C97A22" stroke-width="2"/>
+<text x="55" y="95" style="font:10.5px monospace;fill:#1F5FA8">e^{-at}u(t)</text>
+<path d="M55,120 Q90,60 180,115" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="230" y="95" style="font:10.5px monospace;fill:#1F8A57">cos(ω0t)</text>
+<path d="M225,115 C240,90 255,90 270,115 S300,140 315,115 S345,90 360,115" fill="none" stroke="#1F8A57" stroke-width="2"/>
+<text x="55" y="155" style="${T}">the alphabet: step, impulse, ramp, exponential, sinusoid</text>`),
+
+sysclass: svg(`
+<rect x="150" y="55" width="140" height="55" rx="3" fill="#121D2C" stroke="#1F5FA8" stroke-width="1.5"/>
+<text x="175" y="88" style="font:12px 'IBM Plex Mono',monospace;fill:#E7EDF3">SYSTEM</text>
+<line x1="60" y1="82" x2="146" y2="82" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>
+<text x="60" y="72" style="font:11px monospace;fill:#1F8A57">x(t) in</text>
+<line x1="294" y1="82" x2="380" y2="82" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>
+<text x="300" y="72" style="font:11px monospace;fill:#1F8A57">y(t) out</text>
+<text x="60" y="35" style="${T}">linear? time-invariant? causal? memoryless? stable?</text>
+<text x="60" y="150" style="${T}">the same five questions, asked of every system in this course</text>`),
+
+ltiimpulse: svg(`
+<rect x="150" y="55" width="140" height="55" rx="3" fill="#121D2C" stroke="#1F5FA8" stroke-width="1.5"/>
+<text x="175" y="80" style="font:13px 'IBM Plex Mono',monospace;fill:#E7EDF3">h(t)</text>
+<text x="165" y="98" style="font:9px 'IBM Plex Mono',monospace;fill:#9AA2AC">impulse resp.</text>
+<line x1="55" y1="82" x2="146" y2="82" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="60" y1="82" x2="60" y2="55" stroke="#1F8A57" stroke-width="2.5" marker-end="url(#ac)"/>
+<text x="55" y="45" style="font:11px monospace;fill:#1F8A57">δ(t) in</text>
+<line x1="294" y1="82" x2="385" y2="82" stroke="#1F5FA8" stroke-width="2" marker-end="url(#ac)"/>
+<text x="300" y="72" style="font:11px monospace;fill:#1F5FA8">h(t) out</text>
+<text x="55" y="140" style="${T}">any x(t) in → y(t)=x(t)*h(t) out — h(t) alone fully characterizes the system</text>`),
+
+dtconv: svg(`
+<text x="55" y="18" style="font:10.5px monospace;fill:#1F5FA8">x[k]</text>
+<line x1="55" y1="45" x2="55" y2="30" stroke="#1F5FA8" stroke-width="2.5"/><line x1="72" y1="45" x2="72" y2="20" stroke="#1F5FA8" stroke-width="2.5"/><line x1="89" y1="45" x2="89" y2="35" stroke="#1F5FA8" stroke-width="2.5"/>
+<line x1="45" y1="45" x2="180" y2="45" stroke="#DEDACB"/>
+<text x="230" y="18" style="font:10.5px monospace;fill:#1F8A57">h[n-k] (flipped &amp; slid)</text>
+<line x1="250" y1="100" x2="250" y2="85" stroke="#1F8A57" stroke-width="2.5"/><line x1="267" y1="100" x2="267" y2="90" stroke="#1F8A57" stroke-width="2.5"/>
+<line x1="200" y1="100" x2="340" y2="100" stroke="#DEDACB"/>
+<path d="M180,70 A40,15 0 0 1 250,70" fill="none" stroke="#B94A40" stroke-width="1.5" marker-end="url(#am)" stroke-dasharray="3 2"/>
+<text x="180" y="65" style="font:10px monospace;fill:#B94A40">slide, multiply, sum</text>
+<text x="55" y="150" style="${T}">y[n] = Σ x[k]·h[n-k]  —  flip h, slide across x, multiply, add</text>`),
+
+ctconv: svg(`
+<path d="M55,50 L100,50 L100,80 L145,80 L145,50" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="55" y="35" style="font:10.5px monospace;fill:#1F5FA8">x(τ)</text>
+<path d="M230,110 L270,110 L270,80 L310,80 L310,110" fill="none" stroke="#1F8A57" stroke-width="2" transform="scale(-1,1) translate(-540,0)"/>
+<text x="230" y="130" style="font:10.5px monospace;fill:#1F8A57">h(t-τ), flipped &amp; sliding</text>
+<rect x="230" y="50" width="80" height="30" fill="rgba(201,122,34,0.15)" stroke="none"/>
+<text x="235" y="45" style="font:10px monospace;fill:#C97A22">overlap → integrate (area)</text>
+<line x1="45" y1="120" x2="400" y2="120" stroke="#DEDACB"/>
+<text x="55" y="150" style="${T}">y(t)=∫x(τ)h(t-τ)dτ — area under the sliding product curve, for each t</text>`),
+
+convprops: svg(`
+<text x="55" y="20" style="${T}">identity:  x(t) * δ(t)  =  x(t)</text>
+<path d="M55,60 C75,40 90,80 110,60" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="130" y="65" style="font:16px monospace;fill:#5B6470">*</text>
+<line x1="155" y1="70" x2="175" y2="70" stroke="#1F8A57"/><line x1="165" y1="70" x2="165" y2="40" stroke="#1F8A57" stroke-width="2.5" marker-end="url(#ac)"/>
+<text x="185" y="65" style="font:16px monospace;fill:#5B6470">=</text>
+<path d="M205,60 C225,40 240,80 260,60" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="55" y="110" style="${T}">series: h1(t)*h2(t)  ·  parallel: h1(t)+h2(t)</text>
+<rect x="55" y="120" width="55" height="28" fill="#121D2C" stroke="#1F5FA8"/><text x="65" y="138" style="font:11px monospace;fill:#E7EDF3">h1</text>
+<rect x="120" y="120" width="55" height="28" fill="#121D2C" stroke="#1F5FA8"/><text x="130" y="138" style="font:11px monospace;fill:#E7EDF3">h2</text>
+<line x1="110" y1="134" x2="120" y2="134" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="55" y1="134" x2="35" y2="134" stroke="#1F8A57" marker-end="url(#ac)"/><line x1="175" y1="134" x2="195" y2="134" stroke="#1F8A57" marker-end="url(#ac)"/>`),
+
+correlation: svg(`
+<text x="55" y="18" style="font:10.5px monospace;fill:#1F5FA8">x(t)</text>
+<path d="M55,55 C75,35 90,75 110,55 S140,35 160,55" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="230" y="18" style="font:10.5px monospace;fill:#1F8A57">y(t+τ), sliding — NOT flipped</text>
+<path d="M225,105 C245,85 260,125 280,105 S310,85 330,105" fill="none" stroke="#1F8A57" stroke-width="2"/>
+<line x1="60" y1="140" x2="380" y2="140" stroke="#5B6470"/>
+<path d="M180,145 Q220,120 260,145" fill="none" stroke="#C97A22" stroke-width="1.5"/>
+<text x="200" y="118" style="font:10px monospace;fill:#C97A22">Rxy(τ) peak</text>
+<text x="55" y="160" style="${T}">peak location reveals the relative time-delay between x and y</text>`),
+
+diffeq: svg(`
+<text x="55" y="20" style="font:11.5px monospace;fill:#1F5FA8">RC dy/dt + y(t) = x(t)</text>
+<rect x="150" y="55" width="140" height="55" rx="3" fill="#121D2C" stroke="#1F5FA8" stroke-width="1.5"/>
+<text x="160" y="80" style="font:10px 'IBM Plex Mono',monospace;fill:#E7EDF3">diff. eqn</text>
+<text x="160" y="95" style="font:9px 'IBM Plex Mono',monospace;fill:#9AA2AC">↔ h(t) ↔ H(s)</text>
+<line x1="55" y1="82" x2="146" y2="82" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="294" y1="82" x2="385" y2="82" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>
+<text x="55" y="140" style="${T}">total response = natural (zero-input) + forced (zero-state, = x*h)</text>`),
+
+fourierseries: svg(`
+<text x="55" y="18" style="font:10.5px monospace;fill:#1F5FA8">square wave ≈ sum of odd harmonics</text>
+<path d="M55,60 L90,60 L90,35 L125,35 L125,60 L160,60 L160,35 L195,35" fill="none" stroke="#5B6470" stroke-width="2" opacity="0.5"/>
+<path d="M55,60 C75,42 95,42 115,60 S155,78 175,60 S215,42 235,60" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="250" y="55" style="${T}">line spectrum ck</text>
+<line x1="250" y1="130" x2="380" y2="130" stroke="#5B6470"/>
+<line x1="270" y1="130" x2="270" y2="90" stroke="#1F8A57" stroke-width="3"/>
+<line x1="300" y1="130" x2="300" y2="115" stroke="#1F8A57" stroke-width="3"/>
+<line x1="330" y1="130" x2="330" y2="105" stroke="#1F8A57" stroke-width="3"/>
+<text x="55" y="150" style="${T}">x(t) = Σ ck e^{jkω0t}  — harmonics at 0, ω0, 2ω0, 3ω0 ...</text>`),
+
+fsprops: svg(`
+<text x="55" y="20" style="${T}">time-shift → phase ramp only, |ck| unchanged</text>
+<line x1="60" y1="55" x2="180" y2="55" stroke="#5B6470"/>
+<line x1="80" y1="55" x2="80" y2="35" stroke="#1F5FA8" stroke-width="3"/><line x1="110" y1="55" x2="110" y2="45" stroke="#1F5FA8" stroke-width="3"/><line x1="140" y1="55" x2="140" y2="40" stroke="#1F5FA8" stroke-width="3"/>
+<path d="M180,45 A15,15 0 0 1 200,45" fill="none" stroke="#C97A22" marker-end="url(#am)"/>
+<line x1="230" y1="55" x2="350" y2="55" stroke="#5B6470"/>
+<line x1="250" y1="55" x2="250" y2="35" stroke="#1F8A57" stroke-width="3"/><line x1="280" y1="55" x2="280" y2="45" stroke="#1F8A57" stroke-width="3"/><line x1="310" y1="55" x2="310" y2="40" stroke="#1F8A57" stroke-width="3"/>
+<text x="55" y="130" style="${T}">Parseval: P = Σ|ck|² — power splits exactly across every harmonic</text>`),
+
+fouriertransform: svg(`
+<text x="55" y="18" style="font:10.5px monospace;fill:#1F5FA8">rect(t/τ)</text>
+<rect x="70" y="45" width="60" height="25" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<line x1="45" y1="70" x2="180" y2="70" stroke="#DEDACB"/>
+<path d="M280,55 A15,15 0 0 1 300,55" fill="none" stroke="#C97A22" marker-end="url(#am)"/>
+<text x="220" y="18" style="font:10.5px monospace;fill:#1F8A57">sinc(ωτ/2π)</text>
+<path d="M225,60 C240,20 255,60 270,60 S285,90 300,60 S315,45 330,60 S345,70 360,60" fill="none" stroke="#1F8A57" stroke-width="2"/>
+<line x1="220" y1="60" x2="380" y2="60" stroke="#DEDACB"/>
+<text x="55" y="150" style="${T}">narrow in time ⟺ wide in frequency — the time-bandwidth trade-off</text>`),
+
+ftprops: svg(`
+<text x="55" y="18" style="${T}">Convolution Theorem: x(t)*h(t) ⟺ X(ω)H(ω)</text>
+<path d="M55,55 C70,40 85,70 100,55" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="110" y="60" style="font:14px monospace;fill:#5B6470">*</text>
+<path d="M120,55 C135,40 150,70 165,55" fill="none" stroke="#1F8A57" stroke-width="2"/>
+<path d="M180,55 A18,18 0 0 1 210,55" fill="none" stroke="#C97A22" stroke-width="1.5" marker-end="url(#am)"/>
+<text x="225" y="50" style="font:11px monospace;fill:#1F5FA8">X(ω)</text><text x="255" y="55" style="font:14px monospace;fill:#5B6470">×</text><text x="270" y="50" style="font:11px monospace;fill:#1F8A57">H(ω)</text>
+<text x="55" y="120" style="${T}">modulation: x(t)cos(ω0t) shifts X(ω) to ±ω0 — AM radio in one line</text>`),
+
+sampling: svg(`
+<path d="M55,60 C75,40 95,80 115,60 S155,40 175,60" fill="none" stroke="#5B6470" stroke-width="1.5" opacity="0.6"/>
+<line x1="65" y1="90" x2="65" y2="55" stroke="#1F5FA8" stroke-width="2"/><circle cx="65" cy="55" r="2.5" fill="#1F5FA8"/>
+<line x1="85" y1="90" x2="85" y2="42" stroke="#1F5FA8" stroke-width="2"/><circle cx="85" cy="42" r="2.5" fill="#1F5FA8"/>
+<line x1="105" y1="90" x2="105" y2="65" stroke="#1F5FA8" stroke-width="2"/><circle cx="105" cy="65" r="2.5" fill="#1F5FA8"/>
+<line x1="125" y1="90" x2="125" y2="48" stroke="#1F5FA8" stroke-width="2"/><circle cx="125" cy="48" r="2.5" fill="#1F5FA8"/>
+<line x1="145" y1="90" x2="145" y2="58" stroke="#1F5FA8" stroke-width="2"/><circle cx="145" cy="58" r="2.5" fill="#1F5FA8"/>
+<line x1="45" y1="90" x2="185" y2="90" stroke="#DEDACB"/>
+<text x="220" y="20" style="font:10.5px monospace;fill:#1F8A57">spectrum copies (fs&gt;2fm: OK)</text>
+<path d="M225,50 L245,20 L265,50 Z" fill="rgba(31,138,87,0.15)" stroke="#1F8A57"/>
+<path d="M290,50 L310,20 L330,50 Z" fill="rgba(31,138,87,0.15)" stroke="#1F8A57"/>
+<path d="M355,50 L375,20 L390,50 Z" fill="rgba(31,138,87,0.1)" stroke="#1F8A57"/>
+<text x="220" y="140" style="font:10.5px monospace;fill:#B94A40">fs&lt;2fm: copies OVERLAP → aliasing</text>
+<path d="M225,150 L250,120 L275,150 Z" fill="rgba(185,74,64,0.15)" stroke="#B94A40"/>
+<path d="M260,150 L285,120 L310,150 Z" fill="rgba(185,74,64,0.15)" stroke="#B94A40"/>`),
+
+laplace: svg(`
+<line x1="220" y1="20" x2="220" y2="150" stroke="#5B6470" stroke-width="1"/>
+<line x1="60" y1="85" x2="380" y2="85" stroke="#5B6470" stroke-width="1"/>
+<text x="225" y="30" style="font:10px monospace;fill:#5B6470">jω axis</text>
+<rect x="220" y="20" width="150" height="130" fill="rgba(31,138,87,0.08)"/>
+<text x="240" y="45" style="font:10.5px monospace;fill:#1F8A57">ROC: Re(s) &gt; -a (right-half-plane)</text>
+<text x="150" y="45" style="font:11px monospace;fill:#B94A40">×</text>
+<text x="140" y="60" style="font:9px monospace;fill:#B94A40">pole s=-a</text>
+<text x="55" y="150" style="${T}">X(s)=1/(s+a) — same formula, but ROC decides WHICH x(t) it means</text>`),
+
+laplaceprops: svg(`
+<text x="55" y="18" style="${T}">pole-zero plot of H(s)</text>
+<line x1="60" y1="85" x2="380" y2="85" stroke="#5B6470"/><line x1="220" y1="20" x2="220" y2="150" stroke="#5B6470"/>
+<text x="150" y="90" style="font:14px monospace;fill:#B94A40">×</text><text x="130" y="105" style="font:9px monospace;fill:#B94A40">pole s=-2</text>
+<text x="100" y="90" style="font:14px monospace;fill:#B94A40">×</text><text x="80" y="105" style="font:9px monospace;fill:#B94A40">pole s=-5</text>
+<circle cx="180" cy="85" r="6" fill="none" stroke="#1F8A57" stroke-width="1.5"/><text x="170" y="105" style="font:9px monospace;fill:#1F8A57">zero s=-1</text>
+<text x="55" y="140" style="${T}">L{dx/dt}=sX(s) — differentiation becomes multiplication by s</text>`),
+
+ztransform: svg(`
+<circle cx="220" cy="85" r="55" fill="none" stroke="#5B6470" stroke-dasharray="3 3"/>
+<text x="255" y="35" style="font:10px monospace;fill:#5B6470">unit circle |z|=1</text>
+<text x="205" y="60" style="font:14px monospace;fill:#B94A40">×</text><text x="185" y="45" style="font:9px monospace;fill:#B94A40">pole z=a</text>
+<line x1="60" y1="85" x2="380" y2="85" stroke="#5B6470" stroke-width="0.5"/><line x1="220" y1="20" x2="220" y2="150" stroke="#5B6470" stroke-width="0.5"/>
+<text x="55" y="150" style="${T}">causal: ROC is |z|&gt;|a| (exterior) — z=e^{jω} on the circle gives the DTFT</text>`),
+
+stability: svg(`
+<text x="55" y="18" style="font:10.5px monospace;fill:#1F8A57">CT: left-half-plane = stable</text>
+<line x1="60" y1="85" x2="215" y2="85" stroke="#5B6470"/><line x1="140" y1="20" x2="140" y2="150" stroke="#5B6470"/>
+<rect x="60" y="20" width="80" height="130" fill="rgba(31,138,87,0.10)"/>
+<text x="90" y="70" style="font:12px monospace;fill:#B94A40">×</text><text x="115" y="70" style="font:12px monospace;fill:#B94A40">×</text>
+<text x="240" y="18" style="font:10.5px monospace;fill:#1F8A57">DT: inside unit circle = stable</text>
+<circle cx="310" cy="85" r="55" fill="none" stroke="#5B6470" stroke-dasharray="3 3"/>
+<circle cx="310" cy="85" r="55" fill="rgba(31,138,87,0.06)"/>
+<text x="295" y="90" style="font:12px monospace;fill:#B94A40">×</text>
+<text x="55" y="150" style="${T}">poles strictly inside the stable region ⟺ h(t) or h[n] decays ⟺ BIBO stable</text>`),
+
+bode: svg(`
+<line x1="55" y1="130" x2="390" y2="130" stroke="#5B6470"/><line x1="55" y1="20" x2="55" y2="140" stroke="#5B6470"/>
+<path d="M55,50 L200,50 L390,120" fill="none" stroke="#1F5FA8" stroke-width="2"/>
+<text x="60" y="40" style="font:10px monospace;fill:#1F5FA8">0 dB (passband)</text>
+<line x1="200" y1="130" x2="200" y2="50" stroke="#C97A22" stroke-dasharray="3 2"/>
+<text x="205" y="145" style="font:10px monospace;fill:#C97A22">fc</text>
+<text x="240" y="70" style="font:10px monospace;fill:#B94A40">-20 dB/decade rolloff</text>
+<text x="55" y="15" style="${T}">low-pass Bode magnitude — passes low ω, attenuates above fc</text>`)
+};
+
+function conceptMapSVG(nodes){
+  const n = nodes.length, totalW = 420, boxW = Math.min(110, (totalW-(n-1)*16)/n), gap = (totalW-n*boxW)/(n-1);
+  let x = 10, boxes='', arrows='';
+  nodes.forEach((label,i)=>{
+    boxes += `<rect x="${x}" y="68" width="${boxW}" height="38" rx="3" fill="#121D2C" stroke="#1F5FA8" stroke-width="1.5"/><text x="${x+7}" y="91" style="font:9.5px 'IBM Plex Mono',monospace;fill:#E7EDF3">${label.length>15?label.slice(0,15):label}</text>`;
+    if(i<n-1){ arrows += `<line x1="${x+boxW}" y1="87" x2="${x+boxW+gap-4}" y2="87" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>`; }
+    x += boxW+gap;
+  });
+  return svg(boxes+arrows);
+}
+
+function diagramHTML(spec){
+  if(typeof spec === 'string') return DIAGRAMS[spec] || '';
+  if(spec.type === 'conceptmap') return conceptMapSVG(spec.nodes);
+  return '';
+}
+
+// ---------- Rendering ----------
+const weekListEl = document.getElementById('week-list');
+const contentEl = document.getElementById('content');
+const crumbEl = document.getElementById('crumb');
+const TOTAL_DAYS = 20;
+let currentDay = 1;
+
+/* ---------------- progress persistence (real account, via storage-shim.js) ---------------- */
+let progress = {};
+async function loadProgress(){
+  if(!(window.storage && typeof window.storage.get === 'function')) return;
+  try{
+    const res = await window.storage.get('progress', false);
+    if(res && res.value){ progress = JSON.parse(res.value); }
+  }catch(e){}
+}
+async function saveProgress(){
+  if(!(window.storage && typeof window.storage.set === 'function')) return;
+  try{ await window.storage.set('progress', JSON.stringify(progress), false); }catch(e){}
+}
+function isDayComplete(dayNum){
+  const day = DAYS.find(x=>x.d===dayNum);
+  const entry = progress[dayNum];
+  return !!(day && entry && entry.total === day.mcqs.length && entry.correct !== undefined);
+}
+
+function buildSidebar(){
+  WEEKS.forEach(w=>{
+    const det = document.createElement('details');
+    det.className = 'week';
+    det.open = (w.n===1);
+    const sum = document.createElement('summary');
+    sum.innerHTML = `<span>Week ${w.n} — ${w.title}</span><span class="wk-range">${w.range}</span>`;
+    det.appendChild(sum);
+    const list = document.createElement('div');
+    list.className = 'day-list';
+    DAYS.filter(d=>d.week===w.n).forEach(d=>{
+      const btn = document.createElement('button');
+      btn.className = 'day-btn';
+      btn.id = 'nav-' + d.d;
+      btn.innerHTML = `<span class="num">${String(d.d).padStart(2,'0')}</span><span>${d.title}</span>${d.big?'<span class="flag">BIG TOPIC</span>':''}<span class="flag" id="done-${d.d}" style="display:${isDayComplete(d.d)?'':'none'};">✓</span>`;
+      btn.onclick = ()=>renderDay(d.d, true);
+      list.appendChild(btn);
+    });
+    det.appendChild(list);
+    weekListEl.appendChild(det);
+  });
+}
+
+function renderDay(n, scrollNav){
+  const d = DAYS.find(x=>x.d===n);
+  if(!d) return;
+  currentDay = n;
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  const activeBtn = document.getElementById('nav-'+n);
+  if(activeBtn){
+    activeBtn.classList.add('active');
+    const parentDetails = activeBtn.closest('details');
+    if(parentDetails) parentDetails.open = true;
+    if(scrollNav) activeBtn.scrollIntoView({block:'nearest'});
+  }
+  const week = WEEKS.find(w=>w.n===d.week);
+  crumbEl.textContent = `WEEK ${d.week} · ${week.title.toUpperCase()}`;
+
+  const notesHtml = d.notes.map(p=>`<p>${p}</p>`).join('');
+  const formulaHtml = d.formulas.map(f=>`<div class="formula">${f}</div>`).join('');
+  const qHtml = d.questions.map(q=>`<div class="qcard"><div class="qtype">${q.type}</div><p>${q.q}</p></div>`).join('');
+  const diagramSvg = diagramHTML(d.diagram);
+  const factsHtml = d.facts.map(f=>{
+    const cls = f.tag==='INSIGHT' ? 'insight' : (f.tag==='CAUTION' ? 'caution' : 'key');
+    return `<div class="fact ${cls}"><span class="tag">${f.tag}</span>${f.text}</div>`;
+  }).join('');
+  const mcqHtml = d.mcqs.map((m,qi)=>{
+    const opts = m.options.map((opt,oi)=>
+      `<button class="mcq-opt" data-day="${d.d}" data-q="${qi}" data-o="${oi}">${String.fromCharCode(65+oi)}. ${opt}</button>`
+    ).join('');
+    return `<div class="mcq-card" id="mcq-${d.d}-${qi}">
+      <div class="mcq-q">${qi+1}. ${m.q}</div>
+      <div class="mcq-options">${opts}</div>
+      <div class="mcq-explain" id="exp-${d.d}-${qi}">${m.explain}</div>
+    </div>`;
+  }).join('');
+
+  contentEl.innerHTML = `
+    <div class="day-meta">
+      <span class="day-tag">DAY ${String(d.d).padStart(2,'0')} / ${TOTAL_DAYS}</span>
+      <span class="step-tag ${d.big?'big':''}">${d.steps}-step ${d.big?'(big topic)':''}</span>
+    </div>
+    <h2 class="day-title">${d.title}</h2>
+    <p class="core-idea">${d.core}</p>
+    <div class="diagram-wrap">${diagramSvg}<div class="diagram-cap">figure — Day ${d.d} concept sketch (animated)</div></div>
+    <section class="block">
+      <h3>KEY FACTS</h3>
+      <div class="facts">${factsHtml}</div>
+    </section>
+    <section class="block notes">
+      <h3>NOTES</h3>
+      ${notesHtml}
+    </section>
+    <section class="block">
+      <h3>IMPORTANT FORMULAS</h3>
+      <div class="formula-list">${formulaHtml}</div>
+    </section>
+    <section class="block">
+      <h3>CRITICAL-THINKING &amp; ECE REASONING</h3>
+      <div class="qlist">${qHtml}</div>
+    </section>
+    <section class="block">
+      <h3>QUICK CHECK — 5 MULTIPLE CHOICE</h3>
+      <div class="mcq-score" id="mcq-score-${d.d}">0 / ${d.mcqs.length} answered</div>
+      <div class="mcq-list">${mcqHtml}</div>
+    </section>
+    <div class="daynav">
+      <button id="prevBtn" ${n<=1?'disabled':''}>&larr; Day ${n-1}</button>
+      <button id="nextBtn" ${n>=TOTAL_DAYS?'disabled':''}>Day ${n+1} &rarr;</button>
+    </div>
+  `;
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if(prevBtn) prevBtn.onclick = ()=>{renderDay(n-1,true); window.scrollTo(0,0);};
+  if(nextBtn) nextBtn.onclick = ()=>{renderDay(n+1,true); window.scrollTo(0,0);};
+  restoreAnswerState(d);
+  window.scrollTo(0,0);
+}
+
+function restoreAnswerState(d){
+  const entry = progress[d.d];
+  if(!entry || !entry.answers) return;
+  Object.keys(entry.answers).forEach(qiStr=>{
+    const qi = parseInt(qiStr);
+    const oi = entry.answers[qiStr];
+    const m = d.mcqs[qi];
+    if(!m) return;
+    const card = document.getElementById('mcq-'+d.d+'-'+qi);
+    if(!card || card.classList.contains('answered')) return;
+    card.classList.add('answered');
+    const opts = card.querySelectorAll('.mcq-opt');
+    opts.forEach((o,i)=>{
+      o.classList.add('disabled');
+      if(i===m.correct) o.classList.add('correct');
+      else if(i===oi) o.classList.add('incorrect');
+    });
+    const exp = document.getElementById('exp-'+d.d+'-'+qi);
+    if(exp) exp.classList.add('show');
+  });
+  const scoreEl = document.getElementById('mcq-score-'+d.d);
+  if(scoreEl && entry.total !== undefined){
+    scoreEl.textContent = `${entry.total} / ${d.mcqs.length} answered — ${entry.correct} correct so far`;
+  }
+}
+
+(async function init(){
+  await loadProgress();
+  buildSidebar();
+  renderDay(1, true);
+})();
+
+// ---------- MCQ interaction (event delegation) ----------
+contentEl.addEventListener('click', function(e){
+  const btn = e.target.closest('.mcq-opt');
+  if(!btn) return;
+  const card = btn.closest('.mcq-card');
+  if(card.classList.contains('answered')) return;
+  card.classList.add('answered');
+
+  const dayNum = parseInt(btn.dataset.day);
+  const qi = parseInt(btn.dataset.q);
+  const oi = parseInt(btn.dataset.o);
+  const day = DAYS.find(x=>x.d===dayNum);
+  const m = day.mcqs[qi];
+
+  const opts = card.querySelectorAll('.mcq-opt');
+  opts.forEach((o,i)=>{
+    o.classList.add('disabled');
+    if(i===m.correct) o.classList.add('correct');
+    else if(i===oi) o.classList.add('incorrect');
+  });
+  const exp = document.getElementById('exp-'+dayNum+'-'+qi);
+  if(exp) exp.classList.add('show');
+
+  const scoreEl = document.getElementById('mcq-score-'+dayNum);
+  let answered = 0, correctCount = 0;
+  if(scoreEl){
+    answered = card.parentElement.querySelectorAll('.mcq-card.answered').length;
+    correctCount = Array.from(card.parentElement.querySelectorAll('.mcq-card.answered')).reduce((acc,c)=>{
+      const chosenIncorrect = c.querySelector('.mcq-opt.incorrect');
+      return acc + (chosenIncorrect ? 0 : 1);
+    },0);
+    scoreEl.textContent = `${answered} / ${day.mcqs.length} answered — ${correctCount} correct so far`;
+  }
+
+  if(!progress[dayNum]) progress[dayNum] = { answers: {} };
+  progress[dayNum].answers[qi] = oi;
+  progress[dayNum].total = answered;
+  progress[dayNum].correct = correctCount;
+  saveProgress();
+  if(answered === day.mcqs.length){
+    const doneFlag = document.getElementById('done-'+dayNum);
+    if(doneFlag) doneFlag.style.display = '';
+  }
+});
+</script>
+</body>
+</html>

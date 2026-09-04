@@ -27,6 +27,26 @@
   var panelOpen = false;
   var lastItems = [];
 
+  // The CSS (max-width:760px block in theme.css) pins the panel to the
+  // viewport with a guessed top offset, since a small dropdown anchored to
+  // the bell would overflow off-screen on a narrow phone (see the wrap's
+  // position near the LEFT of the bar on mobile). A guessed pixel value
+  // doesn't hold up across every phone's actual nav bar height — this
+  // measures the real one and overrides it, closing the gap that was
+  // showing up as empty space before the notification text.
+  function positionPanelForMobile() {
+    var panel = document.getElementById('hubNotifPanel');
+    var navMount = document.getElementById('siteNav');
+    if (!panel || !navMount) return;
+    if (!window.matchMedia('(max-width:760px)').matches) {
+      panel.style.top = ''; // let the desktop CSS (anchored to the bell itself) take over
+      return;
+    }
+    var rect = navMount.getBoundingClientRect();
+    panel.style.top = Math.round(rect.bottom + 8) + 'px';
+  }
+  window.addEventListener('resize', function () { if (panelOpen) positionPanelForMobile(); });
+
   function renderPanel(items, unreadCount) {
     var panel = document.getElementById('hubNotifPanel');
     if (!panel) return;
@@ -185,6 +205,7 @@
       panel.classList.toggle('open', panelOpen);
       btn.setAttribute('aria-expanded', String(panelOpen));
       if (panelOpen) {
+        positionPanelForMobile();
         loadNotifications();
         enablePush(); // first genuine interaction — good moment to ask for push permission
       }

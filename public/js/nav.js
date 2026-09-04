@@ -342,3 +342,40 @@
     });
   });
 })();
+
+// --- Blob delivery (file open/download), Android-app-aware --------------
+// A regular browser can turn a fetched Blob into a blob: URL and either
+// window.open() it or force-download it via a temporary <a download>. Both
+// of those silently do nothing inside the Cortex Android app's WebView:
+// window.open() needs a WebChromeClient the WebView doesn't have wired for
+// popups, and blob: URLs aren't independently readable by native download
+// code even if they were. See CortexApp/.../MainActivity.kt — it injects
+// window.AndroidDownload when running inside the app; this function
+// detects that and routes through it (base64 over the JS bridge) instead
+// of the browser-only blob path. Every page's file/document open-or-
+// download code should go through this rather than handling blobs itself.
+window.HubBlobDeliver = function (blob, filename, mimeType, openInline) {
+  var name = filename || 'download';
+  var type = mimeType || blob.type || 'application/octet-stream';
+
+  if (window.AndroidDownload && window.AndroidDownload.saveBase64File) {
+    var reader = new FileReader();
+    reader.onloadend = function () {
+      var base64 = String(reader.result).split(',')[1] || '';
+      window.AndroidDownload.saveBase64File(base64, name, type, !!openInline);
+    };
+    reader.onerror = function () { console.error('[HubBlobDeliver] could not read blob for native bridge'); };
+    reader.readAsDataURL(blob);
+    return;
+  }
+
+  var url = URL.createObjectURL(blob);
+  if (openInline) {
+    window.open(url, '_blank', 'noopener');
+  } else {
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+};

@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discrete Mathematics — Days 1–20 (incl. Foundations for ML)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F5EF;
+    --bg-panel:#FFFFFF;
+    --bg-raised:#EFEBDE;
+    --line:#DEDACB;
+    --text:#23282E;
+    --text-muted:#5B6470;
+    --text-dim:#838C93;
+    --copper:#1F5FA8;
+    --copper-dim:#163F73;
+    --cyan:#1F8A57;
+    --cyan-dim:#146641;
+    --big-flag:#C97A22;
+    --caution:#B94A40;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Atkinson Hyperlegible',sans-serif;
+    font-size:16.5px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    font-feature-settings:"kern" 1, "liga" 1;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:0.05;
+    pointer-events:none;
+    z-index:0;
+  }
+  h1,h2,h3,h4{font-family:'Sora',sans-serif; font-weight:700; letter-spacing:-0.015em; margin:0; color:var(--text);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh; position:relative; z-index:1;}
+
+  .sidebar{
+    width:340px; flex:none;
+    background:var(--bg-panel);
+    border-right:1px solid var(--line);
+    height:100vh; position:sticky; top:0;
+    overflow-y:auto;
+    padding:28px 0 60px;
+  }
+  .sidebar-head{padding:0 24px 20px; border-bottom:1px solid var(--line); margin-bottom:8px;}
+  .sidebar-head .kicker{color:var(--copper); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; font-weight:500;}
+  .sidebar-head h1{font-size:23px; line-height:1.25; margin-top:8px; font-weight:800; letter-spacing:-0.02em;}
+  .sidebar-head p{color:var(--text-muted); font-size:13.5px; line-height:1.55; margin-top:10px; font-family:'Atkinson Hyperlegible',sans-serif;}
+
+  details.week{border-bottom:1px solid var(--line);}
+  details.week summary{
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    font-family:'Sora',sans-serif; font-weight:600; font-size:14.5px; letter-spacing:-0.01em;
+    color:var(--text);
+  }
+  details.week summary::-webkit-details-marker{display:none;}
+  details.week summary .wk-range{color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:400; letter-spacing:0.02em;}
+  details.week summary::after{
+    content:"+"; color:var(--copper); font-family:'IBM Plex Mono',monospace; font-size:16px; margin-left:8px;
+  }
+  details.week[open] summary::after{content:"–";}
+
+  .day-list{padding:0 14px 14px;}
+  .day-btn{
+    width:100%; text-align:left;
+    background:none; border:none; color:var(--text-muted);
+    font-family:'Atkinson Hyperlegible',sans-serif; font-size:13.5px;
+    padding:9px 12px; border-radius:var(--radius);
+    cursor:pointer; display:flex; gap:10px; align-items:baseline;
+  }
+  .day-btn:hover{background:var(--bg-raised); color:var(--text);}
+  .day-btn.active{background:var(--bg-raised); color:var(--text); box-shadow:inset 2px 0 0 var(--copper);}
+  .day-btn .num{font-family:'IBM Plex Mono',monospace; color:var(--cyan); font-size:12px; min-width:20px;}
+  .day-btn .flag{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--big-flag); opacity:0.9;}
+
+  /* ---------- Main ---------- */
+  main{flex:1; padding:56px 64px 120px; max-width:900px;}
+  .top-progress{color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.04em; margin-bottom:26px;}
+  .day-meta{display:flex; align-items:center; gap:14px; margin-bottom:10px;}
+  .day-tag{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--copper);}
+  .step-tag{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-dim); border:1px solid var(--line); padding:3px 9px; border-radius:20px;}
+  .step-tag.big{color:var(--big-flag); border-color:var(--copper-dim);}
+  .day-title{font-size:36px; line-height:1.16; font-weight:800; letter-spacing:-0.02em; margin-bottom:8px;}
+  .core-idea{color:var(--text-muted); font-size:17px; line-height:1.6; font-style:italic; font-family:'Atkinson Hyperlegible',sans-serif; font-weight:400; margin:14px 0 34px; padding-left:16px; border-left:2px solid var(--cyan-dim);}
+
+  section.block{margin-bottom:36px;}
+  .block h3{font-size:12.5px; font-family:'IBM Plex Mono',monospace; color:var(--cyan); font-weight:500; letter-spacing:0.06em; margin-bottom:14px;}
+  .notes p{color:var(--text); font-size:16px; line-height:1.75; margin:0 0 15px; max-width:74ch;}
+  .notes p:last-child{margin-bottom:0;}
+
+  .formula-list{display:flex; flex-direction:column; gap:10px;}
+  .formula{
+    background:rgba(185,74,64,0.06); border:1px solid var(--caution); border-left:4px solid var(--caution);
+    padding:12px 16px; border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:600; color:var(--caution);
+  }
+
+  /* ---------- Diagram ---------- */
+  .diagram-wrap{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 28px 18px; margin-bottom:32px;
+  }
+  .diagram-wrap .diagram-cap{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text-dim);
+    margin-top:10px; text-align:center;
+  }
+  .diagram-svg{width:100%; height:auto; display:block; max-height:460px;}
+
+  @keyframes dashflow{ to{ stroke-dashoffset:-24; } }
+  @keyframes pulseGlow{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.3); opacity:0.55; } }
+  .diagram-svg [marker-end="url(#ac)"],
+  .diagram-svg [marker-end="url(#ao)"],
+  .diagram-svg [marker-end="url(#am)"]{
+    stroke-dasharray:7 6;
+    animation:dashflow 1.3s linear infinite;
+  }
+  .diagram-svg circle[fill="#1F5FA8"],
+  .diagram-svg circle[fill="#1F8A57"]{
+    transform-box:fill-box; transform-origin:center;
+    animation:pulseGlow 2.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .diagram-svg *{ animation:none !important; }
+  }
+
+  /* ---------- Key facts (color-coded highlights) ---------- */
+  .facts{display:flex; flex-direction:column; gap:10px;}
+  .fact{
+    padding:11px 16px; border-radius:var(--radius);
+    font-size:14.5px; color:var(--text);
+    background:var(--bg-panel); border:1px solid var(--line);
+    border-left:3px solid var(--line);
+  }
+  .fact .tag{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;
+    margin-right:9px; letter-spacing:0.03em;
+  }
+  .fact.insight{border-left-color:var(--cyan);}
+  .fact.insight .tag{color:var(--cyan);}
+  .fact.key{border-left-color:var(--copper);}
+  .fact.key .tag{color:var(--copper);}
+  .fact.caution{border-left-color:var(--caution);}
+  .fact.caution .tag{color:var(--caution);}
+
+  /* ---------- MCQ quiz ---------- */
+  .mcq-score{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--text-dim); margin-bottom:16px;}
+  .mcq-list{display:flex; flex-direction:column; gap:18px;}
+  .mcq-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px 18px;}
+  .mcq-q{font-size:15.5px; color:var(--text); margin-bottom:12px; line-height:1.55; font-weight:500;}
+  .mcq-options{display:flex; flex-direction:column; gap:8px;}
+  .mcq-opt{
+    text-align:left; background:var(--bg-raised); border:1px solid var(--line); color:var(--text-muted);
+    padding:9px 13px; border-radius:var(--radius); cursor:pointer;
+    font-family:'Atkinson Hyperlegible',sans-serif; font-size:14px; transition:border-color .15s;
+  }
+  .mcq-opt:hover:not(.disabled){border-color:var(--copper); color:var(--text);}
+  .mcq-opt.correct{border-color:var(--cyan); color:var(--cyan); background:rgba(95,184,201,0.09);}
+  .mcq-opt.incorrect{border-color:var(--caution); color:var(--caution); background:rgba(217,83,79,0.09);}
+  .mcq-opt.disabled{cursor:default;}
+  .mcq-explain{
+    margin-top:11px; padding-top:11px; border-top:1px dashed var(--line);
+    font-size:13.5px; color:var(--text-dim); display:none;
+  }
+  .mcq-explain.show{display:block;}
+
+  .qlist{display:flex; flex-direction:column; gap:14px;}
+  .qcard{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .qcard .qtype{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.05em; color:var(--big-flag); margin-bottom:8px;}
+  .qcard p{margin:0; font-size:15.5px; line-height:1.6; color:var(--text);}
+
+  .daynav{display:flex; justify-content:space-between; margin-top:52px; padding-top:24px; border-top:1px solid var(--line);}
+  .daynav button{
+    background:none; border:1px solid var(--line); color:var(--text-muted);
+    font-family:'Atkinson Hyperlegible',sans-serif; font-size:13.5px; padding:10px 16px; border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .daynav button:hover:not(:disabled){border-color:var(--copper); color:var(--text);}
+  .daynav button:disabled{opacity:0.3; cursor:default;}
+
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg-panel);}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:6px;}
+
+  @media (max-width:860px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%; height:auto; position:relative; max-height:60vh;}
+    main{padding:36px 22px 90px;}
+    .day-title{font-size:26px;}
+  }
+</style>
+</head>
+<body>
+<div id="siteNav"></div>
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="kicker">CS · DISCRETE MATHEMATICS</div>
+      <h1>Discrete Mathematics</h1>
+      <p>Days 1–20 (Part 1 of 2) — logic, proofs, sets, functions, relations, counting, graphs &amp; discrete probability. Weeks 3–4 are framed explicitly around the foundations machine learning is built on.</p>
+    </div>
+    <div id="week-list"></div>
+  </nav>
+  <main>
+    <div class="top-progress" id="crumb"></div>
+    <article id="content"></article>
+  </main>
+</div>
+
+<script>window.APP_NAME = 'discrete-math';</script>
+<script src="/js/nav.js"></script>
+<script src="/js/file-input-enhance.js"></script>
+<script src="/js/storage-shim.js"></script>
+<script>(function(){ window.HubNav.init('discrete-math', true); })();</script>
+
+<script>
+const WEEKS = [
+  {n:1, title:"Logic & Proof Foundations", range:"Days 1–5"},
+  {n:2, title:"Proof Techniques, Sets & Functions", range:"Days 6–10"},
+  {n:3, title:"Relations & Counting", range:"Days 11–15"},
+  {n:4, title:"Graphs & Discrete Probability for ML", range:"Days 16–20"},
+];
+
+const DAYS = [
+{d:1,week:1,title:"Propositional Logic — Statements & Connectives",big:false,steps:4,
+diagram:"truthtable",
+facts:[{tag:"KEY FACT", text:"A proposition is a declarative sentence that is exactly one of true or false -- never both, never neither."}, {tag:"CAUTION", text:"Questions, commands, and opinions ('Is it raining?', 'Close the door', 'Pizza is the best food') are NOT propositions -- they can't be assigned a truth value."}],
+mcqs:[
+{q:"Which of these IS a proposition?", options:["What time is it?", "Paris is the capital of France.", "Please sit down.", "This sentence is amazing!"], correct:1, explain:"It's a declarative sentence with a definite truth value (true)."},
+{q:"p ∧ q is true when:", options:["p is true or q is true", "Both p and q are true", "Neither p nor q is true", "Exactly one is true"], correct:1, explain:"AND requires both operands to be true."},
+{q:"¬p is true when:", options:["p is true", "p is false", "p is undefined", "Always"], correct:1, explain:"Negation flips the truth value."},
+{q:"p → q is false only when:", options:["p is false", "q is true", "p is true and q is false", "p and q are both false"], correct:2, explain:"An implication only fails when the hypothesis holds but the conclusion doesn't."},
+{q:"p ⊕ q (XOR) is true when:", options:["p and q have the same truth value", "p and q have different truth values", "Both are false", "Both are true"], correct:1, explain:"Exclusive OR is true exactly when the operands differ."}
+],
+core:"Every if-statement, every boolean flag, every digital circuit reduces to combinations of true/false statements -- propositional logic is the alphabet everything else in this course, and in software itself, is written in.",
+notes:[
+"A proposition is a declarative sentence that is either true or false, but not both. 'The sun is a star' is a proposition (true). 'x + 1 = 5' is NOT a proposition on its own -- its truth depends on x (this becomes a predicate, Day 3). Propositions are usually named with lowercase letters: p, q, r.",
+"The five core logical connectives are: negation ¬p ('not p'), conjunction p∧q ('p and q', true only if both true), disjunction p∨q ('p or q', true if at least one is true), exclusive or p⊕q ('exactly one is true'), and the conditional p→q ('if p then q', false only when p is true and q is false).",
+"The conditional p→q is the connective students most often misjudge intuitively: it is considered TRUE whenever p is false, regardless of q ('vacuously true'). Only the single combination p=true, q=false makes it false. This matches how 'if it rains, I'll bring an umbrella' isn't broken just because it didn't rain.",
+"Truth tables exhaustively list every combination of input truth values and the resulting output -- for n propositions there are 2^n rows. Building the table mechanically, one connective at a time following operator precedence (¬ binds tightest, then ∧, then ∨, then →, then ↔), is the safest way to evaluate any compound proposition without error.",
+"<strong>Worked example:</strong> Evaluate (p∧q)→¬r when p=T, q=T, r=F. First p∧q = T∧T = T. Then ¬r = ¬F = T. Finally T→T = T. The whole expression is true.",
+"<strong>Self-check:</strong> the most common beginner error is misreading p→q as 'p if and only if q' -- always double check whether a problem means → (one-directional) or ↔ (biconditional, Day 2) before building a truth table.",
+"<strong>Application:</strong> Every `if (condition)` block, every digital logic AND/OR/NOT gate on a chip, and every SQL WHERE clause is a direct, literal instance of a compound proposition being evaluated."
+],
+formulas:["¬p, p∧q, p∨q, p⊕q, p→q, p↔q","p→q is false only when p=T and q=F"],
+questions:[
+{type:"Conceptual", q:"Explain in your own words why 'if pigs can fly, then 2+2=4' is considered a TRUE proposition under formal logic, even though the statement feels absurd in everyday language."},
+{type:"CS reasoning", q:"A boolean expression in code, `if (a && b) { ... }`, short-circuits: if a is false, b is never evaluated. Connect this short-circuit behavior directly to the truth table for ∧ -- why is it safe to skip evaluating q once you know p is false?"},
+{type:"Reasoning", q:"How many rows does the truth table for a compound proposition with 4 distinct propositional variables have, and why does this number make truth tables impractical for very complex boolean logic (motivating the equivalence laws you'll learn on Day 2)?"}
+]},
+
+{d:2,week:1,title:"Logical Equivalences & Laws",big:false,steps:4,
+diagram:{type:"conceptmap", nodes:["Expression","Apply Laws","Simplified"]},
+facts:[{tag:"KEY FACT", text:"De Morgan's Laws: ¬(p∧q) ≡ ¬p∨¬q, and ¬(p∨q) ≡ ¬p∧¬q -- negation flips AND/OR and distributes inward."}, {tag:"INSIGHT", text:"A tautology is always true, a contradiction is always false, and a contingency depends on the inputs -- checking which one a formula is tells you a great deal before building a full truth table."}],
+mcqs:[
+{q:"Two propositions are logically equivalent (p≡q) if:", options:["They use the same variables", "They have identical truth tables", "They are both tautologies", "p implies q"], correct:1, explain:"Equivalence means matching truth values in every row."},
+{q:"¬(p∧q) is equivalent to:", options:["¬p∧¬q", "¬p∨¬q", "p∨q", "p∧q"], correct:1, explain:"De Morgan's Law: negating AND gives OR of negations."},
+{q:"p∨¬p is an example of a:", options:["Contradiction", "Contingency", "Tautology", "Equivalence"], correct:2, explain:"It's always true regardless of p's value (law of excluded middle)."},
+{q:"p∧¬p is an example of a:", options:["Tautology", "Contradiction", "Contingency", "Biconditional"], correct:1, explain:"It's always false -- p and ¬p can never both be true."},
+{q:"The Distributive Law states p∧(q∨r) is equivalent to:", options:["(p∧q)∨(p∧r)", "(p∨q)∧(p∨r)", "p∨q∨r", "¬p∨¬q"], correct:0, explain:"AND distributes over OR just like multiplication over addition."}
+],
+core:"Equivalence laws let you simplify a tangled boolean expression algebraically -- exactly the way you'd simplify algebra -- without ever building a truth table.",
+notes:[
+"Two propositions p and q are logically equivalent, written p≡q, if they have identical truth values in every possible row of their truth table. This is stronger than just 'both true right now' -- it must hold universally.",
+"A small toolbox of named laws covers almost every simplification you'll need: Identity (p∧T≡p), Domination (p∨T≡T), Idempotent (p∨p≡p), Double Negation (¬¬p≡p), Commutative, Associative, Distributive, Absorption (p∨(p∧q)≡p), and De Morgan's Laws. These mirror algebraic identities closely enough that the intuition transfers directly.",
+"De Morgan's Laws deserve special attention because they're the single most frequently used pair in this course: ¬(p∧q)≡¬p∨¬q and ¬(p∨q)≡¬p∧¬q. In words: negating a conjunction gives a disjunction of negations, and vice versa. This exact pattern reappears for sets (Day 9) and for quantifiers (Day 3).",
+"A tautology is a compound proposition that's true in EVERY row of its truth table (e.g. p∨¬p); a contradiction is false in every row (e.g. p∧¬p); everything else is a contingency, true in some rows and false in others. Recognizing a tautology or contradiction by inspection, using the laws, is much faster than a full truth table.",
+"<strong>Worked example:</strong> Simplify ¬(p∨q)∨(¬p∧q). By De Morgan: ¬p∧¬q ∨ (¬p∧q) = ¬p∧(¬q∨q) [distributive] = ¬p∧T [negation law] = ¬p. Four terms collapse to one.",
+"<strong>Self-check:</strong> after simplifying, verify your result against the ORIGINAL expression using a small truth table with 2-3 rows spot-checked -- algebraic slips are common and a quick sanity check catches most of them.",
+"<strong>Application:</strong> Compilers apply exactly these laws to simplify boolean conditions in your code before generating machine instructions, and digital circuit designers use them to reduce the number of physical logic gates needed on a chip."
+],
+formulas:["¬(p∧q) ≡ ¬p∨¬q","¬(p∨q) ≡ ¬p∧¬q","p→q ≡ ¬p∨q"],
+questions:[
+{type:"Conceptual", q:"Explain why proving p≡q by matching truth tables row-by-row and proving it by chaining equivalence laws are guaranteed to give the same answer, even though the two methods feel completely different."},
+{type:"CS reasoning", q:"A junior developer writes `if (!(isValid && isReady))`. Using De Morgan's Law, rewrite this condition into an equivalent form without a leading negation over the whole expression, and explain why the rewritten version might be easier for a reviewer to read correctly."},
+{type:"Reasoning", q:"p→q was rewritten today as ¬p∨q. Using De Morgan's Law on this new form, derive an expression for ¬(p→q), and explain in plain English what it means for an implication to be false."}
+]},
+
+{d:3,week:1,title:"Predicate Logic & Quantifiers",big:false,steps:5,
+diagram:"quantifiers",
+facts:[{tag:"KEY FACT", text:"∀x P(x) means 'for every x in the domain, P(x) is true'; ∃x P(x) means 'there is at least one x for which P(x) is true.'"}, {tag:"CAUTION", text:"Negating a quantifier BOTH flips it (∀↔∃) AND negates the predicate inside -- doing only one of the two is the most common student error."}],
+mcqs:[
+{q:"P(x) = 'x is even' is called a:", options:["Proposition", "Predicate", "Tautology", "Connective"], correct:1, explain:"A predicate's truth depends on the variable's value -- it isn't a fixed proposition until x is fixed or quantified."},
+{q:"∀x∈ℤ, x²≥0 is:", options:["False, since some x makes it false", "True -- every integer squared is non-negative", "Not a proposition", "Only true for positive x"], correct:1, explain:"Squaring any real number, including integers, always yields a non-negative result."},
+{q:"¬∀x P(x) is logically equivalent to:", options:["∀x ¬P(x)", "∃x ¬P(x)", "∃x P(x)", "¬∃x P(x)"], correct:1, explain:"Negating 'for all' gives 'there exists one that fails' -- flip the quantifier AND negate the predicate."},
+{q:"∃x P(x) is false exactly when:", options:["P(x) is true for some x", "P(x) is false for all x", "P(x) is true for all x", "The domain is infinite"], correct:1, explain:"If no x makes P(x) true, the existential claim fails entirely."},
+{q:"In ∀x∃y (x+y=0) over the integers, the order of quantifiers means:", options:["y is chosen first, then x can depend on it", "For each x, some y (which may depend on x) makes it true", "x and y must be equal", "The statement is meaningless"], correct:1, explain:"Quantifier order matters: the later-quantified variable may depend on the earlier one."}
+],
+core:"Predicates add variables to propositions, and quantifiers pin those variables down -- this is the exact vocabulary used to write formal specifications, loop invariants, and database queries precisely.",
+notes:[
+"A predicate, like P(x)='x is prime', is not a proposition by itself -- it becomes one only once x is given a specific value (P(7) is true) or bound by a quantifier. The set of values x is allowed to range over is called the domain of discourse.",
+"The universal quantifier ∀x P(x) reads 'for all x, P(x)' and is true only if P holds for EVERY element of the domain -- a single counterexample makes it false. The existential quantifier ∃x P(x) reads 'there exists an x such that P(x)' and is true if AT LEAST ONE element of the domain satisfies P -- it takes just one witness to make it true.",
+"Negating a quantified statement requires two simultaneous changes: flip the quantifier type (∀ becomes ∃, or vice versa) AND negate the inner predicate. So ¬∀x P(x) ≡ ∃x ¬P(x), and ¬∃x P(x) ≡ ∀x ¬P(x). This is the direct predicate-logic analogue of De Morgan's Laws from Day 2.",
+"When a statement uses multiple quantifiers, their ORDER changes the meaning entirely: ∀x∃y P(x,y) ('for every x there's some y, possibly depending on x') is a fundamentally weaker claim than ∃y∀x P(x,y) ('there's a single y that works for every x'). Swapping quantifier order is one of the most common logical errors in formal writing.",
+"<strong>Worked example:</strong> Translate 'every student has taken at least one CS course' with domain of students S and courses C: ∀s∈S ∃c∈C, Taken(s,c). Its negation, mechanically applying both rules: ∃s∈S ∀c∈C, ¬Taken(s,c) -- 'there is some student who has taken no CS course at all.'",
+"<strong>Self-check:</strong> when negating, resist the urge to negate ONLY the quantifier or ONLY the predicate -- write both steps out explicitly until the two-step habit becomes automatic.",
+"<strong>Application:</strong> Loop invariants in program verification ('∀i, 0≤i<n → arr[i] is sorted'), SQL queries with EXISTS/NOT EXISTS, and formal software specifications are all quantified predicate statements written in exactly this notation."
+],
+formulas:["¬∀x P(x) ≡ ∃x ¬P(x)","¬∃x P(x) ≡ ∀x ¬P(x)"],
+questions:[
+{type:"Conceptual", q:"Explain why P(x)='x is a prime number' is a predicate rather than a proposition, and describe the two distinct ways it can be turned into an actual proposition."},
+{type:"CS reasoning", q:"A loop invariant states ∀i (0≤i<k → arr[i]≤arr[i+1]). Write the negation of this invariant using the two-step rule from today, and explain in plain English what it would mean for this negation to become true during execution (i.e., what bug it detects)."},
+{type:"Reasoning", q:"Give a concrete real-world (non-mathematical) example where swapping the order of ∀ and ∃ changes a true statement into a false one, and explain precisely why the order matters in your example."}
+]},
+
+{d:4,week:1,title:"Rules of Inference & Valid Arguments",big:false,steps:4,
+diagram:{type:"conceptmap", nodes:["Premises","Inference Rule","Conclusion"]},
+facts:[{tag:"KEY FACT", text:"Modus Ponens: from p and p→q, you may validly conclude q. It is the single most-used inference rule in all of mathematics and programming."}, {tag:"CAUTION", text:"Affirming the consequent (from q and p→q, concluding p) is a classic FALLACY, not a valid rule -- q being true doesn't mean p caused it."}],
+mcqs:[
+{q:"Modus Ponens has the form:", options:["p, p→q ⊢ q", "q, p→q ⊢ p", "¬p, p→q ⊢ ¬q", "p∨q, ¬p ⊢ q"], correct:0, explain:"From p and p implies q, conclude q."},
+{q:"Modus Tollens has the form:", options:["p, p→q ⊢ q", "¬q, p→q ⊢ ¬p", "p, q ⊢ p∧q", "p→q, q→r ⊢ p→r"], correct:1, explain:"From ¬q and p implies q, conclude ¬p -- reasoning backward along the implication."},
+{q:"'From p→q and q→r, conclude p→r' is:", options:["Disjunctive Syllogism", "Hypothetical Syllogism", "Modus Tollens", "A fallacy"], correct:1, explain:"Chaining two implications transitively is Hypothetical Syllogism."},
+{q:"An argument is called VALID when:", options:["Its conclusion is true", "Its premises are all true", "The conclusion necessarily follows whenever the premises are true", "It uses modus ponens specifically"], correct:2, explain:"Validity is about the logical structure, not whether the premises happen to be true in reality."},
+{q:"'From p∨q and ¬p, conclude q' is:", options:["Disjunctive Syllogism", "Modus Ponens", "A fallacy called affirming the consequent", "Hypothetical Syllogism"], correct:0, explain:"If at least one of p,q holds and p is ruled out, q must hold."}
+],
+core:"Inference rules formalize exactly what it means for 'the conclusion to follow' from premises -- the same rigor that lets a compiler or a theorem prover check an argument mechanically, with zero appeal to intuition.",
+notes:[
+"An argument consists of premises (assumed true) and a conclusion claimed to follow from them. The argument is VALID if the conclusion is guaranteed true whenever all premises are true -- validity is entirely about logical FORM, independent of whether the premises are actually true in the real world.",
+"The core rules of inference include: Modus Ponens (p, p→q ⊢ q), Modus Tollens (¬q, p→q ⊢ ¬p), Hypothetical Syllogism (p→q, q→r ⊢ p→r), and Disjunctive Syllogism (p∨q, ¬p ⊢ q). Each can be verified as valid by checking that its corresponding conditional is a tautology.",
+"Two classic FALLACIES look deceptively similar to valid rules: affirming the consequent (from q and p→q, wrongly concluding p) and denying the antecedent (from ¬p and p→q, wrongly concluding ¬q). Both fail because p→q says nothing about what happens when p is false or when q is true independently.",
+"<strong>Worked example:</strong> Given 'if the code compiles, then tests can run' (p→q) and 'tests did NOT run' (¬q), Modus Tollens validly concludes 'the code did not compile' (¬p) -- without ever needing to check the compiler directly.",
+"<strong>Self-check:</strong> before applying a rule, write the premises in EXACT p→q form first -- misidentifying which side is the hypothesis and which is the conclusion is what usually causes a valid-looking argument to actually be a fallacy.",
+"<strong>Application:</strong> Automated theorem provers, SAT solvers, and static analysis tools that catch bugs before runtime all mechanically chain these exact inference rules to verify that a program's logic holds -- there's no 'common sense' step involved anywhere in the process."
+],
+formulas:["Modus Ponens: p, p→q ⊢ q","Modus Tollens: ¬q, p→q ⊢ ¬p","Hypothetical Syllogism: p→q, q→r ⊢ p→r"],
+questions:[
+{type:"Conceptual", q:"Explain the difference between an argument being VALID and its conclusion being TRUE, using an example where an argument is valid but its conclusion is false in reality."},
+{type:"CS reasoning", q:"A static analyzer flags: 'variable x is used' (q) and 'if x is initialized, then x is used' (p→q), and a junior engineer concludes 'x must be initialized.' Name the fallacy being committed, and explain what additional information would be needed to draw a valid conclusion."},
+{type:"Reasoning", q:"Modus Ponens and Modus Tollens both start from the same conditional p→q, but reason in opposite directions. Explain, in terms of the conditional's truth table, why exactly these two directions are valid while affirming the consequent and denying the antecedent are not."}
+]},
+
+{d:5,week:1,title:"Proof Techniques I — Direct Proof & Contrapositive",big:false,steps:5,
+diagram:{type:"conceptmap", nodes:["Assume p","Logical steps","Conclude q"]},
+facts:[{tag:"KEY FACT", text:"A direct proof of p→q assumes p is true and derives q through a valid chain of logical steps -- no shortcuts, no assumed conclusions."}, {tag:"INSIGHT", text:"Since p→q ≡ ¬q→¬p (Day 2), proving the CONTRAPOSITIVE is a fully legitimate proof of the original statement -- and is often algebraically easier."}],
+mcqs:[
+{q:"A direct proof of p→q begins by:", options:["Assuming q is false", "Assuming p is true", "Assuming the conclusion", "Listing all cases"], correct:1, explain:"Direct proof assumes the hypothesis and derives the conclusion."},
+{q:"The contrapositive of p→q is:", options:["q→p", "¬p→¬q", "¬q→¬p", "p→¬q"], correct:2, explain:"Contrapositive negates and swaps both sides."},
+{q:"The contrapositive of a true implication is:", options:["Always false", "Always true (logically equivalent)", "Sometimes true", "Undefined"], correct:1, explain:"p→q and ¬q→¬p are logically equivalent, so proving one proves the other."},
+{q:"Proving 'if n² is even then n is even' is typically easier using:", options:["Direct proof", "The contrapositive: if n is odd then n² is odd", "Proof by exhaustion only", "It cannot be proven"], correct:1, explain:"Starting from 'n is odd' gives an algebraic form (2k+1) that's easy to square directly."},
+{q:"The CONVERSE of p→q is:", options:["¬p→¬q", "q→p", "¬q→¬p", "The same as p→q"], correct:1, explain:"The converse swaps p and q but does NOT negate -- and is logically independent of the original."}
+],
+core:"Proofs are the 'unit tests' of mathematics -- a claim isn't accepted as fact until it survives an airtight chain of logical justification, and direct/contrapositive proofs are the two most common ways to build that chain.",
+notes:[
+"A direct proof of 'if p then q' assumes p is true, then uses definitions, algebra, and previously established facts to derive q through a chain of valid logical steps -- every line must follow necessarily from the lines before it, with no gaps.",
+"Since p→q is logically equivalent to its contrapositive ¬q→¬p (established via De Morgan's-style reasoning on Day 2), you may prove ¬q→¬p directly instead and it counts as a complete, valid proof of the original statement. This swap is purely a proof STRATEGY, not a different claim.",
+"The contrapositive is often preferred when the hypothesis p is awkward to work with algebraically but its negation ¬p is clean. The classic example: proving 'n² even ⟹ n even' directly requires reasoning backward from an even square root, which is clumsy; proving the contrapositive 'n odd ⟹ n² odd' starts from n=2k+1, a clean algebraic form to square.",
+"It's critical NOT to confuse the contrapositive (¬q→¬p, equivalent to the original) with the converse (q→p, a completely different and generally NOT equivalent claim) -- 'if it rained, the ground is wet' does not mean 'if the ground is wet, it rained' (a sprinkler could be the cause).",
+"<strong>Worked example:</strong> Prove 'if n is odd, then n² is odd' (used as the contrapositive lemma above) directly: assume n is odd, so n=2k+1 for some integer k. Then n²=(2k+1)²=4k²+4k+1=2(2k²+2k)+1, which is of the form 2m+1 -- therefore n² is odd. QED.",
+"<strong>Self-check:</strong> after finishing a proof, reread it line by line asking 'does this line follow strictly from the previous ones, or did I just assume what I was trying to prove?' -- circular reasoning is the most common flaw in student-written direct proofs.",
+"<strong>Application:</strong> Proving an algorithm is correct -- 'if the input array is sorted (p), then binary search returns the correct index (q)' -- is exactly a direct or contrapositive proof, and is the rigorous foundation behind claims like 'this sorting function always works.'"
+],
+formulas:["Direct proof: assume p, derive q","Contrapositive: p→q ≡ ¬q→¬p (prove the latter to establish the former)"],
+questions:[
+{type:"Conceptual", q:"Explain precisely why proving the contrapositive ¬q→¬p constitutes a fully valid proof of p→q, rather than merely a proof of something 'similar' to it."},
+{type:"CS reasoning", q:"A function's specification says 'if the input list is empty (p), the function returns null (q).' Write out the converse and the contrapositive of this specification, and explain which of the two (if either) a test suite verifying 'if the function did NOT return null, the input was NOT empty' is actually checking."},
+{type:"Reasoning", q:"Describe a mathematical claim (different from the n²-even example above) where you'd expect a DIRECT proof to be easier than its contrapositive, and explain what property of the hypothesis makes direct proof the better choice there."}
+]},
+
+{d:6,week:2,title:"Proof by Contradiction & Proof by Cases",big:false,steps:5,
+diagram:{type:"conceptmap", nodes:["Assume ¬(claim)","Derive","Contradiction"]},
+facts:[{tag:"KEY FACT", text:"Proof by contradiction assumes the NEGATION of what you want to prove, then derives an impossible statement (like 0=1) -- forcing the assumption to be false."}, {tag:"CAUTION", text:"Proof by cases is only valid if the cases are EXHAUSTIVE -- covering every possibility -- even if they are not mutually exclusive."}],
+mcqs:[
+{q:"Proof by contradiction begins by assuming:", options:["The hypothesis is true", "The conclusion is true", "The negation of the statement to be proved", "Nothing -- it starts from a known theorem"], correct:2, explain:"You assume the claim is false and derive an impossibility."},
+{q:"The classic proof that √2 is irrational uses:", options:["Direct proof", "Proof by contradiction", "Proof by induction", "Proof by cases"], correct:1, explain:"It assumes √2=a/b in lowest terms and derives a contradiction about a and b's parity."},
+{q:"Proof by cases requires the cases to be:", options:["Mutually exclusive only", "Exhaustive (covering every possibility)", "Exactly two in number", "Ordered numerically"], correct:1, explain:"Missing even one possible case invalidates the proof."},
+{q:"In the √2 proof, the contradiction reached is:", options:["a and b are both even, contradicting 'lowest terms'", "a=b", "a is negative", "b=0"], correct:0, explain:"Both a and b turning out even contradicts the assumption that a/b was already fully reduced."},
+{q:"'For any integer n, n is even or n is odd' followed by separate reasoning for each is an example of:", options:["Contradiction", "Proof by cases", "Contrapositive", "Induction"], correct:1, explain:"Splitting into exhaustive sub-cases (even/odd) and proving each is proof by cases."}
+],
+core:"Contradiction and cases round out the core proof toolkit -- contradiction handles claims with no obvious direct path (like irrationality), while cases break a messy general claim into a handful of clean, exhaustive sub-problems.",
+notes:[
+"A proof by contradiction assumes the NEGATION of the statement you want to prove is true, then reasons validly from that assumption until reaching something logically impossible (like 0=1, or 'a is both even and odd'). Since valid reasoning can never derive a contradiction from a TRUE assumption, the assumption must have been false -- so the original statement is true.",
+"The most famous example is the irrationality of √2: assume √2=a/b in lowest terms (gcd(a,b)=1). Squaring gives a²=2b², so a² is even, so a is even (Day 5's contrapositive lemma), so a=2k. Substituting: 4k²=2b² → b²=2k², so b is also even -- contradicting that a/b was in lowest terms. Therefore √2 cannot be rational.",
+"A proof by cases splits the domain into two or more sub-cases that together cover EVERY possibility (exhaustive), proves the claim separately within each case, and concludes the claim holds overall. A classic example: proving n²+n is always even by splitting into 'n is even' and 'n is odd' and handling each algebraically.",
+"The single requirement that makes or breaks a cases proof is exhaustiveness -- if there's a possibility your cases don't cover (a missing third option, or an edge case like n=0), the entire proof is invalid, no matter how carefully each individual case was handled.",
+"<strong>Worked example (cases):</strong> Prove n²+n is even for all integers n. Case 1: n even, so n=2k; n²+n=4k²+2k=2(2k²+k), even. Case 2: n odd, so n=2k+1; n²+n=(2k+1)²+(2k+1)=4k²+6k+2=2(2k²+3k+1), even. Both cases (which are exhaustive -- every integer is even or odd) give an even result, so the claim holds for all n.",
+"<strong>Self-check:</strong> before finalizing a cases proof, explicitly list your cases and verify out loud that they cover EVERY input in the domain -- don't rely on 'obviously' the cases are complete.",
+"<strong>Application:</strong> Case analysis is the backbone of algorithm correctness proofs that must handle several distinct input shapes (empty list, single element, general list), and contradiction is the standard technique for proving impossibility results in complexity theory (e.g., 'no algorithm can sort in better than O(n log n) comparisons' style arguments)."
+],
+formulas:["Contradiction: assume ¬claim, derive a falsehood ⟹ claim is true","Cases: prove claim in each of finitely many exhaustive cases ⟹ claim holds generally"],
+questions:[
+{type:"Conceptual", q:"Explain, using the logical structure of the argument (not just the √2 example itself), WHY deriving a contradiction from an assumption is enough to prove that assumption false."},
+{type:"CS reasoning", q:"You're asked to prove a function `abs(x)` always returns a non-negative value for any integer input x. Sketch how you'd structure this as a proof by cases, identifying what the exhaustive cases should be."},
+{type:"Reasoning", q:"Could the irrationality of √2 be proven using a DIRECT proof instead of contradiction? Explain what makes 'irrational' an awkward property to establish directly, and why contradiction sidesteps that difficulty."}
+]},
+
+{d:7,week:2,title:"Mathematical Induction",big:true,steps:6,
+diagram:"staircase",
+facts:[{tag:"KEY FACT", text:"Induction has two parts: a Base Case (verify P(1), or the smallest case) and an Inductive Step (assume P(k) is true, prove P(k+1) follows)."}, {tag:"INSIGHT", text:"Strong induction assumes P is true for ALL of 1,2,...,k, not just P(k) alone -- strictly more powerful, needed whenever P(k+1) depends on more than just the immediately preceding case."}],
+mcqs:[
+{q:"The two required parts of a standard induction proof are:", options:["Base case and inductive step", "Direct proof and contradiction", "Two exhaustive cases", "Contrapositive and converse"], correct:0, explain:"Verify the smallest case, then show each case implies the next."},
+{q:"The inductive step proves:", options:["P(1) directly", "P(k) is true for a specific k", "P(k)→P(k+1) for arbitrary k", "P(n) for the largest n"], correct:2, explain:"You assume P(k) (the inductive hypothesis) and derive P(k+1)."},
+{q:"Skipping the base case in an induction proof:", options:["Is fine if the inductive step is correct", "Invalidates the entire proof, even with a correct inductive step", "Only matters for large n", "Is required for strong induction only"], correct:1, explain:"Without an anchor, the inductive chain P(k)→P(k+1) never actually starts."},
+{q:"Strong induction differs from weak induction in that:", options:["It doesn't need a base case", "The inductive hypothesis assumes P(1) through P(k), not just P(k)", "It only works for even n", "It proves a different kind of statement entirely"], correct:1, explain:"Strong induction gives access to ALL previous cases, not just the immediately preceding one."},
+{q:"Induction is most naturally suited to proving statements about:", options:["A single fixed number", "All real numbers", "All natural numbers ≥ some starting point", "Only prime numbers"], correct:2, explain:"Induction climbs a 'staircase' of naturals one integer step at a time."}
+],
+core:"Recursion and induction are two sides of the same coin -- every recursive algorithm's correctness proof is, structurally, an induction proof, which is exactly why this topic matters so much for CS beyond pure math.",
+notes:[
+"Mathematical induction proves a statement P(n) holds for ALL natural numbers n≥n0 using two pieces: the BASE CASE, which directly verifies P(n0) is true, and the INDUCTIVE STEP, which proves the conditional P(k)→P(k+1) for an arbitrary k≥n0 (assuming P(k), called the inductive hypothesis, and deriving P(k+1) from it).",
+"Think of it as an infinite staircase: the base case gets you onto the first step, and the inductive step is a general rule guaranteeing that if you're standing on any step k, you can always climb to step k+1. Together, these two facts guarantee you can reach every single step, no matter how high.",
+"STRONG induction is a variant where the inductive hypothesis assumes P is true for ALL of n0,n0+1,...,k (not merely P(k) alone) when proving P(k+1). This extra assumed power is essential whenever the (k+1)-th case genuinely depends on an earlier case that isn't simply k (e.g. proofs about Fibonacci-like recurrences, or that every integer >1 has a prime factorization).",
+"A base case is not optional busywork -- omitting it (or getting it wrong) invalidates the ENTIRE proof, because the inductive step alone only proves a chain of IMPLICATIONS (P(1)→P(2)→P(3)→...) without ever establishing that the first link, P(1), is actually true.",
+"<strong>Worked example:</strong> Prove 1+2+...+n = n(n+1)/2 for all n≥1. Base case (n=1): LHS=1, RHS=1(2)/2=1. ✓. Inductive step: assume 1+2+...+k=k(k+1)/2 (hypothesis). Then 1+2+...+k+(k+1) = k(k+1)/2+(k+1) = (k+1)(k/2+1) = (k+1)(k+2)/2, which is exactly the formula evaluated at n=k+1. Both parts hold, so the formula is true for all n≥1 by induction.",
+"<strong>Self-check:</strong> in the inductive step, always write out explicitly WHERE you used the inductive hypothesis -- if your derivation of P(k+1) never actually invoked the assumption P(k), you haven't done induction at all, just a direct proof of one instance.",
+"<strong>Application:</strong> Proving a recursive function terminates with the correct output (e.g. that a recursive factorial or a recursive tree-traversal is correct for every input size) is structurally identical to an induction proof: verify the base case (smallest input) and show correctness for size k implies correctness for size k+1."
+],
+formulas:["P(n0) ∧ [∀k≥n0, P(k)→P(k+1)]  ⟹  ∀n≥n0, P(n)","1+2+...+n = n(n+1)/2"],
+questions:[
+{type:"Conceptual", q:"Using the 'infinite staircase' metaphor, explain precisely why BOTH the base case and the inductive step are individually necessary -- describe what goes wrong with only one of the two."},
+{type:"CS reasoning", q:"A recursive function `sum(n)` returns 0 if n=0, and otherwise returns n+sum(n-1). Sketch how you would structure an induction proof that `sum(n)` correctly computes 1+2+...+n, identifying the base case and what the inductive step needs to show."},
+{type:"Reasoning", q:"Give an example of a claim about integers where you would need STRONG induction rather than ordinary (weak) induction, and explain specifically what the inductive step would need to assume that weak induction wouldn't give you."}
+]},
+
+{d:8,week:2,title:"Set Theory Basics",big:false,steps:4,
+diagram:"sets",
+facts:[{tag:"KEY FACT", text:"A set is an unordered collection of DISTINCT elements -- {1,2,3} and {3,1,2} are the same set, and {1,1,2} is just {1,2}."}, {tag:"CAUTION", text:"∈ (element of) and ⊆ (subset of) are different relations: 2∈{1,2,3} is true, but {2}⊆{1,2,3} is the correct way to say a SET containing 2 is a subset."}],
+mcqs:[
+{q:"Which best describes a set?", options:["An ordered list allowing repeats", "An unordered collection of distinct elements", "A function mapping inputs to outputs", "A sequence of numbers"], correct:1, explain:"Sets ignore order and duplicates entirely."},
+{q:"If A={1,2}, which is TRUE?", options:["1⊆A", "{1}∈A", "{1}⊆A", "A∈A"], correct:2, explain:"{1} is a subset of A (its single element, 1, is in A); 1 itself is an element, not a subset."},
+{q:"The empty set ∅ is:", options:["Not a valid set", "A subset of every set, including itself", "Only a subset of itself", "The same as {0}"], correct:1, explain:"Vacuously, every element of ∅ (there are none) is in any set, so ∅⊆S for all S."},
+{q:"If |S|=n, then |P(S)| (the power set) equals:", options:["n", "n²", "2^n", "n!"], correct:2, explain:"Each of the n elements is independently either in or out of a given subset, giving 2^n total subsets."},
+{q:"A PROPER subset A⊊B means:", options:["A=B", "A⊆B and A≠B", "A has more elements than B", "A and B share no elements"], correct:1, explain:"Proper subset excludes the case of full equality."}
+],
+core:"Sets are the universal data structure underlying essentially all of mathematics -- and they map directly onto core CS data types: a Python/Java Set, a database's distinct rows, and a search space are all literal sets.",
+notes:[
+"A set is an unordered collection of DISTINCT elements, written with curly braces, e.g. A={2,4,6,8}. Order doesn't matter ({1,2}={2,1}) and duplicates collapse ({1,1,2}={1,2}) -- this is the defining difference between a set and a list or array in programming.",
+"Membership is written x∈A ('x is an element of A') or x∉A. The SUBSET relation A⊆B means every element of A is also an element of B; this is a relation between two SETS, distinct from ∈ which relates an element to a set -- confusing the two is the most common notation error at this stage.",
+"Every set has an associated power set P(S): the set of ALL possible subsets of S, including the empty set ∅ and S itself. If |S|=n (n elements), then |P(S)|=2^n, because each of the n elements independently either belongs to a given subset or doesn't -- n independent binary choices.",
+"The empty set ∅ (containing zero elements) is a subset of every set, including itself -- this holds VACUOUSLY: the subset condition 'every element of ∅ is in S' is automatically true because ∅ has no elements to check.",
+"<strong>Worked example:</strong> For S={a,b,c}, the power set is P(S)={∅, {a}, {b}, {c}, {a,b}, {a,c}, {b,c}, {a,b,c}} -- exactly 2³=8 subsets, matching the formula.",
+"<strong>Self-check:</strong> when writing a subset relation, always ask 'am I comparing an element to a set (use ∈) or a set to a set (use ⊆)?' -- writing 2⊆{1,2,3} or {2}∈{1,2,3} are both type errors, even though they 'look' similar to correct statements.",
+"<strong>Application:</strong> The `set` data type in Python/Java, and the DISTINCT keyword in SQL, both implement exactly the mathematical set abstraction -- automatic deduplication and no inherent ordering -- which is why set operations (Day 9) map so directly onto real code."
+],
+formulas:["|P(S)| = 2^|S|","∅ ⊆ S for every set S"],
+questions:[
+{type:"Conceptual", q:"Explain precisely why the empty set is a subset of every set, addressing directly why this 'vacuous truth' argument is logically sound rather than a technicality being glossed over."},
+{type:"CS reasoning", q:"A Python `set()` automatically removes duplicate entries when you add elements. Connect this directly to the mathematical definition of a set given today, and explain why a `list` does NOT have this same behavior by design."},
+{type:"Reasoning", q:"For a set with 10 elements, how many subsets does it have? For a set with 20 elements? Comment on how quickly the power set grows, and why 'generate all subsets' becomes computationally infeasible for even moderately large sets."}
+]},
+
+{d:9,week:2,title:"Set Operations & Venn Diagrams",big:false,steps:4,
+diagram:"venn",
+facts:[{tag:"KEY FACT", text:"De Morgan's Laws for sets mirror De Morgan's Laws for logic exactly: (A∪B)' = A'∩B', and (A∩B)' = A'∪B'."}, {tag:"INSIGHT", text:"Union (∪), intersection (∩), difference (−), and complement (') on sets correspond directly to OR, AND, AND-NOT, and NOT on the predicates defining set membership."}],
+mcqs:[
+{q:"A∪B (union) contains:", options:["Only elements in both A and B", "Elements in A, in B, or in both", "Only elements in A but not B", "The empty set always"], correct:1, explain:"Union combines everything from either set."},
+{q:"A∩B (intersection) contains:", options:["Elements in either A or B", "Only elements in BOTH A and B", "Elements in A only", "Elements not in A or B"], correct:1, explain:"Intersection keeps only the shared elements."},
+{q:"A−B (set difference) contains:", options:["Elements in A but not in B", "Elements in B but not in A", "Elements in both A and B", "All elements not in A or B"], correct:0, explain:"Difference removes B's elements from A."},
+{q:"(A∪B)' (De Morgan's for sets) equals:", options:["A'∪B'", "A'∩B'", "A∩B", "A∪B"], correct:1, explain:"Complement of a union is the intersection of complements."},
+{q:"In a Venn diagram, the overlapping region of two circles represents:", options:["A∪B", "A∩B", "A−B", "The universal set"], correct:1, explain:"The shared, overlapping area is exactly the intersection."}
+],
+core:"Set operations are not just diagrams -- SQL's JOIN, UNION, and INTERSECT clauses are literal, direct implementations of ∩, ∪, and − on database tables treated as sets of rows.",
+notes:[
+"The core set operations are: union A∪B={x : x∈A or x∈B}, intersection A∩B={x : x∈A and x∈B}, difference A−B={x : x∈A and x∉B}, and complement A'={x∈U : x∉A} (relative to some universal set U). Each mirrors a logical connective applied to the membership predicates.",
+"Venn diagrams visualize these operations as overlapping circles inside a rectangle representing the universal set U: union shades everything covered by either circle, intersection shades only the overlap, difference shades one circle with the overlap removed, and complement shades everything OUTSIDE a circle.",
+"De Morgan's Laws for sets, (A∪B)'=A'∩B' and (A∩B)'=A'∪B', are not a coincidental naming choice -- they follow directly from De Morgan's Laws for logic (Day 2), because 'x∈(A∪B)'' unpacks to '¬(x∈A ∨ x∈B)', which is logically ¬(x∈A)∧¬(x∈B) by the exact same law.",
+"Two sets are called DISJOINT if A∩B=∅ (they share no elements at all) -- a common and useful special case, especially when partitioning a set into non-overlapping groups (a preview of equivalence classes in later coursework).",
+"<strong>Worked example:</strong> Let A={1,2,3,4}, B={3,4,5,6}, U={1,...,8}. Then A∪B={1,2,3,4,5,6}, A∩B={3,4}, A−B={1,2}, and A'={5,6,7,8} (relative to U).",
+"<strong>Self-check:</strong> when computing A−B by hand, go element-by-element through A ONLY, checking each against B -- do not accidentally start from B, which is a common source of reversed-difference errors.",
+"<strong>Application:</strong> SQL's `UNION`, `INTERSECT`, and `EXCEPT`/`MINUS` clauses combine query result sets using exactly these set operations, and database query optimizers apply De Morgan-style rewriting to simplify complex WHERE clause conditions before execution."
+],
+formulas:["(A∪B)' = A'∩B'","(A∩B)' = A'∪B'","A−B = A∩B'"],
+questions:[
+{type:"Conceptual", q:"Explain the direct logical parallel between De Morgan's Laws for propositions (Day 2) and De Morgan's Laws for sets, being explicit about how set membership (x∈A) connects the two versions."},
+{type:"CS reasoning", q:"A SQL query uses `SELECT * FROM Customers EXCEPT SELECT * FROM Blocked`. Express this using set-difference notation, and explain what mathematical set operation `INTERSECT` corresponds to."},
+{type:"Reasoning", q:"If A and B are disjoint (A∩B=∅), what can you say about |A∪B| in terms of |A| and |B|? Explain why this simple addition rule fails once A and B are allowed to overlap, and what correction term would be needed."}
+]},
+
+{d:10,week:2,title:"Functions — Injective, Surjective, Bijective",big:true,steps:7,
+diagram:"functionmap",
+facts:[{tag:"KEY FACT", text:"Injective (one-to-one): no two distinct inputs map to the same output. Surjective (onto): every element of the codomain is hit by some input."}, {tag:"CAUTION", text:"Bijective requires BOTH injective AND surjective simultaneously -- a function can be one without being the other, and only a bijection has a true inverse function."}],
+mcqs:[
+{q:"A function f:A→B is injective if:", options:["Every element of B is hit", "f(x1)=f(x2) implies x1=x2", "A and B have the same size", "f is defined for all of A"], correct:1, explain:"Injective means distinct inputs always give distinct outputs."},
+{q:"A function f:A→B is surjective if:", options:["No two inputs share an output", "Every element of B has at least one preimage in A", "f is one-to-one", "A is a subset of B"], correct:1, explain:"Surjective (onto) means the entire codomain is covered by the function's range."},
+{q:"A bijective function has an inverse function that:", options:["Only exists sometimes", "Always exists and is itself a well-defined function", "Is never injective", "Only exists if A=B"], correct:1, explain:"Bijectivity is exactly the condition needed to guarantee a well-defined, unique inverse."},
+{q:"f(x)=x² from ℝ to ℝ (all reals) is:", options:["Injective and surjective", "Injective only", "Neither injective nor surjective", "Surjective only"], correct:2, explain:"Not injective (f(2)=f(-2)=4) and not surjective (negative numbers are never hit)."},
+{q:"A hash function that maps two different inputs to the same output hash has failed to be:", options:["Surjective", "A function at all", "Injective (this is called a collision)", "Well-defined"], correct:2, explain:"Mapping distinct inputs to the same output is precisely a failure of injectivity."}
+],
+core:"Hash functions, encryption schemes, and whether a data transformation can be reversed all hinge directly on whether a function is injective, surjective, or both -- this closes out the two-week foundations sequence by tying logic, proof, and sets together in one working object.",
+notes:[
+"A function f:A→B assigns to EVERY element of the domain A exactly one element of the codomain B. The RANGE (or image) of f is the subset of B actually hit by some input -- {f(x) : x∈A} -- which may be smaller than the full codomain B.",
+"f is INJECTIVE (one-to-one) if distinct inputs always produce distinct outputs: formally, f(x1)=f(x2) ⟹ x1=x2 (equivalently, its contrapositive: x1≠x2 ⟹ f(x1)≠f(x2)). f is SURJECTIVE (onto) if every element of B is the image of at least one element of A -- the range equals the full codomain, with nothing in B left unreached.",
+"f is BIJECTIVE only when it is BOTH injective and surjective at once -- every element of B is hit by EXACTLY one element of A, no more and no fewer. This exact-pairing property is what guarantees a well-defined inverse function f⁻¹:B→A exists, since every b∈B can be traced back to precisely one unambiguous a∈A.",
+"These properties are independent: a function can be injective without being surjective (e.g. f(x)=2x from ℤ to ℤ hits only even numbers, missing odds, so not surjective, but distinct inputs never collide), or surjective without injective (e.g. f(x)=⌊x/2⌋ hits every integer, but many inputs share an output).",
+"<strong>Worked example:</strong> Let f:ℤ→ℤ, f(x)=x+3. Injective? Yes: x1+3=x2+3 ⟹ x1=x2. Surjective? Yes: for any y∈ℤ, x=y−3 gives f(x)=y. So f is bijective, and its inverse is f⁻¹(y)=y−3.",
+"<strong>Self-check:</strong> to disprove injectivity, it's enough to find ONE pair of distinct inputs with equal outputs; to disprove surjectivity, find ONE codomain element with no preimage at all -- a single counterexample settles either question, no exhaustive check needed.",
+"<strong>Application:</strong> A cryptographic hash function is deliberately designed to make finding injectivity failures (collisions) computationally infeasible; a well-formed encryption scheme must be a BIJECTION on its message space so that every ciphertext decrypts back to exactly one unambiguous original message."
+],
+formulas:["Injective: f(x1)=f(x2) ⟹ x1=x2","Surjective: ∀b∈B, ∃a∈A, f(a)=b","Bijective ⟺ f⁻¹ exists and is a function"],
+questions:[
+{type:"Conceptual", q:"Explain why bijectivity -- rather than injectivity or surjectivity alone -- is the exact condition required for an inverse FUNCTION (not just an inverse relation) to exist."},
+{type:"CS reasoning", q:"A hash table implementation experiences a 'collision' when two different keys hash to the same bucket. Explain this phenomenon precisely in terms of injectivity, and describe why NO practical hash function mapping a large key space to a small bucket space can ever be fully injective (hint: think about relative sizes of domain and codomain)."},
+{type:"Reasoning", q:"Across Days 1–10, trace the throughline from propositional logic (Day 1) to functions (today): explain in a few sentences how quantifiers (Day 3), proof techniques (Days 5–6), and sets (Days 8–9) were all necessary tools used to even STATE the formal definitions of injective and surjective given today."}
+]},
+
+{d:11,week:3,title:"Relations — Properties & Representations",big:false,steps:4,
+diagram:"relationmatrix",
+facts:[{tag:"KEY FACT", text:"A relation R from A to B is just a subset of the Cartesian product A×B -- a set of ordered pairs. A relation on A alone is a subset of A×A."}, {tag:"CAUTION", text:"Symmetric and antisymmetric are NOT opposites -- a relation can be neither, and the identity relation is both at once."}],
+mcqs:[
+{q:"A relation R on set A is REFLEXIVE if:", options:["(a,a)∈R for every a∈A", "(a,b)∈R implies (b,a)∈R", "R is empty", "R=A×A"], correct:0, explain:"Every element must relate to itself."},
+{q:"R is SYMMETRIC if:", options:["(a,b)∈R implies (b,a)∈R", "(a,a)∈R for all a", "(a,b)∈R and (b,a)∈R implies a=b", "R is a function"], correct:0, explain:"The relation works equally in both directions."},
+{q:"R is TRANSITIVE if:", options:["(a,b)∈R implies (b,a)∈R", "(a,b)∈R and (b,c)∈R implies (a,c)∈R", "Every element relates to itself", "R has no cycles"], correct:1, explain:"Chains of relatedness must close up directly."},
+{q:"A relation can be represented as an n×n matrix where entry (i,j)=1 means:", options:["Element i equals element j", "(ai,aj)∈R", "i and j are both in A", "The relation is reflexive"], correct:1, explain:"The matrix directly encodes which ordered pairs belong to R."},
+{q:"'≤' on the real numbers is:", options:["Reflexive, antisymmetric, transitive", "Symmetric only", "Neither reflexive nor transitive", "Only defined on integers"], correct:0, explain:"a≤a always; a≤b and b≤a force a=b; a≤b≤c gives a≤c."}
+],
+core:"A relation is simply a set of ordered pairs -- but classifying it by reflexivity, symmetry, and transitivity is exactly what distinguishes 'similarity' relations (used for clustering) from 'ordering' relations (used for ranking), a distinction machine learning systems depend on constantly.",
+notes:[
+"Formally, a relation R from set A to set B is any subset of the Cartesian product A×B={(a,b) : a∈A, b∈B}. When A=B, we call R a relation ON A. Writing (a,b)∈R is often shortened to aRb.",
+"Three properties classify most relations you'll encounter: REFLEXIVE (every a relates to itself: (a,a)∈R for all a∈A), SYMMETRIC ((a,b)∈R implies (b,a)∈R -- the relation is direction-blind), and TRANSITIVE ((a,b)∈R and (b,c)∈R implies (a,c)∈R -- chains close up).",
+"A separate, distinct property is ANTISYMMETRIC: (a,b)∈R and (b,a)∈R implies a=b. Note this does NOT mean 'not symmetric' -- antisymmetry only forbids symmetric pairs between DISTINCT elements; a=b pairs are allowed freely. '≤' is antisymmetric (a≤b and b≤a forces a=b) while also being reflexive and transitive.",
+"Relations can be represented two equivalent ways: as an n×n zero-one MATRIX (entry (i,j)=1 iff (ai,aj)∈R) or as a DIRECTED GRAPH (an arrow from ai to aj iff (ai,aj)∈R). Reflexivity shows up as a diagonal of all 1s (or self-loops on every node); symmetry shows up as a matrix equal to its own transpose.",
+"<strong>Worked example:</strong> Let A={1,2,3} and R={(1,1),(2,2),(3,3),(1,2),(2,1)}. R is reflexive (all three self-pairs present), symmetric ((1,2) and (2,1) both present), but NOT transitive-testable trivially here since it already satisfies it vacuously beyond the given pairs -- checking (1,2)&(2,1)⟹(1,1)✓ confirms transitivity holds too.",
+"<strong>Self-check:</strong> when checking transitivity, you must verify EVERY chain (a,b),(b,c) in R actually has (a,c) also in R -- finding just one broken chain disproves transitivity entirely, the same 'one counterexample suffices' logic from Day 8's subset reasoning.",
+"<strong>Application:</strong> A recommendation system's 'users who bought X also bought Y' relation, and a similarity matrix used in nearest-neighbor search or attention mechanisms, are both literally relations on a set -- and whether that relation is symmetric determines whether 'A is similar to B' automatically implies 'B is similar to A.'"
+],
+formulas:["R ⊆ A×A","Reflexive: ∀a, (a,a)∈R","Transitive: (a,b)∈R ∧ (b,c)∈R ⟹ (a,c)∈R"],
+questions:[
+{type:"Conceptual", q:"Explain why antisymmetric and symmetric are not opposite properties, giving an example of a relation that is neither symmetric nor antisymmetric."},
+{type:"CS reasoning", q:"A social network's 'follows' relation is generally NOT symmetric (you can follow someone who doesn't follow back), while a 'friends with' relation typically IS symmetric. Explain how this distinction would change the adjacency matrix representation of each relation."},
+{type:"Reasoning", q:"A cosine-similarity matrix between embedding vectors is always symmetric (sim(a,b)=sim(b,a)) and reflexive (sim(a,a)=1 maximal). Is it typically transitive? Explain with an intuitive example why 'A similar to B' and 'B similar to C' does not generally guarantee 'A similar to C.'"}
+]},
+
+{d:12,week:3,title:"Equivalence Relations & Partitions",big:false,steps:4,
+diagram:"partition",
+facts:[{tag:"KEY FACT", text:"An equivalence relation is reflexive, symmetric, AND transitive all at once -- it formally captures the idea of 'being the same in some respect.'"}, {tag:"INSIGHT", text:"Every equivalence relation on a set A corresponds EXACTLY to a partition of A into disjoint, non-overlapping equivalence classes -- the two ideas are mathematically interchangeable."}],
+mcqs:[
+{q:"An equivalence relation must be:", options:["Reflexive and symmetric only", "Reflexive, symmetric, and transitive", "Antisymmetric and transitive", "Just transitive"], correct:1, explain:"All three properties together define an equivalence relation."},
+{q:"An equivalence CLASS of an element a, written [a], contains:", options:["Only a itself", "All elements related to a by R", "All elements of A", "Nothing, unless a=0"], correct:1, explain:"[a]={x∈A : xRa}, everything 'equivalent' to a."},
+{q:"A partition of a set A is a collection of subsets that are:", options:["Overlapping and covering A", "Disjoint and their union equals A", "All the same size", "Ordered by size"], correct:1, explain:"Non-overlapping subsets whose union recovers the whole set."},
+{q:"'Has the same remainder mod 3' on the integers is an equivalence relation with how many equivalence classes?", options:["1", "2", "3", "Infinitely many"], correct:2, explain:"Remainders 0, 1, 2 mod 3 give exactly three classes."},
+{q:"If a and b are in the same equivalence class under R, then:", options:["a=b necessarily", "aRb holds", "a and b are unrelated", "R is not an equivalence relation"], correct:1, explain:"Being in the same class is defined precisely by being related."}
+],
+core:"Equivalence relations are the mathematical backbone of clustering: every clustering algorithm implicitly defines (or approximates) an equivalence relation on the data, and the resulting clusters ARE the equivalence classes.",
+notes:[
+"An EQUIVALENCE RELATION is a relation that is simultaneously reflexive, symmetric, AND transitive. It formalizes the everyday idea of 'these things are the same in some specific sense' -- equality itself is the simplest example, but many other relations (same parity, same remainder, same length, same cluster) also qualify.",
+"Given an equivalence relation R on A, the EQUIVALENCE CLASS of an element a, written [a], is the set of all elements related to a: [a]={x∈A : xRa}. A cornerstone theorem states that any two equivalence classes are either IDENTICAL or completely DISJOINT -- never partially overlapping.",
+"This non-overlapping property means the full collection of equivalence classes forms a PARTITION of A: a set of pairwise disjoint, non-empty subsets whose union is all of A. Conversely, ANY partition of A defines a valid equivalence relation (put a and b in relation iff they're in the same block of the partition) -- equivalence relations and partitions are two views of the exact same structure.",
+"This is a genuinely two-way theorem: every equivalence relation induces a unique partition, and every partition induces a unique equivalence relation. Recognizing which one you're handed lets you freely translate to whichever form is more convenient for the problem at hand.",
+"<strong>Worked example:</strong> Define R on ℤ by aRb iff a≡b (mod 3) (same remainder when divided by 3). This is reflexive (a≡a), symmetric (a≡b⟹b≡a), and transitive (a≡b, b≡c⟹a≡c) -- an equivalence relation. It partitions ℤ into exactly 3 classes: [0]={...,-3,0,3,6,...}, [1]={...,-2,1,4,7,...}, [2]={...,-1,2,5,8,...}.",
+"<strong>Self-check:</strong> to verify a candidate relation is an equivalence relation, check all THREE properties independently -- reflexive alone, or symmetric+transitive without reflexive, is not enough; a common mistake is assuming symmetric+transitive automatically implies reflexive (it does NOT, unless every element is already guaranteed related to something).",
+"<strong>Application:</strong> K-means and other clustering algorithms partition a dataset into disjoint groups -- exactly the structure of equivalence classes; more precisely, k-fold cross-validation partitions your training data into k disjoint folds whose union is the full dataset, which is literally a set partition used to guarantee every data point gets used for both training and validation exactly once."
+],
+formulas:["Equivalence relation: reflexive ∧ symmetric ∧ transitive","[a] = {x∈A : xRa}","Equivalence classes partition A: pairwise disjoint, union = A"],
+questions:[
+{type:"Conceptual", q:"Explain why two equivalence classes [a] and [b] must be either identical or completely disjoint -- what would go wrong logically if they partially overlapped?"},
+{type:"CS reasoning", q:"k-fold cross-validation splits a dataset into k disjoint folds. Explain precisely how this splitting is an instance of a set partition, and what property would be violated if two folds accidentally shared a data point."},
+{type:"Reasoning", q:"Clustering algorithms like k-means don't always produce a relation that is perfectly transitive in the underlying similarity scores, yet the FINAL cluster assignment is still a strict partition. Explain how the algorithm 'forces' a true equivalence-relation structure (the partition) even when the raw pairwise similarity relation it started from was not itself transitive."}
+]},
+
+{d:13,week:3,title:"Basic Counting — Sum & Product Rules",big:false,steps:4,
+diagram:"countingtree",
+facts:[{tag:"KEY FACT", text:"Product Rule: if a task has k steps with n1, n2, ..., nk choices each, the total number of outcomes is n1×n2×...×nk."}, {tag:"CAUTION", text:"Use the SUM rule (add) only when choices are mutually exclusive alternatives -- use the PRODUCT rule (multiply) when choices are made in independent, sequential stages."}],
+mcqs:[
+{q:"The Product Rule applies when a task consists of:", options:["Mutually exclusive alternative choices", "A sequence of independent stages, each with its own choices", "A single choice only", "Choices that overlap"], correct:1, explain:"Multiply the number of options at each independent stage."},
+{q:"The Sum Rule applies when:", options:["Tasks happen in sequence", "You choose ONE option from disjoint categories of choices", "Every choice must be made", "Order matters"], correct:1, explain:"Add the counts of mutually exclusive alternative ways to complete the task."},
+{q:"A password has 3 letters followed by 2 digits (26 letters, 10 digits, repeats allowed). Total passwords:", options:["26+26+26+10+10", "26³×10²", "26³+10²", "(26+10)⁵"], correct:1, explain:"5 independent sequential choices → multiply: 26×26×26×10×10."},
+{q:"Choosing a meal of EITHER a sandwich (5 options) OR a salad (3 options), not both:", options:["5×3=15 ways", "5+3=8 ways", "5³ ways", "3⁵ ways"], correct:1, explain:"Mutually exclusive alternatives → sum rule."},
+{q:"A model architecture search picks 1 of 4 optimizers AND 1 of 3 learning rates AND 1 of 5 batch sizes. Total configurations:", options:["4+3+5=12", "4×3×5=60", "4³×3", "(4×3×5)²"], correct:1, explain:"Three independent sequential choices → multiply."}
+],
+core:"Every hyperparameter grid search, every combinatorial search space in AI, and every estimate of 'how big is the space of possible models' starts from these two simple counting rules -- getting sum vs. product right is the difference between a correct search-space size and one off by orders of magnitude.",
+notes:[
+"The PRODUCT RULE: if a task can be broken into a sequence of k independent stages, with n1 choices in stage 1, n2 choices in stage 2 (regardless of what was chosen in stage 1), and so on, the total number of ways to complete the whole task is n1×n2×...×nk.",
+"The SUM RULE: if a task can be completed by choosing exactly ONE option from among several mutually exclusive, non-overlapping alternative CATEGORIES, the total number of ways is the sum of the counts within each category. Mixing these two rules up -- multiplying when you should add, or vice versa -- is the single most common counting error.",
+"A useful diagnostic: ask 'am I making several choices IN SEQUENCE to build one single outcome?' (product rule) versus 'am I picking exactly ONE path from several alternative, disjoint routes?' (sum rule). A decision tree diagram, branching at each stage, visually distinguishes the two: product-rule stages branch DEEPER (multiply the branch counts along a path), sum-rule alternatives branch WIDER at the top (add the branch counts).",
+"These rules combine freely: a more complex counting problem is usually solved by first applying the sum rule to split into disjoint cases, then the product rule within each case, then summing the per-case totals -- the exact same 'split into exhaustive cases' discipline from Day 6's proof by cases.",
+"<strong>Worked example:</strong> A hyperparameter grid search tests 4 optimizers, 5 learning rates, and 3 batch sizes (independent sequential choices → product rule): 4×5×3=60 total configurations to train and evaluate.",
+"<strong>Self-check:</strong> before computing, explicitly state in words whether you're 'choosing one from several alternatives' or 'making several choices to build one outcome' -- writing this sentence out loud catches sum/product confusion before you commit to a (possibly wrong) formula.",
+"<strong>Application:</strong> Grid search over ML hyperparameters is a direct product-rule computation, and its rapid growth (adding just one more hyperparameter with 5 options MULTIPLIES total runs by 5) is exactly why practitioners switch to random or Bayesian search once the grid gets large -- a concrete motivation for the algorithmic complexity ideas closing out Week 4."
+],
+formulas:["Product Rule: n1×n2×...×nk (sequential independent choices)","Sum Rule: n1+n2+...+nk (mutually exclusive alternatives)"],
+questions:[
+{type:"Conceptual", q:"Construct your own short example (different from the ones given today) where using the sum rule instead of the product rule (or vice versa) would give a plausible-looking but WRONG answer, and explain exactly why the wrong rule fails."},
+{type:"CS reasoning", q:"A binary image classifier pipeline chooses one of 3 preprocessing methods, THEN one of 6 model architectures, THEN one of 4 postprocessing steps. Compute the total number of distinct pipelines, showing which counting rule applies at each stage and why."},
+{type:"Reasoning", q:"Explain, using the product rule directly, why adding a single new hyperparameter with only 2 possible values to an existing grid search can still meaningfully slow down a search that already has hundreds of configurations -- what does this reveal about how grid search scales?"}
+]},
+
+{d:14,week:3,title:"Permutations & Combinations",big:false,steps:5,
+diagram:"permcomb",
+facts:[{tag:"KEY FACT", text:"Permutations P(n,r) = n!/(n-r)! count ORDERED selections; combinations C(n,r) = n!/(r!(n-r)!) count UNORDERED selections."}, {tag:"CAUTION", text:"The deciding question is always 'does order matter here?' -- picking a committee (unordered) vs. picking a president/VP/secretary from the same group (ordered) use the SAME group but different formulas."}],
+mcqs:[
+{q:"The number of ways to arrange all n distinct objects in a row is:", options:["n", "n²", "n!", "2^n"], correct:2, explain:"n choices for the first spot, n-1 for the second, ..., down to 1: n!."},
+{q:"P(n,r) counts:", options:["Unordered selections of r from n", "Ordered selections (arrangements) of r from n", "All subsets of size r", "Ways to partition n items"], correct:1, explain:"Permutations count arrangements where order matters."},
+{q:"C(n,r) counts:", options:["Ordered arrangements", "Unordered selections (subsets) of size r from n", "n! total arrangements", "Only r=n cases"], correct:1, explain:"Combinations count subsets -- order is irrelevant."},
+{q:"C(n,r) relates to P(n,r) by:", options:["C(n,r)=P(n,r)×r!", "C(n,r)=P(n,r)/r!", "C(n,r)=P(n,r)+r!", "They are always equal"], correct:1, explain:"Dividing by r! removes the ordering-within-the-selection that permutations count separately."},
+{q:"Choosing 3 features to keep from a set of 10 (order doesn't matter) uses:", options:["P(10,3)", "C(10,3)", "10³", "10!"], correct:1, explain:"Feature SUBSETS are unordered selections -- combinations."}
+],
+core:"Whether you're counting neural architecture search spaces, feature subsets, or possible train/test splits, the permutation-vs-combination distinction (does order matter?) is the very first question that determines which formula -- and which magnitude of search space -- you're actually dealing with.",
+notes:[
+"A PERMUTATION of n distinct objects is an ORDERED arrangement of them. The number of ways to arrange all n objects in a row is n! (n factorial: n×(n-1)×(n-2)×...×2×1), since there are n choices for the first position, n-1 remaining for the second, and so on.",
+"More generally, P(n,r)=n!/(n-r)! counts the number of ordered arrangements of r objects chosen FROM a larger set of n (a 'partial permutation'). This is exactly the product rule from Day 13 applied r times: n choices, then n-1, then n-2, ..., down to n-r+1.",
+"A COMBINATION, by contrast, counts UNORDERED selections: C(n,r)=n!/(r!(n-r)!) (also written (n choose r)) counts the number of size-r SUBSETS of an n-element set, with no regard to the order elements were chosen in. Since each unordered subset of size r corresponds to exactly r! different ordered arrangements, C(n,r)=P(n,r)/r!.",
+"The deciding question before applying either formula is always: 'if I select the same r elements but in a different order, do I get a genuinely DIFFERENT outcome?' If yes (electing a president, VP, and secretary from a group -- swapping who gets which role matters) use permutations; if no (selecting a 3-person committee with no distinct roles, or a subset of features) use combinations.",
+"<strong>Worked example:</strong> From a pool of 8 candidate features, how many size-3 feature subsets exist? Order doesn't matter (it's just a subset kept for the model), so C(8,3)=8!/(3!5!)=56. If instead you needed to rank your TOP 3 features from 1st to 3rd most important, order WOULD matter: P(8,3)=8!/5!=336, exactly 3!=6 times larger, matching the C(n,r)=P(n,r)/r! relationship.",
+"<strong>Self-check:</strong> when unsure, try a tiny concrete case (n=3, r=2) by hand-listing every outcome -- if swapping the two chosen elements' order produces something you'd count as 'the same' result, you need combinations; if it's 'different,' you need permutations.",
+"<strong>Application:</strong> The number of possible feature subsets to evaluate in feature selection is C(n,k) for each subset size k -- summed over all k this is 2^n (matching Day 8's power-set count exactly), which is precisely why exhaustive feature selection is intractable beyond a few dozen features, motivating greedy or regularization-based alternatives in real ML pipelines."
+],
+formulas:["n! = n×(n-1)×...×1","P(n,r) = n!/(n-r)!","C(n,r) = n!/(r!(n-r)!) = P(n,r)/r!"],
+questions:[
+{type:"Conceptual", q:"Explain, using the relationship C(n,r)=P(n,r)/r!, precisely WHY dividing by r! is the correct correction to go from counting ordered arrangements to counting unordered subsets."},
+{type:"CS reasoning", q:"A neural architecture search must choose an ORDERED sequence of 4 distinct layer types from a palette of 10 available layer types (order defines the network's structure, so distinct orderings ARE distinct architectures). Compute the number of possible architectures, and identify which formula you used and why."},
+{type:"Reasoning", q:"Explain why C(n,k)=C(n,n-k) is always true (e.g. C(10,3)=C(10,7)) using a combinatorial argument about 'choosing k to keep' versus 'choosing n-k to discard' -- rather than by expanding the factorial formula algebraically."}
+]},
+
+{d:15,week:3,title:"Pigeonhole Principle & the Binomial Theorem",big:true,steps:6,
+diagram:"pigeonhole",
+facts:[{tag:"KEY FACT", text:"Pigeonhole Principle: if n items are placed into m containers and n>m, at least one container holds more than one item -- deceptively simple, surprisingly powerful."}, {tag:"INSIGHT", text:"The Binomial Theorem expands (x+y)^n using exactly the combination counts C(n,k) as coefficients -- counting and algebra turn out to be the same thing in disguise."}],
+mcqs:[
+{q:"The Pigeonhole Principle guarantees a collision when:", options:["n items are placed into n containers", "n items are placed into m containers with n>m", "Items are placed randomly", "n=m exactly"], correct:1, explain:"More items than containers forces at least one container to hold 2+ items."},
+{q:"If you hash 20 keys into a table with 15 buckets, the Pigeonhole Principle guarantees:", options:["No collisions occur", "At least one bucket has 2+ keys", "All buckets are equally full", "The table will resize"], correct:1, explain:"20>15 forces at least one collision, regardless of hash quality."},
+{q:"The Binomial Theorem states (x+y)^n expands to a sum of terms of the form:", options:["C(n,k)·x^k·y^(n-k)", "n·x^k·y^k", "x^n+y^n only", "k!·x^k"], correct:0, explain:"Each term's coefficient is exactly the combination count C(n,k)."},
+{q:"The coefficients in a row of Pascal's Triangle correspond to:", options:["Factorials", "C(n,0), C(n,1), ..., C(n,n) for that row's n", "Permutation counts", "Prime numbers"], correct:1, explain:"Pascal's Triangle IS the binomial coefficients, arranged by row."},
+{q:"The Generalized Pigeonhole Principle guarantees at least ⌈n/m⌉ items in some container when n items fill m containers. If n=100 items fill m=9 containers, some container holds at least:", options:["9 items", "11 items", "12 items", "100 items"], correct:2, explain:"⌈100/9⌉=⌈11.11⌉=12."}
+],
+core:"An idea so simple it sounds almost like a joke turns out to guarantee hash collisions, bound the compression ratio of any lossless algorithm, and explain the 'curse of dimensionality' -- closing Week 3 by connecting pure counting directly to the limits of real computational systems.",
+notes:[
+"The PIGEONHOLE PRINCIPLE states: if n items are distributed among m containers and n>m, then at least one container must hold MORE than one item. The proof is a one-line proof by contradiction (Day 6): if every container held at most one item, the total would be at most m items -- contradicting that there are n>m items to place.",
+"The GENERALIZED version sharpens this: if n items fill m containers, some container holds AT LEAST ⌈n/m⌉ items (the ceiling of n/m). This turns a binary 'a collision exists' guarantee into a quantitative lower bound on how crowded the worst container must be.",
+"The BINOMIAL THEOREM states (x+y)^n = Σ(k=0 to n) C(n,k)·x^(n-k)·y^k -- expanding a binomial power produces exactly one term per subset size k, with the combination count C(n,k) as its coefficient. This is not a coincidence: expanding (x+y)^n by hand corresponds to choosing, for each of the n factors, EITHER an x OR a y, and C(n,k) counts the number of ways to choose exactly k of the y's.",
+"Arranging these coefficients by row (row n holds C(n,0) through C(n,n)) produces PASCAL'S TRIANGLE, where each entry is the sum of the two entries diagonally above it -- itself a beautiful, separately provable combinatorial identity (C(n,k)=C(n-1,k-1)+C(n-1,k)).",
+"<strong>Worked example (pigeonhole):</strong> A hash table with 1000 buckets stores 1500 keys. By the Generalized Pigeonhole Principle, some bucket holds at least ⌈1500/1000⌉=2 keys -- guaranteed, regardless of how 'good' the hash function is, purely from the item-to-container counting mismatch.",
+"<strong>Self-check:</strong> the Pigeonhole Principle only guarantees THAT a collision exists somewhere -- it says nothing about WHICH container, or how many collisions total; don't over-interpret it as a precise distribution result, only a guaranteed-minimum result.",
+"<strong>Application:</strong> Every hash table's load factor analysis, every proof that lossless compression cannot shrink EVERY possible input file (there are more possible files than shorter output codes, so by pigeonhole some file must map to an output at least as long), and intuitions behind the curse of dimensionality (sparse high-dimensional data has 'more pigeonholes than pigeons,' making nearest-neighbor structure break down) all trace back to this one simple counting argument."
+],
+formulas:["Pigeonhole: n>m ⟹ some container holds ≥2 items","Generalized: some container holds ≥⌈n/m⌉ items","(x+y)^n = Σ C(n,k)x^(n-k)y^k"],
+questions:[
+{type:"Conceptual", q:"Write out, in your own words, the proof-by-contradiction argument establishing the basic Pigeonhole Principle, explicitly identifying what assumption is contradicted and how."},
+{type:"CS reasoning", q:"A hash table has 500 buckets and currently stores 650 keys. Using the Generalized Pigeonhole Principle, compute the guaranteed minimum number of keys in the most-crowded bucket, and explain why this number is a GUARANTEE rather than merely a likely estimate."},
+{type:"Reasoning", q:"Explain, at an intuitive level, how the Pigeonhole Principle relates to the 'curse of dimensionality' in machine learning -- as the number of features (dimensions) grows, why does a fixed amount of training data start to look increasingly 'sparse,' and what pigeonhole-style counting mismatch is happening here?"}
+]},
+
+{d:16,week:4,title:"Graph Theory Basics — Vertices, Edges & Degree",big:false,steps:5,
+diagram:"graphbasic",
+facts:[{tag:"KEY FACT", text:"A graph G=(V,E) is a set of vertices V together with a set of edges E connecting pairs of vertices -- one of the most versatile structures in all of discrete math."}, {tag:"INSIGHT", text:"The Handshake Theorem: the sum of all vertex degrees in a graph always equals 2|E| -- every edge contributes exactly 2 to the total degree count, one for each endpoint."}],
+mcqs:[
+{q:"A graph G=(V,E) consists of:", options:["Only a set of vertices", "A set of vertices and a set of edges connecting pairs of them", "Only edges, no vertices", "A single ordered sequence"], correct:1, explain:"Vertices (nodes) and edges (connections) together define a graph."},
+{q:"The DEGREE of a vertex is:", options:["Its position in the graph", "The number of edges incident to it", "The total number of vertices", "Always 2"], correct:1, explain:"Degree counts how many edges touch that vertex."},
+{q:"The Handshake Theorem states the sum of all degrees equals:", options:["|V|", "|E|", "2|E|", "|V|×|E|"], correct:2, explain:"Each edge is counted once at each of its two endpoints."},
+{q:"In a DIRECTED graph, an edge (u,v) is different from (v,u) because:", options:["They are always the same", "Direction matters -- (u,v) points from u to v specifically", "Directed graphs don't have edges", "u and v must be equal"], correct:1, explain:"Direction encodes an asymmetric relationship, unlike undirected edges."},
+{q:"A WEIGHTED graph attaches to each edge:", options:["A direction only", "A numerical value (e.g. cost, distance, or strength)", "A vertex label", "Nothing extra"], correct:1, explain:"Weights let edges carry quantitative information beyond mere connection."}
+],
+core:"Neural networks, knowledge graphs, social networks, and dependency structures in data are all literally graphs -- vertices and edges are the single most common way both data AND computation itself get represented in machine learning systems.",
+notes:[
+"A graph G=(V,E) consists of a set of VERTICES (or nodes) V and a set of EDGES E, where each edge connects a pair of vertices. In an UNDIRECTED graph, an edge {u,v} is a simple unordered pair (the connection has no inherent direction); in a DIRECTED graph, an edge (u,v) points specifically FROM u TO v, and (u,v)≠(v,u) in general.",
+"The DEGREE of a vertex v, deg(v), is the number of edges incident to (touching) it. In a directed graph this splits into IN-DEGREE (edges pointing in) and OUT-DEGREE (edges pointing out). Vertices with degree 0 are called ISOLATED.",
+"The HANDSHAKE THEOREM states that in any undirected graph, Σ(v∈V) deg(v) = 2|E| -- the sum of all degrees is always exactly twice the number of edges, because every single edge is counted once from each of its two endpoints. An immediate corollary: the number of ODD-degree vertices in any graph must always be EVEN (an elegant, non-obvious consequence provable directly from this sum).",
+"A graph can also be represented as an ADJACENCY MATRIX -- an n×n matrix where entry (i,j)=1 if there's an edge between vertex i and vertex j (and 0 otherwise) -- the exact same representation style used for relations on Day 11, since a graph's edge set IS a relation on its vertex set.",
+"<strong>Worked example:</strong> A graph has 5 vertices with degrees 3,2,2,1,2. Sum of degrees = 10 = 2|E|, so |E|=5. This is consistent (an even sum), and the graph has exactly 5 edges -- without ever needing to see the actual edge list.",
+"<strong>Self-check:</strong> whenever you're handed a list of proposed vertex degrees, first check whether the sum is EVEN -- an odd sum is an immediate, guaranteed proof that no such graph can exist, a fast sanity check before attempting to actually construct one.",
+"<strong>Application:</strong> A neural network's computation graph (vertices = operations/tensors, edges = data flow), a knowledge graph (vertices = entities, edges = relationships), and the graph underlying a Graph Neural Network (GNN) are all literal instances of G=(V,E) -- and the adjacency matrix representation is exactly what GNN layers operate on mathematically."
+],
+formulas:["G = (V,E)","Handshake Theorem: Σ deg(v) = 2|E|","Number of odd-degree vertices is always even"],
+questions:[
+{type:"Conceptual", q:"Using the Handshake Theorem, prove that the number of vertices with odd degree in any graph must be even -- structure this as a short direct argument."},
+{type:"CS reasoning", q:"A computation graph for a neural network has each 'operation' node connected to its inputs and outputs. Explain why this graph is naturally DIRECTED rather than undirected, and what the in-degree and out-degree of a given operation node represent in that context."},
+{type:"Reasoning", q:"You're given only a graph's adjacency matrix (no picture). Explain how you would compute every vertex's degree directly from the matrix alone, without ever drawing the graph -- and how you'd distinguish a directed graph's in-degree from its out-degree using the same matrix."}
+]},
+
+{d:17,week:4,title:"Graph Types, Trees & DAGs",big:false,steps:5,
+diagram:"treedag",
+facts:[{tag:"KEY FACT", text:"A tree is a connected graph with NO cycles -- exactly |V|-1 edges connect |V| vertices, the minimum possible to keep everything reachable."}, {tag:"INSIGHT", text:"A Directed Acyclic Graph (DAG) allows direction but forbids cycles -- exactly the structure needed for computation graphs, where a value can never (even indirectly) depend on itself."}],
+mcqs:[
+{q:"A tree is defined as a graph that is:", options:["Connected and contains at least one cycle", "Connected and acyclic (no cycles)", "Disconnected with cycles", "Any graph with exactly one vertex"], correct:1, explain:"Trees are the minimally-connected, cycle-free graphs."},
+{q:"A tree with n vertices has exactly how many edges?", options:["n", "n-1", "n+1", "n²"], correct:1, explain:"Exactly n-1 edges are needed to connect n vertices with no redundancy (no cycles)."},
+{q:"A DAG is a graph that is:", options:["Undirected and acyclic", "Directed and MAY contain cycles", "Directed and acyclic (no directed cycles)", "Always a tree"], correct:2, explain:"DAG = Directed Acyclic Graph: edges have direction, and following them can never loop back."},
+{q:"Why can't a value in a computation graph depend (even indirectly) on itself?", options:["It's allowed and common", "It would create a directed cycle, making the computation order undefined/impossible", "Graphs don't support this concept", "It only matters for undirected graphs"], correct:1, explain:"A cycle would mean computing A requires B, which requires A -- no valid order exists."},
+{q:"A Bayesian network, where nodes are random variables and edges represent direct dependencies, is structured as:", options:["An undirected cycle", "A DAG", "A tree only, never more general", "A complete graph"], correct:1, explain:"Dependencies must have a direction (cause→effect style) and no cycles, so a DAG."}
+],
+core:"Decision trees, Bayesian networks, and the backpropagation computation graph inside every neural network are all specific, named instances of tree and DAG structures -- the acyclic property isn't a mathematical curiosity, it's the exact property that makes 'compute this in a well-defined order' possible at all.",
+notes:[
+"A TREE is a connected, undirected graph with NO cycles. This single constraint has a precise numerical consequence: a tree with n vertices has EXACTLY n-1 edges -- any fewer and it couldn't be connected; any more and a cycle would necessarily appear. A ROOTED tree additionally designates one vertex as the root, giving every other vertex a well-defined parent and depth.",
+"A CYCLE is a path that starts and ends at the same vertex without repeating any other vertex or edge along the way. A graph is ACYCLIC if it contains no cycles at all -- trees are the connected special case of acyclic graphs.",
+"A DIRECTED ACYCLIC GRAPH (DAG) generalizes the acyclic idea to directed graphs: edges have direction, but following directed edges can never lead back to a vertex you've already visited. DAGs are precisely the structure needed whenever a valid 'processing order' (a topological sort) must exist -- a cycle would make no consistent order possible.",
+"Trees and DAGs are not unrelated -- every tree, once you orient all its edges away from a chosen root, IS a DAG (specifically, one where every non-root vertex has exactly one parent). But general DAGs are strictly more flexible than trees, since a DAG vertex can have MULTIPLE parents (multiple incoming edges), which a tree vertex (aside from the root) cannot.",
+"<strong>Worked example:</strong> A decision tree for classification has a root question, branching into child questions, ultimately reaching leaf nodes (class labels). With 15 total nodes, it has exactly 14 edges (n-1), confirming it's a valid tree -- no node is ever reachable by two different paths from the root.",
+"<strong>Self-check:</strong> to verify a directed graph is truly acyclic (a valid DAG), attempt a topological sort (repeatedly remove a vertex with in-degree 0); if you ever get stuck with remaining vertices but no in-degree-0 vertex among them, a cycle exists and it is NOT a DAG.",
+"<strong>Application:</strong> A neural network's backpropagation graph is a DAG (a value can never depend on its own future computation); a Bayesian network's structure IS a DAG expressing conditional dependencies between random variables; and a decision tree is, unsurprisingly, literally a tree in the graph-theoretic sense defined today."
+],
+formulas:["Tree: connected ∧ acyclic ⟹ exactly n-1 edges","DAG: directed ∧ no directed cycles ⟹ a topological order exists"],
+questions:[
+{type:"Conceptual", q:"Explain why a tree with n vertices must have exactly n-1 edges -- what would go wrong (in terms of connectivity or cycles) with n-2 edges, and what would go wrong with n edges?"},
+{type:"CS reasoning", q:"Explain precisely why a neural network's computation graph being a DAG (rather than allowing arbitrary cycles) is what makes backpropagation well-defined -- what would 'computing the gradient' even mean if the graph contained a directed cycle?"},
+{type:"Reasoning", q:"A Bayesian network represents 'rain causes wet grass' and 'sprinkler causes wet grass' as two directed edges into a shared 'wet grass' node. Explain why this shared-parent structure is possible in a DAG but would NOT be possible if the underlying structure were required to be a strict tree."}
+]},
+
+{d:18,week:4,title:"Discrete Probability & Bayes' Theorem",big:true,steps:6,
+diagram:"bayesdiagram",
+facts:[{tag:"KEY FACT", text:"P(A|B) = P(A∩B)/P(B) -- conditional probability rescales the sample space down to just the outcomes where B already happened."}, {tag:"INSIGHT", text:"Bayes' Theorem lets you FLIP a conditional probability: P(A|B) = P(B|A)P(A)/P(B) -- go from 'how likely is evidence given a cause' to 'how likely is the cause given the evidence.'"}],
+mcqs:[
+{q:"For a finite sample space with equally likely outcomes, P(A) equals:", options:["|A|/|S|", "|A|+|S|", "|S|/|A|", "|A|×|S|"], correct:0, explain:"Classical probability: favorable outcomes over total outcomes."},
+{q:"P(A|B), the conditional probability of A given B, is defined as:", options:["P(A)×P(B)", "P(A∩B)/P(B)", "P(A∪B)", "P(A)-P(B)"], correct:1, explain:"Restrict to the world where B is true, then ask how much of that world is also A."},
+{q:"Bayes' Theorem states P(A|B) equals:", options:["P(A)/P(B)", "P(B|A)P(A)/P(B)", "P(A∩B)+P(B)", "P(A)+P(B|A)"], correct:1, explain:"Bayes' Theorem inverts the direction of conditioning using the definitions of conditional probability."},
+{q:"Events A and B are INDEPENDENT if:", options:["P(A∩B)=P(A)+P(B)", "P(A∩B)=P(A)×P(B)", "P(A|B)=0", "A and B cannot both occur"], correct:1, explain:"Independence means knowing B occurred gives no information about A -- multiplicatively separable probabilities."},
+{q:"In Naive Bayes classification, 'naive' refers to the assumption that:", options:["The classes are equally likely", "Features are conditionally independent given the class", "Only one feature is used", "Probabilities are always 0.5"], correct:1, explain:"Naive Bayes simplifies computation by (naively) assuming features don't interact given the class label."}
+],
+core:"Bayes' Theorem is not just a formula -- it's the mathematical engine behind an entire family of machine learning models (Naive Bayes, Bayesian networks, Bayesian inference broadly) that reason from observed evidence back to the most probable underlying cause.",
+notes:[
+"A PROBABILITY SPACE consists of a sample space S (all possible outcomes) and a probability function P assigning each event (subset of S) a number in [0,1], satisfying P(S)=1 and P(A∪B)=P(A)+P(B) for disjoint events. For equally-likely finite outcomes, P(A)=|A|/|S| -- directly reusing Week 3's counting rules to compute probabilities.",
+"CONDITIONAL PROBABILITY P(A|B) ('probability of A given B') is defined as P(A∩B)/P(B), assuming P(B)>0. Intuitively, once you know B has occurred, you restrict your entire universe of possible outcomes down to just B, then ask what fraction of THAT restricted universe also satisfies A.",
+"BAYES' THEOREM follows directly from the definition of conditional probability applied twice (once for P(A|B), once for P(B|A)) and solving algebraically: P(A|B) = P(B|A)·P(A) / P(B). This lets you INVERT a conditional probability -- going from 'how likely is this data GIVEN a hypothesis' (often easy to model) to 'how likely is the hypothesis GIVEN this data' (often what you actually want to know).",
+"Two events A and B are INDEPENDENT if P(A∩B)=P(A)×P(B), equivalently if P(A|B)=P(A) -- knowing B occurred gives you zero new information about A's likelihood. This is a strong assumption, and 'Naive Bayes' classifiers get their name from naively ASSUMING all features are independent given the class label, which is rarely exactly true but works surprisingly well in practice.",
+"<strong>Worked example:</strong> A rare disease affects 1% of a population (P(D)=0.01). A test is 95% accurate for sick people (P(+|D)=0.95) and has a 5% false positive rate for healthy people (P(+|¬D)=0.05). Given a positive test, P(D|+) = P(+|D)P(D) / [P(+|D)P(D)+P(+|¬D)P(¬D)] = (0.95×0.01)/(0.95×0.01+0.05×0.99) ≈ 0.161 -- only about 16%, a famously counterintuitive result driven by the disease's rarity.",
+"<strong>Self-check:</strong> when a probability calculation 'feels' surprising (like the 16% result above), recompute the DENOMINATOR of Bayes' Theorem explicitly -- P(B) itself, expanded via the Law of Total Probability -- since forgetting to properly weight by the base rate P(A) is the single most common Bayes' Theorem error.",
+"<strong>Application:</strong> Naive Bayes spam filters compute P(spam | words in email) using exactly this theorem, treating each word's presence as (naively) independent evidence; Bayesian neural networks and Bayesian hyperparameter optimization both use Bayes' Theorem to update a belief distribution as new data arrives, rather than committing to a single point estimate."
+],
+formulas:["P(A) = |A|/|S|  (equally likely outcomes)","P(A|B) = P(A∩B)/P(B)","Bayes: P(A|B) = P(B|A)P(A)/P(B)"],
+questions:[
+{type:"Conceptual", q:"Explain, using the disease-testing worked example, why a positive result on a 95%-accurate test for a RARE disease can still leave the true probability of having the disease quite low -- what role does the base rate P(D) play here?"},
+{type:"CS reasoning", q:"A Naive Bayes spam filter assumes the presence of each word in an email is conditionally independent given whether the email is spam. Explain in plain terms what this independence assumption means concretely, and give an example of two words where this assumption is likely to be a poor approximation of reality."},
+{type:"Reasoning", q:"Derive Bayes' Theorem yourself starting only from the definition of conditional probability P(A|B)=P(A∩B)/P(B), by writing P(A∩B) two different ways (once via P(A|B) and once via P(B|A)) and setting them equal."}
+]},
+
+{d:19,week:4,title:"Random Variables & Discrete Distributions",big:false,steps:5,
+diagram:"distribution",
+facts:[{tag:"KEY FACT", text:"A random variable X maps each outcome in a sample space to a number; its Expected Value E[X] = Σ x·P(X=x) is the long-run average value."}, {tag:"CAUTION", text:"Expected value is a WEIGHTED average, not the 'most likely' outcome -- E[X] can even be a value X can never actually equal (e.g. E[die roll]=3.5)."}],
+mcqs:[
+{q:"A random variable is formally a function that maps:", options:["Numbers to outcomes", "Outcomes in the sample space to real numbers", "Probabilities to events", "Events to other events"], correct:1, explain:"X assigns a numeric value to each possible outcome."},
+{q:"For a fair coin flip X (1=heads, 0=tails), E[X] equals:", options:["1", "0", "0.5", "Undefined"], correct:2, explain:"E[X]=1×0.5+0×0.5=0.5, the average even though X itself never equals 0.5."},
+{q:"A Bernoulli random variable models:", options:["A sequence of n independent trials", "A single trial with two outcomes (success/failure)", "A continuous measurement", "Only fair outcomes"], correct:1, explain:"Bernoulli(p) is the simplest discrete distribution: one trial, success probability p."},
+{q:"A Binomial(n,p) random variable counts:", options:["The value of a single trial", "The number of successes in n independent Bernoulli(p) trials", "The probability of failure", "Always exactly n"], correct:1, explain:"Binomial sums n independent Bernoulli trials, using exactly the C(n,k) combination counts from Day 14."},
+{q:"In machine learning, cross-entropy loss is directly derived from:", options:["The Pigeonhole Principle", "Expected value of negative log-probability under a distribution", "Graph theory", "Set complements"], correct:1, explain:"Cross-entropy is literally an expected value computation over predicted vs. true probability distributions."}
+],
+core:"The moment you compute a model's average loss over a dataset, or the expected reward in reinforcement learning, or cross-entropy loss itself, you're computing E[X] -- expected value is the single most-used concept from all of discrete probability inside working machine learning systems.",
+notes:[
+"A RANDOM VARIABLE X is a function mapping each outcome in a sample space to a real number. It's a way of numerically summarizing outcomes that might not themselves be numbers (e.g., X='number of heads' turns a sequence like HTH into the number 2).",
+"The EXPECTED VALUE (or mean) of a discrete random variable is E[X] = Σ(all x) x·P(X=x) -- a probability-WEIGHTED average of every possible value X can take. Crucially, E[X] need not be a value X can ever actually equal (a fair six-sided die has E[X]=3.5, even though no roll ever shows 3.5).",
+"Two of the most important discrete distributions: BERNOULLI(p) models a single trial with two outcomes, success (1) with probability p and failure (0) with probability 1-p, so E[X]=p. BINOMIAL(n,p) models the COUNT of successes across n independent Bernoulli(p) trials, with P(X=k)=C(n,k)p^k(1-p)^(n-k) -- directly reusing the combination counts and binomial coefficients from Day 15.",
+"Expected value is LINEAR: E[X+Y]=E[X]+E[Y] always, even when X and Y are NOT independent -- a surprisingly strong and widely-used property. This is what justifies computing an average loss over a dataset as simply the (linear) average of per-example losses, without needing to worry about how examples relate to each other statistically.",
+"<strong>Worked example:</strong> A binary classifier is correct on each of 100 independent test examples with probability p=0.9 each (Bernoulli(0.9) per example). The number of correct predictions X follows Binomial(100, 0.9), with E[X]=np=90 -- you'd expect about 90 correct predictions on average, with the Binomial formula giving the exact probability of any specific count.",
+"<strong>Self-check:</strong> when a computed E[X] surprises you (a fractional value, or a value 'outside' what a single trial could produce), remember E[X] is a long-run AVERAGE across many repetitions, not a single-instance prediction -- this is the same conceptual trap as expecting a die to literally roll 3.5.",
+"<strong>Application:</strong> Cross-entropy loss, the standard loss function for classification, is precisely E[−log P(true class)] -- an expected value computed over the true label distribution; and the expected reward that reinforcement learning agents try to maximize is, again, literally E[X] applied to a random variable representing cumulative reward."
+],
+formulas:["E[X] = Σ x·P(X=x)","Bernoulli(p): E[X]=p","Binomial(n,p): P(X=k)=C(n,k)p^k(1-p)^(n-k), E[X]=np"],
+questions:[
+{type:"Conceptual", q:"Explain why E[X] for a fair six-sided die (3.5) is a value the die can never actually show, and why this is not a contradiction but rather exactly what 'expected value' is designed to mean."},
+{type:"CS reasoning", q:"A model makes independent binary predictions on 50 test examples, each correct with probability 0.8. Using the Binomial distribution's expected value formula, compute the expected NUMBER of correct predictions, and explain what additional information the full Binomial formula (not just E[X]) would tell you that the expected value alone does not."},
+{type:"Reasoning", q:"Explain, in your own words, why cross-entropy loss being 'an expected value of negative log-probability' connects directly back to Day 18's conditional probability and Bayes' Theorem material -- what is the loss function fundamentally trying to measure about a model's predicted probability distribution?"}
+]},
+
+{d:20,week:4,title:"Review & Capstone — From Counting to ML Foundations",big:true,steps:7,
+diagram:{type:"conceptmap", nodes:["Sets & Relations","Counting","Graphs","Probability"]},
+facts:[{tag:"INSIGHT", text:"Concept chain: Sets & Relations (Days 8-12) -> Counting (Days 13-15) -> Graphs (Days 16-17) -> Probability (Days 18-19) -- each layer is built directly on top of the ones before it."}, {tag:"KEY FACT", text:"Nearly every core ML concept -- clustering, hyperparameter search, computation graphs, Naive Bayes, cross-entropy loss -- is a NAMED application of exactly one topic from Weeks 3-4."}],
+mcqs:[
+{q:"The Week 3–4 concept chain, in order, is:", options:["Probability→Graphs→Counting→Sets", "Sets & Relations→Counting→Graphs→Probability", "Graphs→Sets→Probability→Counting", "Counting→Probability→Sets→Graphs"], correct:1, explain:"Each topic builds on the vocabulary and tools of the one before it."},
+{q:"Which pair correctly matches topic to its direct ML application from these two weeks?", options:["Equivalence relations ↔ hash tables", "Combinations ↔ feature subset selection", "Pigeonhole ↔ Bayes' Theorem", "DAGs ↔ Binomial distribution"], correct:1, explain:"Combinations directly count unordered feature subsets (Day 14)."},
+{q:"The classical probability formula P(A)=|A|/|S| directly reuses ideas from:", options:["Graph theory only", "Week 3's counting rules (sum/product/combinations)", "Nothing from earlier days", "Only the Pigeonhole Principle"], correct:1, explain:"Computing |A| and |S| for complex events often requires exactly the counting techniques from Days 13-15."},
+{q:"A computation graph in a neural network is an application of:", options:["Equivalence relations", "DAGs (Day 17)", "The Binomial distribution", "Proof by contradiction"], correct:1, explain:"Acyclic, directed structure is exactly what a DAG formalizes."},
+{q:"The single deepest lesson connecting all of Weeks 1–4 is:", options:["Every topic is unrelated to the others", "Logic and proof (Weeks 1-2) provide the RIGOR that counting, graphs, and probability (Weeks 3-4) build their guarantees on top of", "Only Week 4 matters for machine learning", "Discrete math has no connection to real ML systems"], correct:1, explain:"The formal definitions and proof techniques from Weeks 1-2 are what make Weeks 3-4's results trustworthy, not just plausible."}
+],
+core:"Synthesis day for relations, counting, graphs, and probability -- and the moment the whole 20-day arc closes the loop: everything from Day 1's propositions to Day 19's expected value was building, one deliberate layer at a time, toward the exact mathematical vocabulary machine learning is written in.",
+notes:[
+"Weeks 3–4 together build a second complete toolkit on top of Weeks 1–2's logic and proof foundation: relations and equivalence classes (Days 11-12, formalizing 'sameness' and clustering) → counting (Days 13-15, formalizing 'how big is this space') → graphs (Days 16-17, formalizing structure and dependency) → discrete probability (Days 18-19, formalizing uncertainty and belief). Today's job is connecting all four layers explicitly.",
+"A structural insight worth writing down: this is NOT four unrelated topics bundled together for convenience. Combinations (Day 14) are used directly INSIDE the Binomial distribution formula (Day 19); relations (Day 11) and the adjacency-matrix representation reappear identically for graphs (Day 16); and probability itself (Day 18) is DEFINED using the counting formula P(A)=|A|/|S| from Week 3. Each week's material is a genuine prerequisite for the next, not just a loosely related unit.",
+"Mapped explicitly onto machine learning: equivalence relations/partitions ↔ clustering and cross-validation folds; sum/product rules and combinations ↔ hyperparameter search spaces and feature subset selection; the Pigeonhole Principle ↔ hash collisions and the curse of dimensionality; graphs and DAGs ↔ neural network computation graphs, knowledge graphs, and Bayesian networks; conditional probability and Bayes' Theorem ↔ Naive Bayes classifiers and Bayesian inference; expected value ↔ loss functions (cross-entropy) and reinforcement learning reward.",
+"Zooming out further to Weeks 1-2: none of Weeks 3-4's results would be TRUSTWORTHY without the rigor established at the very start of the course. The Handshake Theorem (Day 16) is a direct proof; the equivalence-relation/partition correspondence (Day 12) is proven using exactly the definitional reasoning from Day 5; and Bayes' Theorem (Day 18) is DERIVED, not just stated, using algebraic manipulation of a definition -- every 'trust me, this formula works' moment across all 20 days traces back to a proof technique from Week 1 or 2.",
+"<strong>Worked example:</strong> Given a dataset of 1000 samples, 20 candidate binary features, and a plan to test all size-3 feature subsets (Day 14: C(20,3)=1140 subsets) using 5-fold cross-validation (Day 12: a partition into 5 disjoint folds) with a Naive Bayes classifier (Day 18: assumes conditional feature independence) evaluated by cross-entropy loss (Day 19: an expected value) -- a single realistic ML workflow line touches FIVE distinct topics from these two weeks.",
+"<strong>Self-check:</strong> before trusting an unfamiliar formula or claimed result anywhere in mathematics or ML documentation, ask 'could I re-derive this from more basic definitions, the way Bayes' Theorem was derived today from conditional probability?' -- the ability to do so (even roughly) is a stronger sign of understanding than being able to recite the formula.",
+"<strong>Application:</strong> The complete Week 3-4 chain (relations → counting → graphs → probability) is the standard 'mathematical prerequisites' sequence listed at the start of virtually every serious machine learning course or textbook -- not as an arbitrary hurdle, but because each layer is a literal, load-bearing dependency for the concepts built on top of it."
+],
+formulas:["Concept chain: Sets & Relations → Counting → Graphs → Probability","Every Week 3-4 topic has a direct, named ML application"],
+questions:[
+{type:"Conceptual", q:"Write, in your own words, why Weeks 3-4's topics had to be taught in this specific order (relations, then counting, then graphs, then probability) rather than any other order -- point to at least one specific place where a later day's material explicitly reused an earlier day's definition or result."},
+{type:"CS reasoning", q:"You're asked to justify, to a skeptical classmate, why a machine learning course would require discrete mathematics as a prerequisite rather than jumping straight into linear algebra and calculus. Using at least three SPECIFIC topics from Days 11-19 (not just general appeals to 'it's all connected'), make this case concretely."},
+{type:"Reasoning", q:"If you had to teach Weeks 1–4 to a classmate in 15 minutes using only ONE diagram showing how ALL FOUR weeks connect, what would it show, and what would it deliberately have to leave out? Contrast your answer with the Day 30-style synthesis diagrams used in other 40-day courses -- what makes a good capstone diagram different from a good single-day diagram?"}
+]}
+];
+
+// ---------- Diagram library ----------
+const DEFS = `<defs>
+<marker id="ac" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="#1F8A57"/></marker>
+<marker id="ao" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="#1F5FA8"/></marker>
+<marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="#B94A40"/></marker>
+</defs>`;
+function svg(inner, vb){ return `<svg class="diagram-svg" viewBox="${vb||'0 0 440 170'}" xmlns="http://www.w3.org/2000/svg">${DEFS}${inner}</svg>`; }
+const T = 'font:11px \'IBM Plex Mono\',monospace;fill:#5B6470';
+
+const DIAGRAMS = {
+truthtable: svg(`
+<text x="55" y="22" style="${T}">p q  |  p∧q  p∨q  p→q</text>
+<line x1="55" y1="32" x2="385" y2="32" stroke="#DEDACB" stroke-width="1"/>
+<text x="55" y="52" style="font:12px monospace;fill:#23282E">T T  |   T     T     T</text>
+<text x="55" y="72" style="font:12px monospace;fill:#23282E">T F  |   F     T     F</text>
+<text x="55" y="92" style="font:12px monospace;fill:#23282E">F T  |   F     T     T</text>
+<text x="55" y="112" style="font:12px monospace;fill:#23282E">F F  |   F     F     T</text>
+<text x="55" y="145" style="${T}">2 variables → 2² = 4 rows, one per combination</text>`),
+
+quantifiers: svg(`
+<text x="60" y="24" style="font:13px monospace;fill:#1F5FA8">∀x P(x)  —  "for all"</text>
+<circle cx="80" cy="60" r="6" fill="#1F5FA8"/><circle cx="105" cy="60" r="6" fill="#1F5FA8"/><circle cx="130" cy="60" r="6" fill="#1F5FA8"/><circle cx="155" cy="60" r="6" fill="#1F5FA8"/>
+<ellipse cx="117" cy="60" rx="55" ry="20" fill="none" stroke="#1F5FA8" stroke-width="1.5"/>
+<text x="60" y="105" style="${T}">every element satisfies P</text>
+<text x="260" y="24" style="font:13px monospace;fill:#1F8A57">∃x P(x)  —  "there exists"</text>
+<circle cx="285" cy="60" r="6" fill="#DEDACB"/><circle cx="310" cy="60" r="6" fill="#1F8A57"/><circle cx="335" cy="60" r="6" fill="#DEDACB"/><circle cx="360" cy="60" r="6" fill="#DEDACB"/>
+<ellipse cx="322" cy="60" rx="55" ry="20" fill="none" stroke="#1F8A57" stroke-width="1.5"/>
+<text x="255" y="105" style="${T}">just ONE witness is enough</text>
+<text x="60" y="150" style="${T}">negating a quantifier: flip ∀↔∃ AND negate the predicate</text>`),
+
+staircase: svg(`
+<rect x="60" y="130" width="40" height="20" fill="#EFEBDE" stroke="#1F5FA8"/>
+<rect x="100" y="110" width="40" height="40" fill="#EFEBDE" stroke="#1F5FA8"/>
+<rect x="140" y="90" width="40" height="60" fill="#EFEBDE" stroke="#1F5FA8"/>
+<rect x="180" y="70" width="40" height="80" fill="rgba(31,138,87,0.12)" stroke="#1F8A57" stroke-width="2"/>
+<rect x="220" y="50" width="40" height="100" fill="rgba(31,138,87,0.06)" stroke="#1F8A57" stroke-dasharray="4 3"/>
+<text x="65" y="145" style="font:11px monospace;fill:#5B6470">1</text>
+<text x="105" y="125" style="font:11px monospace;fill:#5B6470">2</text>
+<text x="150" y="105" style="font:11px monospace;fill:#5B6470">k</text>
+<text x="188" y="85" style="font:11px monospace;fill:#1F8A57">k+1</text>
+<path d="M160,85 A20,20 0 0 1 198,68" fill="none" stroke="#1F8A57" stroke-width="1.5" marker-end="url(#ac)"/>
+<text x="60" y="25" style="${T}">base case anchors step 1; inductive step: k → k+1, forever</text>`),
+
+sets: svg(`
+<ellipse cx="220" cy="85" rx="150" ry="55" fill="none" stroke="#5B6470" stroke-dasharray="3 3"/>
+<text x="90" y="35" style="${T}">Universal set U</text>
+<ellipse cx="220" cy="85" rx="80" ry="45" fill="rgba(31,95,168,0.06)" stroke="#1F5FA8" stroke-width="2"/>
+<circle cx="190" cy="75" r="3.5" fill="#1F5FA8"/><circle cx="220" cy="95" r="3.5" fill="#1F5FA8"/><circle cx="250" cy="75" r="3.5" fill="#1F5FA8"/><circle cx="220" cy="70" r="3.5" fill="#1F5FA8"/>
+<text x="197" y="60" style="font:12px monospace;fill:#1F5FA8">A</text>
+<text x="60" y="150" style="${T}">a, b, c, d ∈ A — order and repetition don't matter</text>`),
+
+venn: svg(`
+<circle cx="175" cy="85" r="55" fill="rgba(31,95,168,0.10)" stroke="#1F5FA8" stroke-width="2"/>
+<circle cx="255" cy="85" r="55" fill="rgba(31,138,87,0.10)" stroke="#1F8A57" stroke-width="2"/>
+<rect x="55" y="20" width="330" height="130" fill="none" stroke="#5B6470" stroke-dasharray="3 3"/>
+<text x="130" y="60" style="font:13px monospace;fill:#1F5FA8">A</text>
+<text x="295" y="60" style="font:13px monospace;fill:#1F8A57">B</text>
+<text x="205" y="90" style="font:11px monospace;fill:#23282E">A∩B</text>
+<text x="60" y="35" style="${T}">U (universal set)</text>
+<text x="60" y="150" style="${T}">overlap = A∩B   both circles together = A∪B</text>`),
+
+functionmap: svg(`
+<text x="70" y="25" style="font:12px monospace;fill:#1F5FA8">Domain A</text>
+<text x="300" y="25" style="font:12px monospace;fill:#1F8A57">Codomain B</text>
+<circle cx="90" cy="55" r="4" fill="#1F5FA8"/><circle cx="90" cy="85" r="4" fill="#1F5FA8"/><circle cx="90" cy="115" r="4" fill="#1F5FA8"/>
+<circle cx="330" cy="45" r="4" fill="#1F8A57"/><circle cx="330" cy="75" r="4" fill="#1F8A57"/><circle cx="330" cy="105" r="4" fill="#1F8A57"/><circle cx="330" cy="135" r="4" fill="#DEDACB"/>
+<line x1="94" y1="55" x2="326" y2="45" stroke="#9AA2AC" stroke-width="1.5" marker-end="url(#ac)"/>
+<line x1="94" y1="85" x2="326" y2="75" stroke="#9AA2AC" stroke-width="1.5" marker-end="url(#ac)"/>
+<line x1="94" y1="115" x2="326" y2="105" stroke="#9AA2AC" stroke-width="1.5" marker-end="url(#ac)"/>
+<text x="55" y="155" style="${T}">injective: no two arrows share a head  ·  surjective: no unhit dot (grey) remains</text>`),
+
+relationmatrix: svg(`
+<text x="55" y="22" style="${T}">R as a matrix          R as a directed graph</text>
+<rect x="55" y="35" width="24" height="24" fill="#1F5FA8" opacity="0.15" stroke="#DEDACB"/><rect x="79" y="35" width="24" height="24" fill="none" stroke="#DEDACB"/><rect x="103" y="35" width="24" height="24" fill="none" stroke="#DEDACB"/>
+<rect x="55" y="59" width="24" height="24" fill="none" stroke="#DEDACB"/><rect x="79" y="59" width="24" height="24" fill="#1F5FA8" opacity="0.15" stroke="#DEDACB"/><rect x="103" y="59" width="24" height="24" fill="none" stroke="#DEDACB"/>
+<rect x="55" y="83" width="24" height="24" fill="none" stroke="#DEDACB"/><rect x="79" y="83" width="24" height="24" fill="none" stroke="#DEDACB"/><rect x="103" y="83" width="24" height="24" fill="#1F5FA8" opacity="0.15" stroke="#DEDACB"/>
+<text x="63" y="52" style="font:11px monospace">1</text><text x="87" y="76" style="font:11px monospace">1</text><text x="111" y="100" style="font:11px monospace">1</text>
+<circle cx="280" cy="55" r="5" fill="#1F8A57"/><circle cx="340" cy="55" r="5" fill="#1F8A57"/><circle cx="310" cy="105" r="5" fill="#1F8A57"/>
+<path d="M280,55 A25,25 0 1 1 279,55" fill="none" stroke="#1F8A57" stroke-width="1.5" marker-end="url(#ac)"/>
+<line x1="285" y1="58" x2="335" y2="58" stroke="#1F8A57" stroke-width="1.5" marker-end="url(#ac)" stroke-dasharray="3 2"/>
+<text x="55" y="150" style="${T}">diagonal filled = reflexive; matrix = its transpose ⟺ symmetric</text>`),
+
+partition: svg(`
+<ellipse cx="220" cy="85" rx="150" ry="58" fill="none" stroke="#5B6470" stroke-dasharray="3 3"/>
+<text x="80" y="35" style="${T}">Set A, partitioned into equivalence classes</text>
+<circle cx="130" cy="85" r="38" fill="rgba(31,95,168,0.10)" stroke="#1F5FA8" stroke-width="2"/>
+<circle cx="220" cy="85" r="38" fill="rgba(31,138,87,0.10)" stroke="#1F8A57" stroke-width="2"/>
+<circle cx="310" cy="85" r="38" fill="rgba(201,122,34,0.10)" stroke="#C97A22" stroke-width="2"/>
+<text x="120" y="90" style="font:11px monospace;fill:#1F5FA8">[a]</text>
+<text x="210" y="90" style="font:11px monospace;fill:#1F8A57">[b]</text>
+<text x="300" y="90" style="font:11px monospace;fill:#C97A22">[c]</text>
+<text x="60" y="152" style="${T}">classes are disjoint and their union is all of A</text>`),
+
+countingtree: svg(`
+<text x="55" y="20" style="${T}">Product rule: branch at EVERY sequential stage</text>
+<circle cx="70" cy="85" r="3" fill="#5B6470"/>
+<line x1="70" y1="85" x2="150" y2="45" stroke="#1F5FA8" marker-end="url(#ac)"/>
+<line x1="70" y1="85" x2="150" y2="85" stroke="#1F5FA8" marker-end="url(#ac)"/>
+<line x1="70" y1="85" x2="150" y2="125" stroke="#1F5FA8" marker-end="url(#ac)"/>
+<line x1="150" y1="45" x2="230" y2="30" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="150" y1="45" x2="230" y2="60" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="150" y1="85" x2="230" y2="70" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="150" y1="85" x2="230" y2="100" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="150" y1="125" x2="230" y2="110" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="150" y1="125" x2="230" y2="140" stroke="#1F8A57" marker-end="url(#ac)"/>
+<text x="245" y="90" style="font:12px monospace;fill:#23282E">3 × 2 = 6 leaves</text>
+<text x="55" y="155" style="${T}">stage 1: 3 choices  →  stage 2: 2 choices each  →  6 total outcomes</text>`),
+
+permcomb: svg(`
+<text x="55" y="20" style="font:12px monospace;fill:#1F5FA8">Permutation: {A,B} and {B,A} are DIFFERENT</text>
+<rect x="60" y="35" width="26" height="26" fill="rgba(31,95,168,0.12)" stroke="#1F5FA8"/><text x="68" y="53" style="font:12px monospace">A</text>
+<rect x="90" y="35" width="26" height="26" fill="rgba(31,95,168,0.12)" stroke="#1F5FA8"/><text x="98" y="53" style="font:12px monospace">B</text>
+<rect x="140" y="35" width="26" height="26" fill="rgba(31,95,168,0.12)" stroke="#1F5FA8"/><text x="148" y="53" style="font:12px monospace">B</text>
+<rect x="170" y="35" width="26" height="26" fill="rgba(31,95,168,0.12)" stroke="#1F5FA8"/><text x="178" y="53" style="font:12px monospace">A</text>
+<text x="55" y="95" style="font:12px monospace;fill:#1F8A57">Combination: {A,B} and {B,A} are the SAME subset</text>
+<rect x="60" y="108" width="26" height="26" fill="rgba(31,138,87,0.12)" stroke="#1F8A57"/><text x="68" y="126" style="font:12px monospace">A</text>
+<rect x="90" y="108" width="26" height="26" fill="rgba(31,138,87,0.12)" stroke="#1F8A57"/><text x="98" y="126" style="font:12px monospace">B</text>
+<text x="130" y="126" style="${T}">= { A , B } one subset</text>`),
+
+pigeonhole: svg(`
+<text x="55" y="20" style="${T}">5 items, 4 containers → one container guaranteed 2+</text>
+<rect x="60" y="90" width="40" height="45" fill="none" stroke="#5B6470" stroke-width="1.5"/>
+<rect x="110" y="90" width="40" height="45" fill="none" stroke="#5B6470" stroke-width="1.5"/>
+<rect x="160" y="90" width="40" height="45" fill="none" stroke="#B94A40" stroke-width="2"/>
+<rect x="210" y="90" width="40" height="45" fill="none" stroke="#5B6470" stroke-width="1.5"/>
+<circle cx="80" cy="80" r="5" fill="#1F5FA8"/>
+<circle cx="130" cy="80" r="5" fill="#1F5FA8"/>
+<circle cx="172" cy="80" r="5" fill="#B94A40"/><circle cx="188" cy="80" r="5" fill="#B94A40"/>
+<circle cx="230" cy="80" r="5" fill="#1F5FA8"/>
+<text x="167" y="150" style="font:10.5px monospace;fill:#B94A40">collision!</text>`),
+
+graphbasic: svg(`
+<circle cx="100" cy="50" r="5" fill="#1F5FA8"/><circle cx="220" cy="40" r="5" fill="#1F5FA8"/><circle cx="320" cy="70" r="5" fill="#1F5FA8"/><circle cx="180" cy="130" r="5" fill="#1F5FA8"/><circle cx="80" cy="120" r="5" fill="#1F5FA8"/>
+<line x1="100" y1="50" x2="220" y2="40" stroke="#5B6470" stroke-width="1.5"/>
+<line x1="220" y1="40" x2="320" y2="70" stroke="#5B6470" stroke-width="1.5"/>
+<line x1="100" y1="50" x2="80" y2="120" stroke="#5B6470" stroke-width="1.5"/>
+<line x1="100" y1="50" x2="180" y2="130" stroke="#5B6470" stroke-width="1.5"/>
+<line x1="180" y1="130" x2="320" y2="70" stroke="#5B6470" stroke-width="1.5"/>
+<text x="107" y="45" style="font:10px monospace;fill:#1F5FA8">deg=3</text>
+<text x="60" y="150" style="${T}">V = 5 vertices, E = 5 edges → Σdeg(v) = 2×5 = 10</text>`),
+
+treedag: svg(`
+<text x="55" y="20" style="font:11px monospace;fill:#1F5FA8">Tree (acyclic, undirected)</text>
+<circle cx="110" cy="40" r="5" fill="#1F5FA8"/>
+<circle cx="70" cy="85" r="5" fill="#1F5FA8"/><circle cx="150" cy="85" r="5" fill="#1F5FA8"/>
+<circle cx="150" cy="130" r="5" fill="#1F5FA8"/>
+<line x1="110" y1="40" x2="70" y2="85" stroke="#5B6470"/><line x1="110" y1="40" x2="150" y2="85" stroke="#5B6470"/><line x1="150" y1="85" x2="150" y2="130" stroke="#5B6470"/>
+<text x="255" y="20" style="font:11px monospace;fill:#1F8A57">DAG (directed, acyclic)</text>
+<circle cx="270" cy="40" r="5" fill="#1F8A57"/><circle cx="320" cy="85" r="5" fill="#1F8A57"/><circle cx="380" cy="40" r="5" fill="#1F8A57"/><circle cx="350" cy="130" r="5" fill="#1F8A57"/>
+<line x1="270" y1="40" x2="316" y2="80" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="380" y1="40" x2="324" y2="80" stroke="#1F8A57" marker-end="url(#ac)"/>
+<line x1="320" y1="85" x2="348" y2="126" stroke="#1F8A57" marker-end="url(#ac)"/>
+<text x="55" y="155" style="${T}">tree: n vertices, n−1 edges   ·   DAG: two parents can share one child</text>`),
+
+bayesdiagram: svg(`
+<circle cx="150" cy="85" r="50" fill="rgba(31,95,168,0.10)" stroke="#1F5FA8" stroke-width="2"/>
+<circle cx="230" cy="85" r="50" fill="rgba(31,138,87,0.10)" stroke="#1F8A57" stroke-width="2"/>
+<rect x="60" y="20" width="300" height="130" fill="none" stroke="#5B6470" stroke-dasharray="3 3"/>
+<text x="110" y="55" style="font:12px monospace;fill:#1F5FA8">A (hypothesis)</text>
+<text x="245" y="55" style="font:12px monospace;fill:#1F8A57">B (evidence)</text>
+<text x="178" y="90" style="font:10.5px monospace;fill:#23282E">A∩B</text>
+<text x="60" y="15" style="${T}">P(A|B) = P(A∩B)/P(B)  restricts the world to just B</text>`),
+
+distribution: svg(`
+<line x1="60" y1="140" x2="380" y2="140" stroke="#5B6470" stroke-width="1"/>
+<rect x="80" y="120" width="35" height="20" fill="#1F5FA8" opacity="0.75"/>
+<rect x="130" y="90" width="35" height="50" fill="#1F5FA8" opacity="0.75"/>
+<rect x="180" y="60" width="35" height="80" fill="#1F5FA8" opacity="0.75"/>
+<rect x="230" y="80" width="35" height="60" fill="#1F5FA8" opacity="0.75"/>
+<rect x="280" y="115" width="35" height="25" fill="#1F5FA8" opacity="0.75"/>
+<text x="90" y="155" style="font:10px monospace;fill:#5B6470">k=0</text>
+<text x="140" y="155" style="font:10px monospace;fill:#5B6470">k=1</text>
+<text x="190" y="155" style="font:10px monospace;fill:#5B6470">k=2</text>
+<text x="240" y="155" style="font:10px monospace;fill:#5B6470">k=3</text>
+<text x="290" y="155" style="font:10px monospace;fill:#5B6470">k=4</text>
+<text x="55" y="20" style="${T}">P(X=k) = C(n,k)pᵏ(1-p)ⁿ⁻ᵏ — peak near E[X]=np</text>`)
+};
+
+function conceptMapSVG(nodes){
+  const n = nodes.length, totalW = 420, boxW = Math.min(110, (totalW-(n-1)*16)/n), gap = (totalW-n*boxW)/(n-1);
+  let x = 10, boxes='', arrows='';
+  nodes.forEach((label,i)=>{
+    boxes += `<rect x="${x}" y="68" width="${boxW}" height="38" rx="3" fill="#121D2C" stroke="#1F5FA8" stroke-width="1.5"/><text x="${x+7}" y="91" style="font:9.5px 'IBM Plex Mono',monospace;fill:#E7EDF3">${label.length>15?label.slice(0,15):label}</text>`;
+    if(i<n-1){ arrows += `<line x1="${x+boxW}" y1="87" x2="${x+boxW+gap-4}" y2="87" stroke="#1F8A57" stroke-width="2" marker-end="url(#ac)"/>`; }
+    x += boxW+gap;
+  });
+  return svg(boxes+arrows);
+}
+
+function diagramHTML(spec){
+  if(typeof spec === 'string') return DIAGRAMS[spec] || '';
+  if(spec.type === 'conceptmap') return conceptMapSVG(spec.nodes);
+  return '';
+}
+
+// ---------- Rendering ----------
+const weekListEl = document.getElementById('week-list');
+const contentEl = document.getElementById('content');
+const crumbEl = document.getElementById('crumb');
+const TOTAL_DAYS = 20;
+let currentDay = 1;
+
+/* ---------------- progress persistence (real account, via storage-shim.js) ---------------- */
+// progress[day] = { answers: { qi: chosenOptionIndex }, correct: n, total: n }
+let progress = {};
+async function loadProgress(){
+  if(!(window.storage && typeof window.storage.get === 'function')) return;
+  try{
+    const res = await window.storage.get('progress', false);
+    if(res && res.value){ progress = JSON.parse(res.value); }
+  }catch(e){ /* start fresh if anything's malformed */ }
+}
+async function saveProgress(){
+  if(!(window.storage && typeof window.storage.set === 'function')) return;
+  try{ await window.storage.set('progress', JSON.stringify(progress), false); }catch(e){}
+}
+function isDayComplete(dayNum){
+  const day = DAYS.find(x=>x.d===dayNum);
+  const entry = progress[dayNum];
+  return !!(day && entry && entry.total === day.mcqs.length && entry.correct !== undefined);
+}
+
+function buildSidebar(){
+  WEEKS.forEach(w=>{
+    const det = document.createElement('details');
+    det.className = 'week';
+    det.open = (w.n===1);
+    const sum = document.createElement('summary');
+    sum.innerHTML = `<span>Week ${w.n} — ${w.title}</span><span class="wk-range">${w.range}</span>`;
+    det.appendChild(sum);
+    const list = document.createElement('div');
+    list.className = 'day-list';
+    DAYS.filter(d=>d.week===w.n).forEach(d=>{
+      const btn = document.createElement('button');
+      btn.className = 'day-btn';
+      btn.id = 'nav-' + d.d;
+      btn.innerHTML = `<span class="num">${String(d.d).padStart(2,'0')}</span><span>${d.title}</span>${d.big?'<span class="flag">7-STEP</span>':''}<span class="flag" id="done-${d.d}" style="display:${isDayComplete(d.d)?'':'none'};">✓</span>`;
+      btn.onclick = ()=>renderDay(d.d, true);
+      list.appendChild(btn);
+    });
+    det.appendChild(list);
+    weekListEl.appendChild(det);
+  });
+}
+
+function renderDay(n, scrollNav){
+  const d = DAYS.find(x=>x.d===n);
+  if(!d) return;
+  currentDay = n;
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  const activeBtn = document.getElementById('nav-'+n);
+  if(activeBtn){
+    activeBtn.classList.add('active');
+    const parentDetails = activeBtn.closest('details');
+    if(parentDetails) parentDetails.open = true;
+    if(scrollNav) activeBtn.scrollIntoView({block:'nearest'});
+  }
+  const week = WEEKS.find(w=>w.n===d.week);
+  crumbEl.textContent = `WEEK ${d.week} · ${week.title.toUpperCase()}`;
+
+  const notesHtml = d.notes.map(p=>`<p>${p}</p>`).join('');
+  const formulaHtml = d.formulas.map(f=>`<div class="formula">${f}</div>`).join('');
+  const qHtml = d.questions.map(q=>`<div class="qcard"><div class="qtype">${q.type}</div><p>${q.q}</p></div>`).join('');
+  const diagramSvg = diagramHTML(d.diagram);
+  const factsHtml = d.facts.map(f=>{
+    const cls = f.tag==='INSIGHT' ? 'insight' : (f.tag==='CAUTION' ? 'caution' : 'key');
+    return `<div class="fact ${cls}"><span class="tag">${f.tag}</span>${f.text}</div>`;
+  }).join('');
+  const mcqHtml = d.mcqs.map((m,qi)=>{
+    const opts = m.options.map((opt,oi)=>
+      `<button class="mcq-opt" data-day="${d.d}" data-q="${qi}" data-o="${oi}">${String.fromCharCode(65+oi)}. ${opt}</button>`
+    ).join('');
+    return `<div class="mcq-card" id="mcq-${d.d}-${qi}">
+      <div class="mcq-q">${qi+1}. ${m.q}</div>
+      <div class="mcq-options">${opts}</div>
+      <div class="mcq-explain" id="exp-${d.d}-${qi}">${m.explain}</div>
+    </div>`;
+  }).join('');
+
+  contentEl.innerHTML = `
+    <div class="day-meta">
+      <span class="day-tag">DAY ${String(d.d).padStart(2,'0')} / ${TOTAL_DAYS}</span>
+      <span class="step-tag ${d.big?'big':''}">${d.steps}-step ${d.big?'(big topic)':''}</span>
+    </div>
+    <h2 class="day-title">${d.title}</h2>
+    <p class="core-idea">${d.core}</p>
+    <div class="diagram-wrap">${diagramSvg}<div class="diagram-cap">figure — Day ${d.d} concept sketch (animated)</div></div>
+    <section class="block">
+      <h3>KEY FACTS</h3>
+      <div class="facts">${factsHtml}</div>
+    </section>
+    <section class="block notes">
+      <h3>NOTES</h3>
+      ${notesHtml}
+    </section>
+    <section class="block">
+      <h3>IMPORTANT FORMULAS</h3>
+      <div class="formula-list">${formulaHtml}</div>
+    </section>
+    <section class="block">
+      <h3>CRITICAL-THINKING &amp; CS REASONING</h3>
+      <div class="qlist">${qHtml}</div>
+    </section>
+    <section class="block">
+      <h3>QUICK CHECK — 5 MULTIPLE CHOICE</h3>
+      <div class="mcq-score" id="mcq-score-${d.d}">0 / ${d.mcqs.length} answered</div>
+      <div class="mcq-list">${mcqHtml}</div>
+    </section>
+    <div class="daynav">
+      <button id="prevBtn" ${n<=1?'disabled':''}>&larr; Day ${n-1}</button>
+      <button id="nextBtn" ${n>=TOTAL_DAYS?'disabled':''}>Day ${n+1} &rarr;</button>
+    </div>
+  `;
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if(prevBtn) prevBtn.onclick = ()=>{renderDay(n-1,true); window.scrollTo(0,0);};
+  if(nextBtn) nextBtn.onclick = ()=>{renderDay(n+1,true); window.scrollTo(0,0);};
+  restoreAnswerState(d);
+  window.scrollTo(0,0);
+}
+
+// Re-applies the same visual "answered" state (correct/incorrect
+// highlighting + explanation shown) that the click handler below applies
+// live — used here so revisiting a day, or reloading the page, shows your
+// past answers instead of a blank quiz every time.
+function restoreAnswerState(d){
+  const entry = progress[d.d];
+  if(!entry || !entry.answers) return;
+  Object.keys(entry.answers).forEach(qiStr=>{
+    const qi = parseInt(qiStr);
+    const oi = entry.answers[qiStr];
+    const m = d.mcqs[qi];
+    if(!m) return;
+    const card = document.getElementById('mcq-'+d.d+'-'+qi);
+    if(!card || card.classList.contains('answered')) return;
+    card.classList.add('answered');
+    const opts = card.querySelectorAll('.mcq-opt');
+    opts.forEach((o,i)=>{
+      o.classList.add('disabled');
+      if(i===m.correct) o.classList.add('correct');
+      else if(i===oi) o.classList.add('incorrect');
+    });
+    const exp = document.getElementById('exp-'+d.d+'-'+qi);
+    if(exp) exp.classList.add('show');
+  });
+  const scoreEl = document.getElementById('mcq-score-'+d.d);
+  if(scoreEl && entry.total !== undefined){
+    scoreEl.textContent = `${entry.total} / ${d.mcqs.length} answered — ${entry.correct} correct so far`;
+  }
+}
+
+(async function init(){
+  await loadProgress();
+  buildSidebar();
+  renderDay(1, true);
+})();
+
+// ---------- MCQ interaction (event delegation, session-only state) ----------
+contentEl.addEventListener('click', function(e){
+  const btn = e.target.closest('.mcq-opt');
+  if(!btn) return;
+  const card = btn.closest('.mcq-card');
+  if(card.classList.contains('answered')) return;
+  card.classList.add('answered');
+
+  const dayNum = parseInt(btn.dataset.day);
+  const qi = parseInt(btn.dataset.q);
+  const oi = parseInt(btn.dataset.o);
+  const day = DAYS.find(x=>x.d===dayNum);
+  const m = day.mcqs[qi];
+
+  const opts = card.querySelectorAll('.mcq-opt');
+  opts.forEach((o,i)=>{
+    o.classList.add('disabled');
+    if(i===m.correct) o.classList.add('correct');
+    else if(i===oi) o.classList.add('incorrect');
+  });
+  const exp = document.getElementById('exp-'+dayNum+'-'+qi);
+  if(exp) exp.classList.add('show');
+
+  const scoreEl = document.getElementById('mcq-score-'+dayNum);
+  let answered = 0, correctCount = 0;
+  if(scoreEl){
+    answered = card.parentElement.querySelectorAll('.mcq-card.answered').length;
+    correctCount = Array.from(card.parentElement.querySelectorAll('.mcq-card.answered')).reduce((acc,c)=>{
+      const chosenIncorrect = c.querySelector('.mcq-opt.incorrect');
+      return acc + (chosenIncorrect ? 0 : 1);
+    },0);
+    scoreEl.textContent = `${answered} / ${day.mcqs.length} answered — ${correctCount} correct so far`;
+  }
+
+  // Save this answer to the real account (see storage-shim.js) — not just
+  // this browser tab, so progress picks up correctly on any device.
+  if(!progress[dayNum]) progress[dayNum] = { answers: {} };
+  progress[dayNum].answers[qi] = oi;
+  progress[dayNum].total = answered;
+  progress[dayNum].correct = correctCount;
+  saveProgress();
+  if(answered === day.mcqs.length){
+    const doneFlag = document.getElementById('done-'+dayNum);
+    if(doneFlag) doneFlag.style.display = '';
+  }
+});
+</script>
+</body>
+</html>

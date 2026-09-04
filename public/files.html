@@ -177,9 +177,7 @@ async function fetchFileBlob(id){
 async function openFile(id){
   try {
     const blob = await fetchFileBlob(id);
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    window.HubBlobDeliver(blob, null, blob.type, true);
   } catch (e) {
     showToast(e.message || 'Could not open file.', 'error');
   }
@@ -190,14 +188,7 @@ async function openFile(id){
 async function downloadFile(id, filename){
   try {
     const blob = await fetchFileBlob(id);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || 'download';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    window.HubBlobDeliver(blob, filename, blob.type, false);
   } catch (e) {
     showToast(e.message || 'Could not download file.', 'error');
   }

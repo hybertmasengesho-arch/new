@@ -17,11 +17,16 @@
 <div id="siteNav"></div>
 
 <div class="hub-wrap">
-  <div class="hub-eyebrow">Three tracks · one login</div>
+  <div class="hub-eyebrow">Seven tracks · one login</div>
   <h1 class="hub-h1">Courses</h1>
   <p class="hub-sub">Pick a track to continue where you left off.</p>
 
   <div class="courses-row" id="coursesRow">
+    <div class="courses-section-head">
+      <span class="label">Core Trackers</span>
+      <span class="rule"></span>
+    </div>
+
     <a class="app-card" href="/matrix.html" style="--app-accent:#2F6F4F;">
       <div class="app-eyebrow mono">LINEAR ALGEBRA</div>
       <h3>30-Day Matrix Accuracy</h3>
@@ -48,6 +53,40 @@
       <h3>Tracks</h3>
       <p>Day-by-day trackers set up by your facilitator or admin — check off your own progress.</p>
       <div class="app-progress-label mono" id="myTracksLabel">Loading…</div>
+    </a>
+
+    <div class="courses-section-head">
+      <span class="label">Engineering &amp; CS Tracks</span>
+      <span class="rule"></span>
+    </div>
+
+    <a class="app-card" href="/discrete-math.html" style="--app-accent:#4A6FA5;">
+      <div class="app-eyebrow mono">CS FOUNDATIONS</div>
+      <h3>Discrete Mathematics</h3>
+      <p>20 days — logic, proofs, sets, functions, relations, counting, graphs, and the foundations machine learning is built on.</p>
+      <div class="app-progress-bar"><i id="discreteMathBar"></i></div>
+      <div class="app-progress-label mono" id="discreteMathLabel">Loading…</div>
+    </a>
+    <a class="app-card" href="/signals-systems.html" style="--app-accent:#B4548A;">
+      <div class="app-eyebrow mono">ECE · SIGNALS</div>
+      <h3>Signals &amp; Systems</h3>
+      <p>20 days — CT/DT signals, LTI systems, convolution, Fourier &amp; Laplace/Z-transforms, sampling, and frequency response.</p>
+      <div class="app-progress-bar"><i id="signalsBar"></i></div>
+      <div class="app-progress-label mono" id="signalsLabel">Loading…</div>
+    </a>
+    <a class="app-card" href="/electromagnetism.html" style="--app-accent:#3F8FA6;">
+      <div class="app-eyebrow mono">ETE · YEAR 2</div>
+      <h3>Electromagnetism I</h3>
+      <p>40 days — vector foundations through EM waves, built for electronics &amp; telecommunication engineering.</p>
+      <div class="app-progress-bar"><i id="emBar"></i></div>
+      <div class="app-progress-label mono" id="emLabel">Loading…</div>
+    </a>
+    <a class="app-card" href="/engineering-mechanics.html" style="--app-accent:#A56B3F;">
+      <div class="app-eyebrow mono">STATICS &amp; DYNAMICS</div>
+      <h3>The Mechanics Track</h3>
+      <p>45 days — rigid body equilibrium, structures, friction, centroids, then dynamics kinematics and kinetics.</p>
+      <div class="app-progress-bar"><i id="mechBar"></i></div>
+      <div class="app-progress-label mono" id="mechLabel">Loading…</div>
     </a>
   </div>
 </div>
@@ -99,6 +138,31 @@ async function loadMyTracksCount(){
   }catch(e){ /* non-critical */ }
 }
 
+// The four uploaded day-by-day tracks (Discrete Math, Signals & Systems,
+// Electromagnetism, Mechanics) all save through the same window.storage
+// shim (see public/js/storage-shim.js) under a single 'progress' key —
+// this reads that same shape back for the progress bars here. MCQ-based
+// tracks store { [day]: { total, correct } }; Mechanics stores
+// { [dayIdx]: { completed } } (0-indexed, no MCQ count).
+async function loadMcqTrackProgress(app, totalDays, barId, labelId){
+  try{
+    const v = await apiGet(app, 'progress');
+    let done = 0;
+    if(v){ Object.values(v).forEach(entry => { if(entry && entry.total >= 5) done++; }); }
+    document.getElementById(barId).style.width = (done/totalDays*100) + '%';
+    document.getElementById(labelId).textContent = done + '/' + totalDays + ' days';
+  }catch(e){ /* non-critical */ }
+}
+async function loadMechanicsProgress(){
+  try{
+    const v = await apiGet('engineering-mechanics', 'progress');
+    let done = 0;
+    if(v){ Object.values(v).forEach(entry => { if(entry && entry.completed) done++; }); }
+    document.getElementById('mechBar').style.width = (done/45*100) + '%';
+    document.getElementById('mechLabel').textContent = done + '/45 days';
+  }catch(e){ /* non-critical */ }
+}
+
 // Small yellow "#N" badge in the top-right corner of every course card —
 // your current overall rank (same number the admin's Ranking tab shows,
 // and whatever an admin last shared with you as a message). My Tracks is
@@ -126,6 +190,10 @@ async function loadRankBadge(){
   loadReasoning();
   loadPrep30();
   loadMyTracksCount();
+  loadMcqTrackProgress('discrete-math', 20, 'discreteMathBar', 'discreteMathLabel');
+  loadMcqTrackProgress('signals-systems', 20, 'signalsBar', 'signalsLabel');
+  loadMcqTrackProgress('electromagnetism', 40, 'emBar', 'emLabel');
+  loadMechanicsProgress();
   loadRankBadge();
 })();
 </script>
